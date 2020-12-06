@@ -13,7 +13,7 @@ This repository holds community extensions for the [Fyne](https://fyne.io) toolk
 
 This is in early development and more information will appear soon.
 
-## Layouts
+## Layouts
 
 Community contributed layouts.
 
