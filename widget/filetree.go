@@ -1,12 +1,13 @@
 package widget
 
 import (
+	"sort"
+
 	"fyne.io/fyne"
 	"fyne.io/fyne/layout"
 	"fyne.io/fyne/storage"
 	"fyne.io/fyne/theme"
 	"fyne.io/fyne/widget"
-	"sort"
 )
 
 type FileTree struct {

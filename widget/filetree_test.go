@@ -1,14 +1,16 @@
 package widget_test
 
 import (
-	"fyne.io/fyne/storage"
-	"fyne.io/fyne/test"
-	"github.com/fyne-io/fyne-x/widget"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"os"
 	"path"
 	"testing"
+
+	"fyne.io/fyne/storage"
+	"fyne.io/fyne/test"
+
+	"github.com/fyne-io/fyne-x/widget"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFileTree(t *testing.T) {
