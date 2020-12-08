@@ -24,3 +24,36 @@ Community contributed layouts.
 Community contributed widgets.
 
 `import fyne.io/x/fyne/widget`
+
+### FileTree
+
+An extension of widget.Tree for displaying a file system hierarchy.
+
+```go
+package main
+
+import (
+    "fyne.io/fyne"
+    "fyne.io/fyne/app"
+    "fyne.io/fyne/storage"
+    "github.com/fyne-io/fyne-x/widget"
+    "os"
+)
+
+func main() {
+    a := app.New()
+    w := a.NewWindow("FileTree")
+    dir, err := os.Getwd()
+    if err != nil {
+        fyne.LogError("Could not get current working directory", err)
+        return
+    }
+    w.SetContent(widget.NewFileTree(storage.NewFileURI(dir)))
+    w.Resize(fyne.NewSize(400, 300))
+    w.ShowAndRun()
+}
+```
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widget-filetree.png" width="1024" height="868" alt="FileTree Widget" style="max-width: 100%" />
+</p>
