@@ -13,7 +13,7 @@ import (
 // FileTree extends widget.Tree to display a file system hierarchy.
 type FileTree struct {
 	widget.Tree
-	Filter func(fyne.URI) bool
+	Filter storage.FileFilter
 	Sorter func(fyne.URI, fyne.URI) bool
 
 	luriCache map[widget.TreeNodeID]fyne.ListableURI
@@ -83,7 +83,7 @@ func NewFileTree(root fyne.URI) *FileTree {
 			us = uris
 		} else {
 			for _, u := range uris {
-				if filter(u) {
+				if filter.Matches(u) {
 					us = append(us, u)
 				}
 			}
