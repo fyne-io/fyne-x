@@ -6,6 +6,7 @@ import (
 	"path"
 	"testing"
 
+	"fyne.io/fyne"
 	"fyne.io/fyne/storage"
 	"fyne.io/fyne/test"
 
@@ -16,6 +17,28 @@ import (
 func TestFileTree(t *testing.T) {
 	tree := &widget.FileTree{}
 	tree.Refresh() // Should not crash
+}
+
+func TestFileTree_Layout(t *testing.T) {
+	test.NewApp()
+
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+
+	root := storage.NewURI("file://" + tempDir)
+	tree := widget.NewFileTree(root)
+	tree.OpenAllBranches()
+
+	branch, err := storage.Child(root, "B")
+	assert.NoError(t, err)
+	leaf, err := storage.Child(branch, "C")
+	assert.NoError(t, err)
+	tree.Select(leaf.String())
+
+	window := test.NewWindow(tree)
+	defer window.Close()
+	window.Resize(fyne.NewSize(300, 100))
+	test.AssertImageMatches(t, "filetree/selected.png", window.Canvas().Capture())
 }
 
 func Test_NewFileTree(t *testing.T) {
@@ -29,15 +52,15 @@ func Test_NewFileTree(t *testing.T) {
 	tree.OpenAllBranches()
 
 	assert.True(t, tree.IsBranchOpen(root.String()))
-	b1, err := storage.Child(root, "A")
+	branch1, err := storage.Child(root, "A")
 	assert.NoError(t, err)
-	assert.True(t, tree.IsBranchOpen(b1.String()))
-	b2, err := storage.Child(root, "B")
+	assert.True(t, tree.IsBranchOpen(branch1.String()))
+	branch2, err := storage.Child(root, "B")
 	assert.NoError(t, err)
-	assert.True(t, tree.IsBranchOpen(b2.String()))
-	l1, err := storage.Child(b2, "C")
+	assert.True(t, tree.IsBranchOpen(branch2.String()))
+	leaf, err := storage.Child(branch2, "C")
 	assert.NoError(t, err)
-	assert.False(t, tree.IsBranchOpen(l1.String()))
+	assert.False(t, tree.IsBranchOpen(leaf.String()))
 }
 
 func createTempDir(t *testing.T) string {
