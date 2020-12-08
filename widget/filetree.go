@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/widget"
 )
 
+// FileTree extends widget.Tree to display a file system hierarchy.
 type FileTree struct {
 	widget.Tree
 	Filter func(fyne.URI) bool
@@ -19,6 +20,7 @@ type FileTree struct {
 	uriCache  map[widget.TreeNodeID]fyne.URI
 }
 
+// NewFileTree creates a new FileTree from the given root URI.
 func NewFileTree(root fyne.URI) *FileTree {
 	tree := &FileTree{
 		Tree: widget.Tree{
@@ -64,10 +66,9 @@ func NewFileTree(root fyne.URI) *FileTree {
 			if err != nil {
 				fyne.LogError("Unable to get lister for "+id, err)
 				return
-			} else {
-				luri = l
-				tree.luriCache[id] = l
 			}
+			luri = l
+			tree.luriCache[id] = l
 		}
 
 		uris, err := luri.List()
