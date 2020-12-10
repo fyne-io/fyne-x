@@ -36,7 +36,7 @@ import (
     "fyne.io/fyne"
     "fyne.io/fyne/app"
     "fyne.io/fyne/storage"
-    "github.com/fyne-io/fyne-x/widget"
+    "fyne.io/x/fyne/widget"
     "os"
 )
 

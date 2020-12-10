@@ -9,8 +9,8 @@ import (
 	"fyne.io/fyne"
 	"fyne.io/fyne/storage"
 	"fyne.io/fyne/test"
+	"fyne.io/x/fyne/widget"
 
-	"github.com/fyne-io/fyne-x/widget"
 	"github.com/stretchr/testify/assert"
 )
 
