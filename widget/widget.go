@@ -1,2 +1,2 @@
 // Package widget contains community extensions for Fyne widgets
-package widget // import "fyne.io/fyne/x/widget
+package widget // import "fyne.io/x/fyne/widget
