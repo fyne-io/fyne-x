@@ -85,7 +85,7 @@ func (g *AnimatedGif) Start() {
 	}()
 }
 
-type gifRenderer struct{
+type gifRenderer struct {
 	gif *AnimatedGif
 }
 
