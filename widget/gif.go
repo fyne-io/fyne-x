@@ -13,6 +13,7 @@ import (
 	"fyne.io/fyne/widget"
 )
 
+// AnimatedGif widget shows a Gif image with many frames.
 type AnimatedGif struct {
 	widget.BaseWidget
 
@@ -21,6 +22,8 @@ type AnimatedGif struct {
 	stopping bool
 }
 
+// NewAnimatedGif creates a new widget loaded to show the specified image.
+// If there is an error loading the image it will be returned in the error value.
 func NewAnimatedGif(u fyne.URI) (*AnimatedGif, error) {
 	ret := &AnimatedGif{}
 	ret.ExtendBaseWidget(ret)
@@ -34,6 +37,8 @@ func NewAnimatedGif(u fyne.URI) (*AnimatedGif, error) {
 	return ret, ret.Load(u)
 }
 
+// Load is used to change the gif file shown.
+// It will change the loaded content and prepare the new frames for animation.
 func (g *AnimatedGif) Load(u fyne.URI) error {
 	g.dst.Image = nil
 	g.dst.Refresh()
@@ -52,14 +57,12 @@ func (g *AnimatedGif) Load(u fyne.URI) error {
 	return nil
 }
 
+// CreateRenderer loads the widget renderer for this widget. This is an internal requirement for Fyne.
 func (g *AnimatedGif) CreateRenderer() fyne.WidgetRenderer {
 	return &gifRenderer{gif: g}
 }
 
-func (g *AnimatedGif) Stop() {
-	g.stopping = true
-}
-
+// Start begins the animation. The speed of the transition is controlled by the loaded gif file.
 func (g *AnimatedGif) Start() {
 	buffer := image.NewNRGBA(g.dst.Image.Bounds())
 	draw.Draw(buffer, g.dst.Image.Bounds(), g.src.Image[0], image.Point{}, draw.Over)
@@ -83,6 +86,11 @@ func (g *AnimatedGif) Start() {
 
 		g.dst.Image = nil
 	}()
+}
+
+// Stop will request that the animation stops running, the last frame will remain visible
+func (g *AnimatedGif) Stop() {
+	g.stopping = true
 }
 
 type gifRenderer struct {
