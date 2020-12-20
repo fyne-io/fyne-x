@@ -23,4 +23,13 @@ Community contributed layouts.
 
 Community contributed widgets.
 
+### Animated Gif
+
+A widget that will run animated gifs.
+
+```go
+gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/minions.gif"))
+gif.Start()
+```
+
 `import fyne.io/x/fyne/widget`
