@@ -4,7 +4,7 @@
   <br />
   <a href="https://goreportcard.com/report/fyne.io/x/fyne"><img src="https://goreportcard.com/badge/fyne.io/x/fyne" alt="Code Status" /></a>
   <a href="https://github.com/fyne-io/fyne-x/actions"><img src="https://github.com/fyne-io/fyne-x/workflows/Platform%20Tests/badge.svg" alt="Build Status" /></a>
-  <a href='https://coveralls.io/github/fyne-io/fyne-x?branch=develop'><img src='https://coveralls.io/repos/github/fyne-io/fyne-x/badge.svg?branch=develop' alt='Coverage Status' /></a>
+  <a href='https://coveralls.io/github/fyne-io/fyne-x?branch=master'><img src='https://coveralls.io/repos/github/fyne-io/fyne-x/badge.svg?branch=master' alt='Coverage Status' /></a>
 </p>
 
 # About
