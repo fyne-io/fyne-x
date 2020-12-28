@@ -80,7 +80,7 @@ func newSpinner(value, step float64, integer bool) *Spinner {
 	s := &Spinner{
 		buttonDown: widget.NewButtonWithIcon("", theme.MoveDownIcon(), nil),
 		buttonUp:   widget.NewButtonWithIcon("", theme.MoveUpIcon(), nil),
-		entry:      &spinnerEntry{},
+		entry:      newSpinnerEntry(),
 		precision:  SpinnerDefaultPrecision,
 		step:       step,
 		value:      value,
@@ -98,8 +98,8 @@ func newSpinner(value, step float64, integer bool) *Spinner {
 	// ! Changing the above would replace this, and the AddObject calls.
 	s.Layout = layout.NewBorderLayout(nil, nil, nil, buttons)
 
-	s.AddObject(s.entry)
-	s.AddObject(buttons)
+	s.Add(s.entry)
+	s.Add(buttons)
 
 	// Force the value in the entry to refresh (with the correct decimal count)
 	s.updateVal()
