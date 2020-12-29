@@ -47,6 +47,11 @@ var _ mobile.Keyboardable = (*spinnerEntry)(nil)
 // then you would have to re-implement this component using a decimal math library such as:
 // github.com/ericlagergren/decimal. A conscious choice not to use this library was made due to
 // the significant performance hit involved in using software over hardware floating point math.
+//
+// Bugs
+//
+// The Entry is not correctly receiving focus events (no cursor is displayed, and no highlight)
+// but I (AlbinoGeek) don't know why this occurs.
 type Spinner struct {
 	fyne.Container
 
@@ -95,7 +100,7 @@ func newSpinner(value, step float64, integer bool) *Spinner {
 	// ! manual Layout of widgets v.s. using fyne.Container
 	buttons := widget.NewHBox(s.buttonUp, s.buttonDown)
 
-	// ! Changing the above would replace this, and the AddObject calls.
+	// ! Changing the above would replace this, and the Add calls.
 	s.Layout = layout.NewBorderLayout(nil, nil, nil, buttons)
 
 	s.Add(s.entry)
