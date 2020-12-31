@@ -27,7 +27,7 @@ func Example() {
 	positive.SetMin(0)
 
 	// shows the value as accurately as possible (default is to round to SpinnerDefaultPrecision)
-	precision.SetPrecision(-1)
+	precision.SetPrecision(12)
 
 	w.SetContent(container.NewVBox(
 		widget.NewForm(

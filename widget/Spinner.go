@@ -21,7 +21,7 @@ import (
 // See Also
 //
 // strconv.ParseFloat
-var SpinnerDefaultPrecision = 12
+var SpinnerDefaultPrecision = -1
 
 // Declare conformity with fyne.Container interfaces
 var _ fyne.Disableable = (*Spinner)(nil)
