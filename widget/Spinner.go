@@ -55,8 +55,8 @@ var _ mobile.Keyboardable = (*spinnerEntry)(nil)
 type Spinner struct {
 	fyne.Container
 
-	buttonDown *widget.Button
-	buttonUp   *widget.Button
+	buttonDown *spinnerButton
+	buttonUp   *spinnerButton
 	entry      *spinnerEntry
 
 	hasMax    bool
@@ -83,8 +83,8 @@ func NewIntSpinner(value, step int) *Spinner {
 
 func newSpinner(value, step float64, integer bool) *Spinner {
 	s := &Spinner{
-		buttonDown: widget.NewButtonWithIcon("", theme.MoveDownIcon(), nil),
-		buttonUp:   widget.NewButtonWithIcon("", theme.MoveUpIcon(), nil),
+		buttonDown: newSpinnerButtonWithIcon("", theme.MenuDropDownIcon(), nil),
+		buttonUp:   newSpinnerButtonWithIcon("", theme.MenuDropUpIcon(), nil),
 		entry:      newSpinnerEntry(),
 		precision:  SpinnerDefaultPrecision,
 		step:       step,
@@ -96,11 +96,9 @@ func newSpinner(value, step float64, integer bool) *Spinner {
 	s.buttonUp.OnTapped = s.onUp
 	s.entry.spinner = s
 
-	// ! Buttons should be positioned one atop the other vertically... However, this would require
-	// ! manual Layout of widgets v.s. using fyne.Container
-	buttons := widget.NewHBox(s.buttonUp, s.buttonDown)
-
-	// ! Changing the above would replace this, and the Add calls.
+	// ! this VBox introduces vertical padding between the up and down button which should not exist
+	// ! however, the only way I can think of fixing this is a custom layout just for that..?
+	buttons := widget.NewVBox(s.buttonUp, s.buttonDown)
 	s.Layout = layout.NewBorderLayout(nil, nil, nil, buttons)
 
 	s.Add(s.entry)
@@ -283,6 +281,29 @@ func (s *Spinner) updateVal() {
 }
 
 // ---
+
+type spinnerButton struct {
+	widget.Button
+}
+
+func newSpinnerButtonWithIcon(label string, icon fyne.Resource, tapped func()) *spinnerButton {
+	e := &spinnerButton{Button: widget.Button{
+		Text: label,
+		Icon: icon,
+	}}
+
+	e.ExtendBaseWidget(e)
+
+	return e
+}
+
+func (b *spinnerButton) MinSize() fyne.Size {
+	size := b.Button.MinSize()
+
+	size.Height = size.Height/2 - theme.Padding()/2
+
+	return size
+}
 
 type spinnerEntry struct {
 	widget.Entry
