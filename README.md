@@ -13,6 +13,16 @@ This repository holds community extensions for the [Fyne](https://fyne.io) toolk
 
 This is in early development and more information will appear soon.
 
+## Generating Local Documentation
+
+[gomarkdoc](https://github.com/princjef/gomarkdoc) can be used to generate local documentation in markdown format.
+
+```bash
+mkdir docs
+# (re)Generates documentation for the "Spinner" widget
+gomarkdoc widget/Spinner* > docs/Spinner.md
+```
+
 ## Layouts
 
 Community contributed layouts.
