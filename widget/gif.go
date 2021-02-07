@@ -2,9 +2,9 @@ package widget
 
 import (
 	"image"
-	"image/color"
 	"image/draw"
 	"image/gif"
+	"sync"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -22,6 +22,7 @@ type AnimatedGif struct {
 	dst               *canvas.Image
 	remaining         int
 	stopping, running bool
+	runLock           sync.RWMutex
 }
 
 // NewAnimatedGif creates a new widget loaded to show the specified image.
@@ -37,6 +38,11 @@ func NewAnimatedGif(u fyne.URI) (*AnimatedGif, error) {
 	}
 
 	return ret, ret.Load(u)
+}
+
+// CreateRenderer loads the widget renderer for this widget. This is an internal requirement for Fyne.
+func (g *AnimatedGif) CreateRenderer() fyne.WidgetRenderer {
+	return &gifRenderer{gif: g}
 }
 
 // Load is used to change the gif file shown.
@@ -59,11 +65,6 @@ func (g *AnimatedGif) Load(u fyne.URI) error {
 	return nil
 }
 
-// CreateRenderer loads the widget renderer for this widget. This is an internal requirement for Fyne.
-func (g *AnimatedGif) CreateRenderer() fyne.WidgetRenderer {
-	return &gifRenderer{gif: g}
-}
-
 // MinSize returns the minimum size that this GIF can occupy.
 // Because gif images are measured in pixels we cannot use the dimensions, so this defaults to 0x0.
 // You can set a minimum size if required using SetMinSize.
@@ -79,9 +80,11 @@ func (g *AnimatedGif) SetMinSize(min fyne.Size) {
 
 // Start begins the animation. The speed of the transition is controlled by the loaded gif file.
 func (g *AnimatedGif) Start() {
-	if g.running {
+	if g.isRunning() {
 		return
 	}
+	g.runLock.Lock()
+	defer g.runLock.Unlock()
 	g.running = true
 
 	buffer := image.NewNRGBA(g.dst.Image.Bounds())
@@ -101,7 +104,7 @@ func (g *AnimatedGif) Start() {
 
 		for g.remaining != 0 {
 			for c, srcImg := range g.src.Image {
-				if g.stopping {
+				if g.isStopping() {
 					break
 				}
 				draw.Draw(buffer, g.dst.Image.Bounds(), srcImg, image.Point{}, draw.Over)
@@ -118,15 +121,25 @@ func (g *AnimatedGif) Start() {
 
 // Stop will request that the animation stops running, the last frame will remain visible
 func (g *AnimatedGif) Stop() {
+	g.runLock.Lock()
 	g.stopping = true
+	g.runLock.Unlock()
+}
+
+func (g *AnimatedGif) isStopping() bool {
+	g.runLock.RLock()
+	defer g.runLock.RUnlock()
+	return g.stopping
+}
+
+func (g *AnimatedGif) isRunning() bool {
+	g.runLock.RLock()
+	defer g.runLock.RUnlock()
+	return g.running
 }
 
 type gifRenderer struct {
 	gif *AnimatedGif
-}
-
-func (g *gifRenderer) BackgroundColor() color.Color {
-	return color.Transparent
 }
 
 func (g *gifRenderer) Destroy() {
