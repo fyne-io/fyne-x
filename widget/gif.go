@@ -113,7 +113,9 @@ func (g *AnimatedGif) Start() {
 
 				time.Sleep(time.Millisecond * time.Duration(g.src.Delay[c]) * 10)
 			}
-			g.remaining--
+			if g.remaining > -1 { // don't underflow int
+				g.remaining--
+			}
 		}
 
 		g.running = false
