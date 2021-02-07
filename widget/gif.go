@@ -16,6 +16,7 @@ import (
 // AnimatedGif widget shows a Gif image with many frames.
 type AnimatedGif struct {
 	widget.BaseWidget
+	min fyne.Size
 
 	src               *gif.GIF
 	dst               *canvas.Image
@@ -61,6 +62,19 @@ func (g *AnimatedGif) Load(u fyne.URI) error {
 // CreateRenderer loads the widget renderer for this widget. This is an internal requirement for Fyne.
 func (g *AnimatedGif) CreateRenderer() fyne.WidgetRenderer {
 	return &gifRenderer{gif: g}
+}
+
+// MinSize returns the minimum size that this GIF can occupy.
+// Because gif images are measured in pixels we cannot use the dimensions, so this defaults to 0x0.
+// You can set a minimum size if required using SetMinSize.
+func (g *AnimatedGif) MinSize() fyne.Size {
+	return g.min
+}
+
+// SetMinSize sets the smallest possible size that this AnimatedGif should be drawn at.
+// Be careful not to set this based on pixel sizes as that will vary based on output device.
+func (g *AnimatedGif) SetMinSize(min fyne.Size) {
+	g.min = min
 }
 
 // Start begins the animation. The speed of the transition is controlled by the loaded gif file.
@@ -124,7 +138,7 @@ func (g *gifRenderer) Layout(size fyne.Size) {
 }
 
 func (g *gifRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(1, 1)
+	return g.gif.MinSize()
 }
 
 func (g *gifRenderer) Objects() []fyne.CanvasObject {

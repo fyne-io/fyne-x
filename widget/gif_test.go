@@ -26,3 +26,12 @@ func TestNewAnimatedGif(t *testing.T) {
 	time.Sleep(time.Millisecond * 10)
 	assert.Equal(t, -1, gif.remaining)
 }
+
+func TestAnimatedGif_MinSize(t *testing.T) {
+	gif, _ := NewAnimatedGif(storage.NewFileURI("./testdata/gif/minions.gif"))
+	assert.True(t, gif.min.IsZero())
+
+	gif.SetMinSize(fyne.NewSize(10.0, 10.0))
+	assert.Equal(t, float32(10), gif.MinSize().Width)
+	assert.Equal(t, float32(10), gif.MinSize().Height)
+}
