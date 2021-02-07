@@ -61,6 +61,7 @@ func (g *AnimatedGif) Load(u fyne.URI) error {
 	}
 	g.src = pix
 	g.dst.Image = pix.Image[0]
+	g.dst.Refresh()
 
 	return nil
 }
