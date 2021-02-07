@@ -7,10 +7,10 @@ import (
 	"image/gif"
 	"time"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/canvas"
-	"fyne.io/fyne/storage"
-	"fyne.io/fyne/widget"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/widget"
 )
 
 // AnimatedGif widget shows a Gif image with many frames.
@@ -43,7 +43,7 @@ func (g *AnimatedGif) Load(u fyne.URI) error {
 	g.dst.Image = nil
 	g.dst.Refresh()
 
-	read, err := storage.OpenFileFromURI(u)
+	read, err := storage.Reader(u)
 	if err != nil {
 		return err
 	}
