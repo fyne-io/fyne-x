@@ -28,7 +28,7 @@ Community contributed widgets.
 A widget that will run animated gifs.
 
 ```go
-gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/minions.gif"))
+gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
 gif.Start()
 ```
 
