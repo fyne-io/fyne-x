@@ -17,10 +17,10 @@ import (
 type AnimatedGif struct {
 	widget.BaseWidget
 
-	src       *gif.GIF
-	dst       *canvas.Image
-	remaining int
-	stopping  bool
+	src               *gif.GIF
+	dst               *canvas.Image
+	remaining         int
+	stopping, running bool
 }
 
 // NewAnimatedGif creates a new widget loaded to show the specified image.
@@ -65,6 +65,11 @@ func (g *AnimatedGif) CreateRenderer() fyne.WidgetRenderer {
 
 // Start begins the animation. The speed of the transition is controlled by the loaded gif file.
 func (g *AnimatedGif) Start() {
+	if g.running {
+		return
+	}
+	g.running = true
+
 	buffer := image.NewNRGBA(g.dst.Image.Bounds())
 	draw.Draw(buffer, g.dst.Image.Bounds(), g.src.Image[0], image.Point{}, draw.Over)
 	g.dst.Image = buffer
@@ -93,7 +98,7 @@ func (g *AnimatedGif) Start() {
 			g.remaining--
 		}
 
-		g.dst.Image = nil
+		g.running = false
 	}()
 }
 
