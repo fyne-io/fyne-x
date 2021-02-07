@@ -6,9 +6,9 @@ import (
 	"path"
 	"testing"
 
-	"fyne.io/fyne"
-	"fyne.io/fyne/storage"
-	"fyne.io/fyne/test"
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/test"
 	"fyne.io/x/fyne/widget"
 
 	"github.com/stretchr/testify/assert"
