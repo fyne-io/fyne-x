@@ -17,9 +17,10 @@ import (
 type AnimatedGif struct {
 	widget.BaseWidget
 
-	src      *gif.GIF
-	dst      *canvas.Image
-	stopping bool
+	src       *gif.GIF
+	dst       *canvas.Image
+	remaining int
+	stopping  bool
 }
 
 // NewAnimatedGif creates a new widget loaded to show the specified image.
@@ -70,9 +71,16 @@ func (g *AnimatedGif) Start() {
 	g.dst.Refresh()
 
 	go func() {
-		g.stopping = false
+		switch g.src.LoopCount {
+		case -1: // don't loop
+			g.remaining = 1
+		case 0: // loop forever
+			g.remaining = -1
+		default:
+			g.remaining = g.src.LoopCount + 1
+		}
 
-		for !g.stopping {
+		for g.remaining != 0 {
 			for c, srcImg := range g.src.Image {
 				if g.stopping {
 					break
@@ -82,6 +90,7 @@ func (g *AnimatedGif) Start() {
 
 				time.Sleep(time.Millisecond * time.Duration(g.src.Delay[c]) * 10)
 			}
+			g.remaining--
 		}
 
 		g.dst.Image = nil
