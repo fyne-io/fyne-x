@@ -12,7 +12,7 @@ import (
 )
 
 func TestNewAnimatedGif(t *testing.T) {
-	gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/minions.gif"))
+	gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
 	assert.Nil(t, err)
 
 	w := test.NewWindow(gif)
@@ -28,7 +28,7 @@ func TestNewAnimatedGif(t *testing.T) {
 }
 
 func TestAnimatedGif_MinSize(t *testing.T) {
-	gif, _ := NewAnimatedGif(storage.NewFileURI("./testdata/gif/minions.gif"))
+	gif, _ := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
 	assert.True(t, gif.min.IsZero())
 
 	gif.SetMinSize(fyne.NewSize(10.0, 10.0))
