@@ -4,7 +4,7 @@ import (
 	"sort"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/layout"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -32,7 +32,7 @@ func NewFileTree(root fyne.URI) *FileTree {
 				} else {
 					icon = widget.NewFileIcon(nil)
 				}
-				return fyne.NewContainerWithLayout(layout.NewHBoxLayout(), icon, widget.NewLabel("Template Object"))
+				return container.NewBorder(nil, nil, icon, nil, widget.NewLabel("Template Object"))
 			},
 		},
 		luriCache: make(map[widget.TreeNodeID]fyne.ListableURI),
@@ -119,13 +119,15 @@ func NewFileTree(root fyne.URI) *FileTree {
 				// Set folder icon
 				r = theme.FolderIcon()
 			}
-			c.Objects[0].(*widget.Icon).SetResource(r)
+			c.Objects[1].(*widget.Icon).SetResource(r)
 		} else {
 			// Set file uri to update icon
-			c.Objects[0].(*widget.FileIcon).SetURI(uri)
+			c.Objects[1].(*widget.FileIcon).SetURI(uri)
+			c.Objects[1].(*widget.FileIcon).Resize(c.Objects[1].(*widget.FileIcon).Size())
+			c.Objects[1].(*widget.FileIcon).Refresh()
 		}
 
-		l := c.Objects[1].(*widget.Label)
+		l := c.Objects[0].(*widget.Label)
 		if tree.Root == id {
 			l.SetText(id)
 		} else {

@@ -29,15 +29,16 @@ func TestFileTree_Layout(t *testing.T) {
 	tree := widget.NewFileTree(root)
 	tree.OpenAllBranches()
 
+	window := test.NewWindow(tree)
+	defer window.Close()
+	window.Resize(fyne.NewSize(300, 200))
+
 	branch, err := storage.Child(root, "B")
 	assert.NoError(t, err)
 	leaf, err := storage.Child(branch, "C")
 	assert.NoError(t, err)
 	tree.Select(leaf.String())
 
-	window := test.NewWindow(tree)
-	defer window.Close()
-	window.Resize(fyne.NewSize(300, 100))
 	test.AssertImageMatches(t, "filetree/selected.png", window.Canvas().Capture())
 }
 
@@ -71,7 +72,9 @@ func createTempDir(t *testing.T) string {
 	assert.NoError(t, err)
 	err = os.MkdirAll(path.Join(tempDir, "B"), os.ModePerm)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(path.Join(tempDir, "B", "C"), []byte("c"), os.ModePerm)
+	err = ioutil.WriteFile(path.Join(tempDir, "B", "C.txt"), []byte("c"), os.ModePerm)
+	assert.NoError(t, err)
+	err = ioutil.WriteFile(path.Join(tempDir, "B", "D.txt"), []byte("d"), os.ModePerm)
 	assert.NoError(t, err)
 	return tempDir
 }
