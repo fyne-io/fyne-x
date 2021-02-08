@@ -16,8 +16,8 @@ type FileTree struct {
 	Filter storage.FileFilter
 	Sorter func(fyne.URI, fyne.URI) bool
 
-	luriCache map[widget.TreeNodeID]fyne.ListableURI
-	uriCache  map[widget.TreeNodeID]fyne.URI
+	listableCache map[widget.TreeNodeID]fyne.ListableURI
+	uriCache      map[widget.TreeNodeID]fyne.URI
 }
 
 // NewFileTree creates a new FileTree from the given root URI.
@@ -35,11 +35,11 @@ func NewFileTree(root fyne.URI) *FileTree {
 				return container.NewBorder(nil, nil, icon, nil, widget.NewLabel("Template Object"))
 			},
 		},
-		luriCache: make(map[widget.TreeNodeID]fyne.ListableURI),
-		uriCache:  make(map[widget.TreeNodeID]fyne.URI),
+		listableCache: make(map[widget.TreeNodeID]fyne.ListableURI),
+		uriCache:      make(map[widget.TreeNodeID]fyne.URI),
 	}
 	tree.IsBranch = func(id widget.TreeNodeID) bool {
-		if _, ok := tree.luriCache[id]; ok {
+		if _, ok := tree.listableCache[id]; ok {
 			return true
 		}
 		var err error
@@ -53,14 +53,14 @@ func NewFileTree(root fyne.URI) *FileTree {
 			tree.uriCache[id] = uri
 		}
 		if luri, err := storage.ListerForURI(uri); err == nil {
-			tree.luriCache[id] = luri
+			tree.listableCache[id] = luri
 			return true
 		}
 		return false
 	}
 	tree.ChildUIDs = func(id widget.TreeNodeID) (c []string) {
 		var err error
-		luri, ok := tree.luriCache[id]
+		luri, ok := tree.listableCache[id]
 		if !ok {
 			uri, ok := tree.uriCache[id]
 			if !ok {
@@ -78,7 +78,7 @@ func NewFileTree(root fyne.URI) *FileTree {
 				return
 			}
 			luri = l
-			tree.luriCache[id] = l
+			tree.listableCache[id] = l
 		}
 
 		uris, err := luri.List()
