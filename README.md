@@ -42,9 +42,9 @@ An extension of widget.Tree for displaying a file system hierarchy.
 package main
 
 import (
-    "fyne.io/fyne"
-    "fyne.io/fyne/app"
-    "fyne.io/fyne/storage"
+    "fyne.io/fyne/v2"
+    "fyne.io/fyne/v2/app"
+    "fyne.io/fyne/v2/storage"
     "fyne.io/x/fyne/widget"
     "os"
 )
@@ -57,7 +57,11 @@ func main() {
         fyne.LogError("Could not get current working directory", err)
         return
     }
-    w.SetContent(widget.NewFileTree(storage.NewFileURI(dir)))
+    tree := widget.NewFileTree(storage.NewFileURI(dir))
+    tree.Sorter = func(u1, u2 fyne.URI) bool {
+        return u1.String() < u2.String() // Sort alphabetically
+    }
+    w.SetContent(tree)
     w.Resize(fyne.NewSize(400, 300))
     w.ShowAndRun()
 }
