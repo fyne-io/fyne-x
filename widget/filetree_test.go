@@ -57,7 +57,7 @@ func TestFileTree_filter(t *testing.T) {
 	assert.NoError(t, err)
 	leaf1, err := storage.Child(branch2, "C.txt")
 	assert.NoError(t, err)
-	leaf2, err := storage.Child(branch2, "C.txt")
+	leaf2, err := storage.Child(branch2, "D.txt")
 	assert.NoError(t, err)
 
 	given := []fyne.URI{
@@ -92,7 +92,7 @@ func TestFileTree_sort(t *testing.T) {
 	assert.NoError(t, err)
 	leaf1, err := storage.Child(branch2, "C.txt")
 	assert.NoError(t, err)
-	leaf2, err := storage.Child(branch2, "C.txt")
+	leaf2, err := storage.Child(branch2, "D.txt")
 	assert.NoError(t, err)
 
 	given := []fyne.URI{

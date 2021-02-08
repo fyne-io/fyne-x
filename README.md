@@ -58,6 +58,7 @@ func main() {
         return
     }
     tree := widget.NewFileTree(storage.NewFileURI(dir))
+    tree.Filter = storage.NewExtensionFileFilter([]string{".txt"}) // Filter files
     tree.Sorter = func(u1, u2 fyne.URI) bool {
         return u1.String() < u2.String() // Sort alphabetically
     }
