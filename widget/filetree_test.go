@@ -32,11 +32,11 @@ func TestFileTree_Layout(t *testing.T) {
 
 	window := test.NewWindow(tree)
 	defer window.Close()
-	window.Resize(fyne.NewSize(300, 200))
+	window.Resize(fyne.NewSize(300, 100))
 
 	branch, err := storage.Child(root, "B")
 	assert.NoError(t, err)
-	leaf, err := storage.Child(branch, "C")
+	leaf, err := storage.Child(branch, "C.txt")
 	assert.NoError(t, err)
 	tree.Select(leaf.String())
 
@@ -61,7 +61,7 @@ func Test_NewFileTree(t *testing.T) {
 	branch2, err := storage.Child(root, "B")
 	assert.NoError(t, err)
 	assert.True(t, tree.IsBranchOpen(branch2.String()))
-	leaf, err := storage.Child(branch2, "C")
+	leaf, err := storage.Child(branch2, "C.txt")
 	assert.NoError(t, err)
 	assert.False(t, tree.IsBranchOpen(leaf.String()))
 }
