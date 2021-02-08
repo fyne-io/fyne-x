@@ -39,51 +39,19 @@ func NewFileTree(root fyne.URI) *FileTree {
 		uriCache:      make(map[widget.TreeNodeID]fyne.URI),
 	}
 	tree.IsBranch = func(id widget.TreeNodeID) bool {
-		if _, ok := tree.listableCache[id]; ok {
-			return true
-		}
-		var err error
-		uri, ok := tree.uriCache[id]
-		if !ok {
-			uri, err = storage.ParseURI(id)
-			if err != nil {
-				fyne.LogError("Unable to parse URI", err)
-				return false
-			}
-			tree.uriCache[id] = uri
-		}
-		if luri, err := storage.ListerForURI(uri); err == nil {
-			tree.listableCache[id] = luri
-			return true
-		}
-		return false
+		_, err := tree.toListable(id)
+		return err == nil
 	}
 	tree.ChildUIDs = func(id widget.TreeNodeID) (c []string) {
-		var err error
-		luri, ok := tree.listableCache[id]
-		if !ok {
-			uri, ok := tree.uriCache[id]
-			if !ok {
-				uri, err = storage.ParseURI(id)
-				if err != nil {
-					fyne.LogError("Unable to parse URI", err)
-					return
-				}
-				tree.uriCache[id] = uri
-			}
-
-			l, err := storage.ListerForURI(uri)
-			if err != nil {
-				fyne.LogError("Unable to get lister for "+id, err)
-				return
-			}
-			luri = l
-			tree.listableCache[id] = l
+		listable, err := tree.toListable(id)
+		if err != nil {
+			fyne.LogError("Unable to get lister for "+id, err)
+			return
 		}
 
-		uris, err := luri.List()
+		uris, err := listable.List()
 		if err != nil {
-			fyne.LogError("Unable to list "+luri.String(), err)
+			fyne.LogError("Unable to list "+listable.String(), err)
 			return
 		}
 
@@ -113,15 +81,10 @@ func NewFileTree(root fyne.URI) *FileTree {
 		return
 	}
 	tree.UpdateNode = func(id widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
-		var err error
-		uri, ok := tree.uriCache[id]
-		if !ok {
-			uri, err = storage.ParseURI(id)
-			if err != nil {
-				fyne.LogError("Unable to parse URI", err)
-				return
-			}
-			tree.uriCache[id] = uri
+		uri, err := tree.toURI(id)
+		if err != nil {
+			fyne.LogError("Unable to parse URI", err)
+			return
 		}
 
 		c := node.(*fyne.Container)
@@ -149,4 +112,36 @@ func NewFileTree(root fyne.URI) *FileTree {
 	}
 	tree.ExtendBaseWidget(tree)
 	return tree
+}
+
+func (t *FileTree) toListable(id widget.TreeNodeID) (fyne.ListableURI, error) {
+	listable, ok := t.listableCache[id]
+	if ok {
+		return listable, nil
+	}
+	uri, err := t.toURI(id)
+	if err != nil {
+		return nil, err
+	}
+
+	listable, err = storage.ListerForURI(uri)
+	if err != nil {
+		return nil, err
+	}
+	t.listableCache[id] = listable
+	return listable, nil
+}
+
+func (t *FileTree) toURI(id widget.TreeNodeID) (fyne.URI, error) {
+	uri, ok := t.uriCache[id]
+	if ok {
+		return uri, nil
+	}
+
+	uri, err := storage.ParseURI(id)
+	if err != nil {
+		return nil, err
+	}
+	t.uriCache[id] = uri
+	return uri, nil
 }
