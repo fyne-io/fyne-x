@@ -42,9 +42,14 @@ func NewFileTree(root fyne.URI) *FileTree {
 		if _, ok := tree.luriCache[id]; ok {
 			return true
 		}
+		var err error
 		uri, ok := tree.uriCache[id]
 		if !ok {
-			uri = storage.NewURI(id)
+			uri, err = storage.ParseURI(id)
+			if err != nil {
+				fyne.LogError("Unable to parse URI", err)
+				return false
+			}
 			tree.uriCache[id] = uri
 		}
 		if luri, err := storage.ListerForURI(uri); err == nil {
@@ -54,11 +59,16 @@ func NewFileTree(root fyne.URI) *FileTree {
 		return false
 	}
 	tree.ChildUIDs = func(id widget.TreeNodeID) (c []string) {
+		var err error
 		luri, ok := tree.luriCache[id]
 		if !ok {
 			uri, ok := tree.uriCache[id]
 			if !ok {
-				uri = storage.NewURI(id)
+				uri, err = storage.ParseURI(id)
+				if err != nil {
+					fyne.LogError("Unable to parse URI", err)
+					return
+				}
 				tree.uriCache[id] = uri
 			}
 
@@ -103,9 +113,14 @@ func NewFileTree(root fyne.URI) *FileTree {
 		return
 	}
 	tree.UpdateNode = func(id widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
+		var err error
 		uri, ok := tree.uriCache[id]
 		if !ok {
-			uri = storage.NewURI(id)
+			uri, err = storage.ParseURI(id)
+			if err != nil {
+				fyne.LogError("Unable to parse URI", err)
+				return
+			}
 			tree.uriCache[id] = uri
 		}
 
