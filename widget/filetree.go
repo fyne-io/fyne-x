@@ -138,7 +138,6 @@ func NewFileTree(root fyne.URI) *FileTree {
 		} else {
 			// Set file uri to update icon
 			c.Objects[1].(*widget.FileIcon).SetURI(uri)
-			c.Objects[1].(*widget.FileIcon).Refresh()
 		}
 
 		l := c.Objects[0].(*widget.Label)
