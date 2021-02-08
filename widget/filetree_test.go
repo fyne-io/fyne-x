@@ -25,7 +25,8 @@ func TestFileTree_Layout(t *testing.T) {
 	tempDir := createTempDir(t)
 	defer os.RemoveAll(tempDir)
 
-	root := storage.NewURI("file://" + tempDir)
+	root, err := storage.ParseURI("file://" + tempDir)
+	assert.NoError(t, err)
 	tree := widget.NewFileTree(root)
 	tree.OpenAllBranches()
 
@@ -48,7 +49,8 @@ func Test_NewFileTree(t *testing.T) {
 	tempDir := createTempDir(t)
 	defer os.RemoveAll(tempDir)
 
-	root := storage.NewURI("file://" + tempDir)
+	root, err := storage.ParseURI("file://" + tempDir)
+	assert.NoError(t, err)
 	tree := widget.NewFileTree(root)
 	tree.OpenAllBranches()
 
