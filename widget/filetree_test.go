@@ -1,4 +1,4 @@
-package widget_test
+package widget
 
 import (
 	"io/ioutil"
@@ -9,13 +9,12 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/test"
-	"fyne.io/x/fyne/widget"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFileTree(t *testing.T) {
-	tree := &widget.FileTree{}
+	tree := &FileTree{}
 	tree.Refresh() // Should not crash
 }
 
@@ -27,7 +26,7 @@ func TestFileTree_Layout(t *testing.T) {
 
 	root, err := storage.ParseURI("file://" + tempDir)
 	assert.NoError(t, err)
-	tree := widget.NewFileTree(root)
+	tree := NewFileTree(root)
 	tree.OpenAllBranches()
 
 	window := test.NewWindow(tree)
@@ -43,6 +42,76 @@ func TestFileTree_Layout(t *testing.T) {
 	test.AssertImageMatches(t, "filetree/selected.png", window.Canvas().Capture())
 }
 
+func TestFileTree_filter(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+
+	root, err := storage.ParseURI("file://" + tempDir)
+	assert.NoError(t, err)
+	tree := NewFileTree(root)
+	tree.Filter = storage.NewExtensionFileFilter([]string{".txt"})
+
+	branch1, err := storage.Child(root, "A")
+	assert.NoError(t, err)
+	branch2, err := storage.Child(root, "B")
+	assert.NoError(t, err)
+	leaf1, err := storage.Child(branch2, "C.txt")
+	assert.NoError(t, err)
+	leaf2, err := storage.Child(branch2, "C.txt")
+	assert.NoError(t, err)
+
+	given := []fyne.URI{
+		branch1,
+		branch2,
+		leaf1,
+		leaf2,
+	}
+
+	expected := []fyne.URI{
+		leaf1,
+		leaf2,
+	}
+
+	assert.Equal(t, expected, tree.filter(given))
+}
+
+func TestFileTree_sort(t *testing.T) {
+	tempDir := createTempDir(t)
+	defer os.RemoveAll(tempDir)
+
+	root, err := storage.ParseURI("file://" + tempDir)
+	assert.NoError(t, err)
+	tree := NewFileTree(root)
+	tree.Sorter = func(u1, u2 fyne.URI) bool {
+		return u2.String() < u1.String() // Reverse alphabetical
+	}
+
+	branch1, err := storage.Child(root, "A")
+	assert.NoError(t, err)
+	branch2, err := storage.Child(root, "B")
+	assert.NoError(t, err)
+	leaf1, err := storage.Child(branch2, "C.txt")
+	assert.NoError(t, err)
+	leaf2, err := storage.Child(branch2, "C.txt")
+	assert.NoError(t, err)
+
+	given := []fyne.URI{
+		branch1,
+		branch2,
+		leaf1,
+		leaf2,
+	}
+
+	expected := []fyne.URI{
+		leaf2,
+		leaf1,
+		branch2,
+		branch1,
+	}
+
+	assert.Equal(t, expected, tree.sort(given))
+}
+
 func Test_NewFileTree(t *testing.T) {
 	test.NewApp()
 
@@ -51,7 +120,7 @@ func Test_NewFileTree(t *testing.T) {
 
 	root, err := storage.ParseURI("file://" + tempDir)
 	assert.NoError(t, err)
-	tree := widget.NewFileTree(root)
+	tree := NewFileTree(root)
 	tree.OpenAllBranches()
 
 	assert.True(t, tree.IsBranchOpen(root.String()))

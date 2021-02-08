@@ -55,27 +55,8 @@ func NewFileTree(root fyne.URI) *FileTree {
 			return
 		}
 
-		var us []fyne.URI
-		// Filter URIs
-		if filter := tree.Filter; filter == nil {
-			us = uris
-		} else {
-			for _, u := range uris {
-				if filter.Matches(u) {
-					us = append(us, u)
-				}
-			}
-		}
-
-		// Sort URIs
-		if sorter := tree.Sorter; sorter != nil {
-			sort.Slice(us, func(i, j int) bool {
-				return sorter(us[i], us[j])
-			})
-		}
-
-		// Convert to Strings
-		for _, u := range us {
+		for _, u := range tree.sort(tree.filter(uris)) {
+			// Convert to String
 			c = append(c, u.String())
 		}
 		return
@@ -103,15 +84,39 @@ func NewFileTree(root fyne.URI) *FileTree {
 			c.Objects[1].(*widget.FileIcon).SetURI(uri)
 		}
 
-		l := c.Objects[0].(*widget.Label)
+		var l string
 		if tree.Root == id {
-			l.SetText(id)
+			l = id
 		} else {
-			l.SetText(uri.Name())
+			l = uri.Name()
 		}
+		c.Objects[0].(*widget.Label).SetText(l)
 	}
 	tree.ExtendBaseWidget(tree)
 	return tree
+}
+
+func (t *FileTree) filter(uris []fyne.URI) []fyne.URI {
+	filter := t.Filter
+	if filter == nil {
+		return uris
+	}
+	var filtered []fyne.URI
+	for _, u := range uris {
+		if filter.Matches(u) {
+			filtered = append(filtered, u)
+		}
+	}
+	return filtered
+}
+
+func (t *FileTree) sort(uris []fyne.URI) []fyne.URI {
+	if sorter := t.Sorter; sorter != nil {
+		sort.Slice(uris, func(i, j int) bool {
+			return sorter(uris[i], uris[j])
+		})
+	}
+	return uris
 }
 
 func (t *FileTree) toListable(id widget.TreeNodeID) (fyne.ListableURI, error) {
