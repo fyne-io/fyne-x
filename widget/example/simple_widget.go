@@ -18,7 +18,9 @@ type SampleWidget struct {
 
 // NewSampleWidget creates a new sample widget.
 func NewSampleWidget(property int) *SampleWidget {
-	return &SampleWidget{Property: property}
+	wgt := &SampleWidget{Property: property}
+	wgt.ExtendBaseWidget(wgt)
+	return wgt
 }
 
 // Render renders the SampleWidget.

@@ -14,7 +14,7 @@ import (
 type SimpleWidget interface {
 	fyne.Widget
 
-	Render() ([]fyne.CanvasObject, func(size fyne.Size))
+	Build() ([]fyne.CanvasObject, func(size fyne.Size))
 }
 
 // SimpleWidgetBase defines the base for a SimpleWidget implementation.
@@ -23,10 +23,10 @@ type SimpleWidget interface {
 // ExtendBaseWidget in the New function. Always use the `New` function to
 // create the widget or make sure `ExtendBaseWidget` is called elsewhere.
 //
-// Overwrite the `Render() (objects []fyne.CanvasObject, layout func(size fyne.Size))`
-// function. It returns the (base-)objects needed to render the widgets content,
+// Overwrite the `Build() (objects []fyne.CanvasObject, layout func(size fyne.Size))`
+// function. It returns the objects needed to render the widgets content,
 // as well as a function `layout` responsible for positioning and resizing the
-// different objects based on the incoming available space for the widget.
+// different objects.
 // Try not to define new objects in the `layout` function as they would be
 // recreated every time the widget is refreshed.
 //
@@ -41,14 +41,12 @@ type SimpleWidgetBase struct {
 	impl         SimpleWidget
 }
 
-// Render must be overwritten in a widget to create other widgets and
-// canvas objects the widget is composed of. It returns a slice of the
-// created objects and the layout function.
-// The layout fucntion should be used to position and size the objects (widgets
-// and canvas objects). New objects should be created in the Render function body
-// outside the returned layout function, so they are not re-created
-// every time the widget gets refreshed.
-func (s *SimpleWidgetBase) Render() (objects []fyne.CanvasObject, layout func(size fyne.Size)) {
+// Build must be overwritten in a widget. It returns a slice of child objects
+// and a layout function.
+// The layout function should be used to position and size the objects (widgets
+// and canvas objects). New objects should be created in the Build function body,
+// so they are not re-created every time the widget gets refreshed.
+func (s *SimpleWidgetBase) Build() (objects []fyne.CanvasObject, layout func(size fyne.Size)) {
 	return nil, func(fyne.Size) {}
 }
 
@@ -58,7 +56,7 @@ func (s *SimpleWidgetBase) Render() (objects []fyne.CanvasObject, layout func(si
 // Usually this should not be overwritten or called manually.
 func (s *SimpleWidgetBase) CreateRenderer() fyne.WidgetRenderer {
 	wdgt := s.super()
-	objs, layout := wdgt.Render()
+	objs, layout := wdgt.Build()
 
 	return newSimpleRenderer(wdgt, objs, layout)
 }
