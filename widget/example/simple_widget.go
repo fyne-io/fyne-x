@@ -29,7 +29,11 @@ func (s *SampleWidget) Render() (objects []fyne.CanvasObject, layout func(size f
 	// (executed in Widget.CreateRenderer function)
 
 	return objects, func(size fyne.Size) {
-		// position, resize or otherwise update objects. (executed in WidgetRenderer.Layout)
+		property := s.getProperty()
+		_ = property
+
+		// position, resize or otherwise update objects based on changed properties.
+		// (executed in WidgetRenderer.Layout)
 	}
 }
 
