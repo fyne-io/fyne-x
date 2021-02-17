@@ -30,8 +30,11 @@ type SimpleWidget interface {
 // Try not to define new objects in the `layout` function as they would be
 // recreated every time the widget is refreshed.
 //
-// Other functions defined by the fyne.Widget interface can be overwritten
+// Other methods defined by the fyne.Widget interface can be overwritten
 // and will be used by the SimpleWidgetBase if overwritten.
+// Overwrite `Destroy()` to implement custom cleanup for the widget.
+// Implement `Refresh()` to optimize refresh performance. By default `Refresh`
+// calls the `Layout` method of the renderer, which is not necessary in most cases.
 //
 // See ./example/simple_wigdet.go for a bootstraped widget implementation.
 type SimpleWidgetBase struct {
@@ -39,6 +42,7 @@ type SimpleWidgetBase struct {
 
 	propertyLock sync.RWMutex
 	impl         SimpleWidget
+	layout       func(fyne.Size)
 }
 
 // Build must be overwritten in a widget. It returns a slice of child objects
@@ -58,7 +62,18 @@ func (s *SimpleWidgetBase) CreateRenderer() fyne.WidgetRenderer {
 	wdgt := s.super()
 	objs, layout := wdgt.Build()
 
-	return newSimpleRenderer(wdgt, objs, layout)
+	s.propertyLock.Lock()
+	s.layout = layout
+	s.propertyLock.Unlock()
+
+	renderer := &simpleRenderer{
+		widget:  wdgt,
+		objects: objs,
+		layout:  layout,
+		destroy: s.Destroy,
+		refresh: s.Refresh,
+	}
+	return renderer
 }
 
 // SetState sets or changes the state of a widget. A Refresh
@@ -93,6 +108,23 @@ func (s *SimpleWidgetBase) ExtendBaseWidget(wid SimpleWidget) {
 	defer s.propertyLock.Unlock()
 	s.impl = wid
 }
+
+// Refresh is a hook that is called if the widget has updated and needs to be redrawn.
+// By default it triggers a call to Layout. Overwrite to optimize for performance if
+// a call to Layout is not needed.
+func (s *SimpleWidgetBase) Refresh() {
+	s.propertyLock.RLock()
+	layout := s.layout
+	s.propertyLock.RUnlock()
+
+	if layout == nil {
+		return
+	}
+	layout(s.Size())
+}
+
+// Destroy can be overwritten if there is extra cleanup needed.
+func (s *SimpleWidgetBase) Destroy() {}
 
 func (s *SimpleWidgetBase) super() SimpleWidget {
 	impl := s.getImpl()
