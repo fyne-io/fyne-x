@@ -13,11 +13,12 @@ type simpleRenderer struct {
 	layout  func(size fyne.Size)
 	destroy func()
 	refresh func()
+	minSize func() fyne.Size
 }
 
 // MinSize returns the minimum size of the widget that is rendered by this renderer.
 func (s *simpleRenderer) MinSize() fyne.Size {
-	return fyne.Size{Width: 0, Height: 0}
+	return s.minSize()
 }
 
 // Refresh is a hook that is called if the widget has updated and needs to be redrawn.

@@ -72,6 +72,7 @@ func (s *SimpleWidgetBase) CreateRenderer() fyne.WidgetRenderer {
 		layout:  layout,
 		destroy: s.Destroy,
 		refresh: s.Refresh,
+		minSize: s.MinSize,
 	}
 	return renderer
 }
@@ -121,6 +122,13 @@ func (s *SimpleWidgetBase) Refresh() {
 		return
 	}
 	layout(s.Size())
+}
+
+// MinSize for the widget - it should never be resized below this value.
+// By default this returns (0, 0). Overwrite this to return a different
+// minimum size for the widget.
+func (s *SimpleWidgetBase) MinSize() fyne.Size {
+	return fyne.NewSize(0, 0)
 }
 
 // Destroy can be overwritten if there is extra cleanup needed.
