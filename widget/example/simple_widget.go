@@ -23,8 +23,8 @@ func NewSampleWidget(property int) *SampleWidget {
 	return wgt
 }
 
-// Render renders the SampleWidget.
-func (s *SampleWidget) Render() (objects []fyne.CanvasObject, layout func(size fyne.Size)) {
+// Build renders the SampleWidget.
+func (s *SampleWidget) Build() (objects []fyne.CanvasObject, layout func(size fyne.Size)) {
 	// create objects needed for rendering and append them to the objects slice.
 	// (executed in Widget.CreateRenderer function)
 
