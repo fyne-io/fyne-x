@@ -50,7 +50,7 @@ type hexRenderer struct {
 
 func (h *hexRenderer) MinSize() fyne.Size {
 	return fyne.NewSize(
-		float32(h.hex.hexWidth)+theme.Padding()*2,
+		float32(h.hex.hexWidth)+theme.Padding()*2+h.hex.hexOffset,
 		float32(h.hex.hexHeight)+theme.Padding()*2,
 	)
 }
