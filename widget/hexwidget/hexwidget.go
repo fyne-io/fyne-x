@@ -11,6 +11,28 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// segmentLookupTable is used by h.Set() - the i-th index into this table
+// represents the raw value that should be sent to updateSegments to show
+// the value i.
+var segmentLookupTable []uint8 = []uint8{
+	1 << 6,
+	(1<<0 | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 6) | (1 << 7)),
+	(1<<2 | (1 << 5)),
+	(1<<4 | (1 << 5)),
+	(1<<0 | (1 << 3) | (1 << 4)),
+	(1<<1 | (1 << 4)),
+	(1 << 1),
+	(1<<3 | (1 << 4) | (1 << 5) | (1 << 6)),
+	0,
+	(1<<3 | (1 << 4)),
+	(1 << 3),
+	(1<<0 | (1 << 1)),
+	(1<<0 | (1 << 1) | (1 << 2) | (1 << 5)),
+	(1<<0 | (1 << 5)),
+	(1<<1 | (1 << 2)),
+	(1<<1 | (1 << 2) | (1 << 3)),
+}
+
 // size in pixels of the hex widget
 var hexHeight float32 = 75.0
 var hexWidth float32 = hexHeight * (7.5 / 14.0)
@@ -164,38 +186,5 @@ func (h *HexWidget) updateSegments(segments uint8) {
 // it will be modulo-ed by 16.
 func (h *HexWidget) Set(val uint) {
 	val = val % 16
-
-	if val == 0 {
-		h.updateSegments(1 << 6)
-	} else if val == 1 {
-		h.updateSegments((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 6) | (1 << 7))
-	} else if val == 2 {
-		h.updateSegments((1 << 2) | (1 << 5))
-	} else if val == 3 {
-		h.updateSegments((1 << 4) | (1 << 5))
-	} else if val == 4 {
-		h.updateSegments((1 << 0) | (1 << 3) | (1 << 4))
-	} else if val == 5 {
-		h.updateSegments((1 << 1) | (1 << 4))
-	} else if val == 6 {
-		h.updateSegments((1 << 1))
-	} else if val == 7 {
-		h.updateSegments((1 << 3) | (1 << 4) | (1 << 5) | (1 << 6))
-	} else if val == 8 {
-		h.updateSegments(0)
-	} else if val == 9 {
-		h.updateSegments((1 << 3) | (1 << 4))
-	} else if val == 10 {
-		h.updateSegments((1 << 3))
-	} else if val == 11 {
-		h.updateSegments((1 << 0) | (1 << 1))
-	} else if val == 12 {
-		h.updateSegments((1 << 0) | (1 << 1) | (1 << 2) | (1 << 5))
-	} else if val == 13 {
-		h.updateSegments((1 << 0) | (1 << 5))
-	} else if val == 14 {
-		h.updateSegments((1 << 1) | (1 << 2))
-	} else if val == 15 {
-		h.updateSegments((1 << 1) | (1 << 2) | (1 << 3))
-	}
+	h.updateSegments(segmentLookupTable[val])
 }
