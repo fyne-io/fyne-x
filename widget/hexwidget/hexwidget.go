@@ -166,7 +166,7 @@ func (h *HexWidget) SetSize(s fyne.Size) {
 	h.Refresh()
 }
 
-// Set Slant changes the amount of "slant" i nthe hex widgets. The topmost
+// SetSlant changes the amount of "slant" i nthe hex widgets. The topmost
 // segment is offset by slant many virtual pixels to the right. A value of 0
 // means no slant at all.
 func (h *HexWidget) SetSlant(s float32) {
@@ -184,7 +184,7 @@ func setLineEndpoints(l *canvas.Line, pt1, pt2 image.Point) {
 }
 
 func (h *HexWidget) getSegmentColor(segno int) color.RGBA {
-	if (h.segments & (1 << segno)) == 0 {
+	if (h.segments & (1 << uint(segno))) == 0 {
 		return h.hexOnColor
 	}
 
