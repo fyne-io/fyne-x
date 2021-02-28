@@ -174,10 +174,6 @@ func (h *HexWidget) SetSlant(s float32) {
 	h.Refresh()
 }
 
-func ptToPos(pt image.Point) fyne.Position {
-	return fyne.NewPos(float32(pt.X), float32(pt.Y))
-}
-
 func setLineEndpoints(l *canvas.Line, pt1, pt2 image.Point) {
 	l.Move(fyne.NewPos(float32(pt1.X), float32(pt1.Y)))
 	l.Resize(fyne.NewSize(float32(pt2.X-pt1.X), float32(pt2.Y-pt1.Y)))
