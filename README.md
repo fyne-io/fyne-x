@@ -39,32 +39,10 @@ gif.Start()
 An extension of widget.Tree for displaying a file system hierarchy.
 
 ```go
-package main
-
-import (
-    "fyne.io/fyne/v2"
-    "fyne.io/fyne/v2/app"
-    "fyne.io/fyne/v2/storage"
-    "fyne.io/x/fyne/widget"
-    "os"
-)
-
-func main() {
-    a := app.New()
-    w := a.NewWindow("FileTree")
-    dir, err := os.Getwd()
-    if err != nil {
-        fyne.LogError("Could not get current working directory", err)
-        return
-    }
-    tree := widget.NewFileTree(storage.NewFileURI(dir))
-    tree.Filter = storage.NewExtensionFileFilter([]string{".txt"}) // Filter files
-    tree.Sorter = func(u1, u2 fyne.URI) bool {
-        return u1.String() < u2.String() // Sort alphabetically
-    }
-    w.SetContent(tree)
-    w.Resize(fyne.NewSize(400, 300))
-    w.ShowAndRun()
+tree := widget.NewFileTree(storage.NewFileURI("~")) // Start from home directory
+tree.Filter = storage.NewExtensionFileFilter([]string{".txt"}) // Filter files
+tree.Sorter = func(u1, u2 fyne.URI) bool {
+    return u1.String() < u2.String() // Sort alphabetically
 }
 ```
 
