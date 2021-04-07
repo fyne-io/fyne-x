@@ -69,5 +69,5 @@ func main() {
 ```
 
 <p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/widget-filetree.png" width="1024" height="868" alt="FileTree Widget" style="max-width: 100%" />
+  <img src="img/widget-filetree.png" width="1024" height="880" alt="FileTree Widget" style="max-width: 100%" />
 </p>
