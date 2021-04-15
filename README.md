@@ -49,3 +49,31 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
 <p align="center" markdown="1" style="max-width: 100%">
   <img src="img/widget-filetree.png" width="1024" height="880" alt="FileTree Widget" style="max-width: 100%" />
 </p>
+
+### CompletionEntry
+
+An extension of widget.Entry for displaying a popup menu for completion. Keyboard keys can be used to navigate (up and down) and select the option to set to the Entry (Enter key) - the mouse can be used too.
+
+```go
+entry := widget.NewCompletionEntry([]string{})
+entry.OnChanged = func(s string) {
+    if len(s) < 3 {
+        // for example, you can avoid to display the completion
+        // if the entry has a value lenght < 3
+        entry.HideCompletion()
+        return
+    }
+
+    // here, you can get compltion from a dataset then
+    // set the list to the completion
+    entry.SetOptions([]string{"foo", "bar", "baz"})
+
+    // then display the completion list
+    entry.ShowCompletion()
+}
+```
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widget-completion-entry.png" width="653" height="563" alt="CompletionEntry Widget" style="max-width: 100%" />
+</p>
+
