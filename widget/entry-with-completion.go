@@ -1,10 +1,7 @@
 package widget
 
 import (
-	"fmt"
-
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -72,32 +69,26 @@ func (c *CompletionEntry) setTextFromMenu(s string) {
 
 type navigableList struct {
 	widget.List
-	data            binding.StringList
 	entry           *widget.Entry
 	selected        int
 	setTextFromMenu func(string)
 	hide            func()
 	navigating      bool
+	items           []string
 }
 
 func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func()) *navigableList {
-	n := &navigableList{entry: entry, selected: -1, setTextFromMenu: setTextFromMenu, hide: hide}
-	n.data = binding.BindStringList(&items)
+	n := &navigableList{entry: entry, selected: -1, setTextFromMenu: setTextFromMenu, hide: hide, items: items}
 
 	n.List = widget.List{
 		Length: func() int {
-			return n.data.Length()
+			return len(n.items)
 		},
 		CreateItem: func() fyne.CanvasObject {
 			return widget.NewLabel("")
 		},
 		UpdateItem: func(i widget.ListItemID, o fyne.CanvasObject) {
-			item, err := n.data.GetItem(i)
-			if err != nil {
-				fyne.LogError(fmt.Sprintf("Error getting data item %d", i), err)
-				return
-			}
-			o.(*widget.Label).Bind(item.(binding.String))
+			o.(*widget.Label).SetText(n.items[i])
 		},
 	}
 
@@ -105,9 +96,7 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 
 	n.OnSelected = func(id int) {
 		if !n.navigating {
-			item, _ := n.data.GetItem(id)
-			val, _ := item.(binding.String).Get()
-			setTextFromMenu(val)
+			setTextFromMenu(n.items[id])
 		}
 		n.navigating = false
 	}
@@ -117,7 +106,8 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 
 func (n *navigableList) SetOptions(items []string) {
 	n.Unselect(n.selected)
-	n.data.Set(items)
+	n.items = items
+	n.Refresh()
 	n.selected = -1
 }
 
@@ -125,7 +115,7 @@ func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
 	n.entry.TypedKey(event)
 	switch event.Name {
 	case fyne.KeyDown:
-		if n.selected < n.data.Length()-1 {
+		if n.selected < len(n.items)-1 {
 			n.selected++
 		} else {
 			n.selected = 0
@@ -137,7 +127,7 @@ func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
 		if n.selected > 0 {
 			n.selected--
 		} else {
-			n.selected = n.data.Length() - 1
+			n.selected = len(n.items) - 1
 		}
 		n.navigating = true
 		n.Select(n.selected)

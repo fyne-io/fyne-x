@@ -27,7 +27,7 @@ func TestCompletionEntry(t *testing.T) {
 	defer win.Close()
 
 	entry.SetText("init")
-	assert.Equal(t, 3, entry.navigableList.data.Length())
+	assert.Equal(t, 3, len(entry.Options))
 }
 
 // Show the completion menu
