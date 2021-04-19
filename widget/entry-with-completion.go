@@ -14,13 +14,13 @@ type CompletionEntry struct {
 	widget.Entry
 	popupMenu     *widget.PopUp
 	navigableList *navigableList
-	Items         []string
+	Options       []string
 	pause         bool
 }
 
 // NewCompletionEntry creates a new CompletionEntry which creates a popup menu that responds to keystrokes to navigate through the items without losing the editing ability of the text input.
 func NewCompletionEntry(options []string) *CompletionEntry {
-	c := &CompletionEntry{Items: options}
+	c := &CompletionEntry{Options: options}
 	c.ExtendBaseWidget(c)
 	return c
 }
@@ -32,7 +32,7 @@ func (c *CompletionEntry) ShowCompletion() {
 	}
 
 	if c.navigableList == nil {
-		c.navigableList = newNavigableList(c.Items, &c.Entry, c.setTextFromMenu, c.HideCompletion)
+		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion)
 	}
 	holder := fyne.CurrentApp().Driver().CanvasForObject(c)
 	pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
@@ -40,7 +40,7 @@ func (c *CompletionEntry) ShowCompletion() {
 	if c.popupMenu == nil {
 		c.popupMenu = widget.NewPopUp(c.navigableList, holder)
 	}
-	max := fyne.Min(10, float32(len(c.Items)))
+	max := fyne.Min(10, float32(len(c.Options)))
 	c.popupMenu.Resize(fyne.NewSize(c.Entry.Size().Width, c.popupMenu.MinSize().Height*max-3*theme.Padding()))
 	c.popupMenu.ShowAtPosition(fyne.Position{X: pos.X, Y: pos.Y + c.Size().Height})
 	holder.Focus(c.navigableList)
@@ -55,7 +55,7 @@ func (c *CompletionEntry) HideCompletion() {
 
 // SetOptions set the completion list with itemList.
 func (c *CompletionEntry) SetOptions(itemList []string) {
-	c.Items = itemList
+	c.Options = itemList
 	if c.navigableList != nil {
 		c.navigableList.SetOptions(itemList)
 	}
