@@ -50,11 +50,16 @@ func (c *CompletionEntry) HideCompletion() {
 	}
 }
 
-// SetOptions set the completion list with itemList.
+// SetOptions set the completion list with itemList and update the view.
 func (c *CompletionEntry) SetOptions(itemList []string) {
 	c.Options = itemList
+	c.Update()
+}
+
+// Update the list to refresh the options to display.
+func (c *CompletionEntry) Update() {
 	if c.navigableList != nil {
-		c.navigableList.SetOptions(itemList)
+		c.navigableList.SetOptions(c.Options)
 	}
 }
 
@@ -78,7 +83,13 @@ type navigableList struct {
 }
 
 func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func()) *navigableList {
-	n := &navigableList{entry: entry, selected: -1, setTextFromMenu: setTextFromMenu, hide: hide, items: items}
+	n := &navigableList{
+		entry:           entry,
+		selected:        -1,
+		setTextFromMenu: setTextFromMenu,
+		hide:            hide,
+		items:           items,
+	}
 
 	n.List = widget.List{
 		Length: func() int {
@@ -90,17 +101,14 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 		UpdateItem: func(i widget.ListItemID, o fyne.CanvasObject) {
 			o.(*widget.Label).SetText(n.items[i])
 		},
+		OnSelected: func(id widget.ListItemID) {
+			if !n.navigating {
+				setTextFromMenu(n.items[id])
+			}
+			n.navigating = false
+		},
 	}
-
 	n.ExtendBaseWidget(n)
-
-	n.OnSelected = func(id int) {
-		if !n.navigating {
-			setTextFromMenu(n.items[id])
-		}
-		n.navigating = false
-	}
-
 	return n
 }
 
