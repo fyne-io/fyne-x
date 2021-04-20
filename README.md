@@ -59,15 +59,17 @@ entry := widget.NewCompletionEntry([]string{})
 
 // When the use typed text, complete the list.
 entry.OnChanged = func(s string) {
+    // completion start for text length >= 3
     if len(s) < 3 {
-        // do not make completion if string length is too short.
         entry.HideCompletion()
         return
     }
 
-    // make a search on wikipedia
+    // Make a search on wikipedia
     resp, err := http.Get(
-        fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s", entry.Text),
+        fmt.Sprintf(
+            "https://en.wikipedia.org/w/api.php?action=opensearch&search=%s", entry.Text,
+        ),
     )
     if err != nil {
         entry.HideCompletion()
@@ -76,6 +78,12 @@ entry.OnChanged = func(s string) {
         results := make([][]interface{}, 0)
         dec := json.NewDecoder(resp.Body)
         dec.Decode(&results)
+
+        // no results
+        if len(results) == 0 {
+            entry.HideCompletion()
+            return
+        }
 
         // preapre the list
         items := make([]string, len(results[1]))
