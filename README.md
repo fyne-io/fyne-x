@@ -56,24 +56,41 @@ An extension of widget.Entry for displaying a popup menu for completion. Keyboar
 
 ```go
 entry := widget.NewCompletionEntry([]string{})
+
+// When the use typed text, complete the list.
 entry.OnChanged = func(s string) {
     if len(s) < 3 {
-        // for example, you can avoid to display the completion
-        // if the entry has a value lenght < 3
+        // do not make completion if string length is too short.
         entry.HideCompletion()
         return
     }
 
-    // here, you can get compltion from a dataset then
-    // set the list to the completion
-    entry.SetOptions([]string{"foo", "bar", "baz"})
+    // make a search on wikipedia
+    resp, err := http.Get(
+        fmt.Sprintf("https://en.wikipedia.org/w/api.php?action=opensearch&search=%s", entry.Text),
+    )
+    if err != nil {
+        entry.HideCompletion()
+    } else {
+        // Get the list of possible completion
+        results := make([][]interface{}, 0)
+        dec := json.NewDecoder(resp.Body)
+        dec.Decode(&results)
 
-    // then display the completion list
-    entry.ShowCompletion()
+        // preapre the list
+        items := make([]string, len(results[1]))
+        for i, result := range results[1] {
+            items[i] = result.(string)
+        }
+
+        // then show them
+        entry.SetOptions(items)
+        entry.ShowCompletion()
+    }
 }
 ```
 
 <p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/widget-completion-entry.png" width="653" height="563" alt="CompletionEntry Widget" style="max-width: 100%" />
+  <img src="img/widget-completion-entry.png" width="886" height="649" alt="CompletionEntry Widget" style="max-width: 100%" />
 </p>
 
