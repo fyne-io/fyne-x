@@ -73,28 +73,27 @@ entry.OnChanged = func(s string) {
     )
     if err != nil {
         entry.HideCompletion()
-    } else {
-        // Get the list of possible completion
-        results := make([][]interface{}, 0)
-        dec := json.NewDecoder(resp.Body)
-        dec.Decode(&results)
-
-        // no results
-        if len(results) == 0 {
-            entry.HideCompletion()
-            return
-        }
-
-        // preapre the list
-        items := make([]string, len(results[1]))
-        for i, result := range results[1] {
-            items[i] = result.(string)
-        }
-
-        // then show them
-        entry.SetOptions(items)
-        entry.ShowCompletion()
     }
+    // Get the list of possible completion
+    results := make([][]interface{}, 0)
+    dec := json.NewDecoder(resp.Body)
+    dec.Decode(&results)
+
+    // no results
+    if len(results) == 0 {
+        entry.HideCompletion()
+        return
+    }
+
+    // else preapre the list
+    items := make([]string, len(results[1]))
+    for i, result := range results[1] {
+        items[i] = result.(string)
+    }
+
+    // then show them
+    entry.SetOptions(items)
+    entry.ShowCompletion()
 }
 ```
 
