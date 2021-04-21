@@ -52,7 +52,7 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
 
 ### CompletionEntry
 
-An extension of widget.Entry for displaying a popup menu for completion. Keyboard keys can be used to navigate (up and down) and select the option to set to the Entry (Enter key) - the mouse can be used too.
+An extension of widget.Entry for displaying a popup menu for completion. The "up" and "down" keys on the keyboard are used to navigate through the menu, the "Enter" key is used to confirm the selection. The options can also be selected with the mouse. The "Escape" key closes the selection list.
 
 ```go
 entry := widget.NewCompletionEntry([]string{})
