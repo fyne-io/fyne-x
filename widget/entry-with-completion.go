@@ -53,11 +53,12 @@ func (c *CompletionEntry) HideCompletion() {
 // SetOptions set the completion list with itemList and update the view.
 func (c *CompletionEntry) SetOptions(itemList []string) {
 	c.Options = itemList
-	c.Update()
+	c.Refresh()
 }
 
 // Update the list to refresh the options to display.
-func (c *CompletionEntry) Update() {
+func (c *CompletionEntry) Refresh() {
+	c.Entry.Refresh()
 	if c.navigableList != nil {
 		c.navigableList.SetOptions(c.Options)
 	}
