@@ -74,8 +74,7 @@ entry.OnChanged = func(s string) {
     }
     // Get the list of possible completion
     results := make([][]interface{}, 0)
-    dec := json.NewDecoder(resp.Body)
-    dec.Decode(&results)
+    json.NewDecoder(resp.Body).Decode(&results)
 
     // no results
     if len(results) == 0 {
