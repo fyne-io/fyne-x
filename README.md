@@ -67,9 +67,7 @@ entry.OnChanged = func(s string) {
 
     // Make a search on wikipedia
     resp, err := http.Get(
-        fmt.Sprintf(
-            "https://en.wikipedia.org/w/api.php?action=opensearch&search=%s", entry.Text,
-        ),
+        "https://en.wikipedia.org/w/api.php?action=opensearch&search=" + entry.Text,
     )
     if err != nil {
         entry.HideCompletion()
