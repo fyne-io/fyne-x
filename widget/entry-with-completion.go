@@ -56,7 +56,7 @@ func (c *CompletionEntry) SetOptions(itemList []string) {
 	c.Refresh()
 }
 
-// Update the list to refresh the options to display.
+// Refresh the list to update the options to display.
 func (c *CompletionEntry) Refresh() {
 	c.Entry.Refresh()
 	if c.navigableList != nil {
