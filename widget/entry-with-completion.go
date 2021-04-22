@@ -32,14 +32,12 @@ func (c *CompletionEntry) ShowCompletion() {
 		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion)
 	}
 	holder := fyne.CurrentApp().Driver().CanvasForObject(c)
-	pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
 
 	if c.popupMenu == nil {
 		c.popupMenu = widget.NewPopUp(c.navigableList, holder)
 	}
-	max := fyne.Min(10, float32(len(c.Options)))
-	c.popupMenu.Resize(fyne.NewSize(c.Entry.Size().Width, c.popupMenu.MinSize().Height*max-theme.SeparatorThicknessSize()))
-	c.popupMenu.ShowAtPosition(fyne.Position{X: pos.X, Y: pos.Y + c.Size().Height})
+	c.popupMenu.Resize(c.maxSize())
+	c.popupMenu.ShowAtPosition(c.popUpPos())
 	holder.Focus(c.navigableList)
 }
 
@@ -61,6 +59,29 @@ func (c *CompletionEntry) Refresh() {
 	c.Entry.Refresh()
 	if c.navigableList != nil {
 		c.navigableList.SetOptions(c.Options)
+	}
+}
+
+// calculate where the popup should appear
+func (c *CompletionEntry) popUpPos() fyne.Position {
+	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
+	return entryPos.Add(fyne.NewPos(0, c.Size().Height))
+}
+
+// calculate the max size to make the popup to cover everything below the entry
+func (c *CompletionEntry) maxSize() fyne.Size {
+	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
+	return fyne.NewSize(c.Size().Width, cnv.Size().Height-c.Position().Y-c.Size().Height-theme.InputBorderSize()-theme.Padding())
+}
+
+// Move changes the relative position of the select entry.
+//
+// Implements: fyne.Widget
+func (c *CompletionEntry) Move(pos fyne.Position) {
+	c.Entry.Move(pos)
+	if c.popupMenu != nil {
+		c.popupMenu.Resize(c.maxSize())
+		c.popupMenu.Move(c.popUpPos())
 	}
 }
 
