@@ -72,8 +72,9 @@ entry.OnChanged = func(s string) {
     if err != nil {
         entry.HideCompletion()
     }
+
     // Get the list of possible completion
-    results := make([][]interface{}, 0)
+    var results [][]string
     json.NewDecoder(resp.Body).Decode(&results)
 
     // no results
@@ -82,14 +83,8 @@ entry.OnChanged = func(s string) {
         return
     }
 
-    // else preapre the list
-    items := make([]string, len(results[1]))
-    for i, result := range results[1] {
-        items[i] = result.(string)
-    }
-
     // then show them
-    entry.SetOptions(items)
+    entry.SetOptions(results[1])
     entry.ShowCompletion()
 }
 ```
