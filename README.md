@@ -17,13 +17,13 @@ This is in early development and more information will appear soon.
 
 Community contributed layouts.
 
-`import fyne.io/x/fyne/layout`
+`import "fyne.io/x/fyne/layout"`
 
 ## Widgets
 
 Community contributed widgets.
 
-`import fyne.io/x/fyne/widget`
+`import "fyne.io/x/fyne/widget"`
 
 ### Animated Gif
 
