@@ -78,7 +78,7 @@ func (c *CompletionEntry) maxSize() fyne.Size {
 		c.itemHeight = c.navigableList.CreateItem().MinSize().Height
 	}
 
-	listheight := float32(len(c.Options)) * (c.itemHeight + 2*theme.Padding() + theme.SeparatorThicknessSize() + 1)
+	listheight := float32(len(c.Options))*(c.itemHeight+2*theme.Padding()+theme.SeparatorThicknessSize()) + 2*theme.Padding()
 
 	if cnv.Size().Height > listheight {
 		return fyne.NewSize(c.Size().Width, listheight)
