@@ -71,7 +71,16 @@ func (c *CompletionEntry) popUpPos() fyne.Position {
 // calculate the max size to make the popup to cover everything below the entry
 func (c *CompletionEntry) maxSize() fyne.Size {
 	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
-	return fyne.NewSize(c.Size().Width, cnv.Size().Height-c.Position().Y-c.Size().Height-theme.InputBorderSize()-theme.Padding())
+
+	listheight := float32(len(c.Options)) * (c.navigableList.CreateItem().MinSize().Height + 2*theme.Padding() + theme.SeparatorThicknessSize() + 1)
+
+	if cnv.Size().Height > listheight {
+		return fyne.NewSize(c.Size().Width, listheight)
+	}
+
+	return fyne.NewSize(
+		c.Size().Width,
+		cnv.Size().Height-c.Position().Y-c.Size().Height-theme.InputBorderSize()-theme.Padding())
 }
 
 // Move changes the relative position of the select entry.
