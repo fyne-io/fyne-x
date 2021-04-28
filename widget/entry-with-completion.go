@@ -18,7 +18,7 @@ type CompletionEntry struct {
 
 // NewCompletionEntry creates a new CompletionEntry which creates a popup menu that responds to keystrokes to navigate through the items without losing the editing ability of the text input.
 func NewCompletionEntry(options []string) *CompletionEntry {
-	c := &CompletionEntry{Options: options, itemHeight: -1}
+	c := &CompletionEntry{Options: options}
 	c.ExtendBaseWidget(c)
 	return c
 }
@@ -73,7 +73,7 @@ func (c *CompletionEntry) popUpPos() fyne.Position {
 func (c *CompletionEntry) maxSize() fyne.Size {
 	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
 
-	if c.itemHeight == -1 {
+	if c.itemHeight == 0 {
 		// set item height to cache
 		c.itemHeight = c.navigableList.CreateItem().MinSize().Height
 	}
