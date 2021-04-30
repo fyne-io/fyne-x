@@ -79,14 +79,15 @@ func (c *CompletionEntry) maxSize() fyne.Size {
 	}
 
 	listheight := float32(len(c.Options))*(c.itemHeight+2*theme.Padding()+theme.SeparatorThicknessSize()) + 2*theme.Padding()
-
-	if cnv.Size().Height > listheight {
-		return fyne.NewSize(c.Size().Width, listheight)
+      canvasSize = cnv.Size()
+      entrySize = c.Size()
+	if canvasSize.Height > listheight {
+		return fyne.NewSize(entrySize.Width, listheight)
 	}
 
 	return fyne.NewSize(
-		c.Size().Width,
-		cnv.Size().Height-c.Position().Y-c.Size().Height-theme.InputBorderSize()-theme.Padding())
+		entrySize.Width,
+		canvasSize.Height-c.Position().Y-entrySize.Height-theme.InputBorderSize()-theme.Padding())
 }
 
 // Move changes the relative position of the select entry.
