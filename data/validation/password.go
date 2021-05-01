@@ -2,8 +2,9 @@
 package validation // import "fyne.io/x/fyne/data/validation"
 
 import (
-	"fyne.io/fyne/v2"
 	gpv "github.com/wagslane/go-password-validator"
+
+	"fyne.io/fyne/v2"
 )
 
 // NewPassword returns a new validator for validating passwords.
