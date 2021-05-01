@@ -79,8 +79,8 @@ func (c *CompletionEntry) maxSize() fyne.Size {
 	}
 
 	listheight := float32(len(c.Options))*(c.itemHeight+2*theme.Padding()+theme.SeparatorThicknessSize()) + 2*theme.Padding()
-      canvasSize := cnv.Size()
-      entrySize := c.Size()
+	canvasSize := cnv.Size()
+	entrySize := c.Size()
 	if canvasSize.Height > listheight {
 		return fyne.NewSize(entrySize.Width, listheight)
 	}
