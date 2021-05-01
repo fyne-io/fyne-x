@@ -140,7 +140,7 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 			o.(*widget.Label).SetText(n.items[i])
 		},
 		OnSelected: func(id widget.ListItemID) {
-			if !n.navigating {
+			if !n.navigating && id > -1 {
 				setTextFromMenu(n.items[id])
 			}
 			n.navigating = false
@@ -158,7 +158,6 @@ func (n *navigableList) SetOptions(items []string) {
 }
 
 func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
-	n.entry.TypedKey(event)
 	switch event.Name {
 	case fyne.KeyDown:
 		if n.selected < len(n.items)-1 {
@@ -177,11 +176,13 @@ func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
 		}
 		n.navigating = true
 		n.Select(n.selected)
-	case fyne.KeyReturn:
+	case fyne.KeyReturn, fyne.KeyEnter:
 		n.navigating = false
 		n.OnSelected(n.selected)
 	case fyne.KeyEscape:
 		n.hide()
+	default:
+		n.entry.TypedKey(event)
 
 	}
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Create the test entry with 3 completion items
+// Create the test entry with 3 completion items.
 func createEntry() *CompletionEntry {
 	entry := NewCompletionEntry([]string{"zoo", "boo"})
 	entry.OnChanged = func(s string) {
@@ -42,7 +42,7 @@ func TestCompletionEntry_ShowMenu(t *testing.T) {
 
 }
 
-// Navigate in menu and select an endty
+// Navigate in menu and select an entry.
 func TestCompletionEntry_Navigate(t *testing.T) {
 	entry := createEntry()
 	win := test.NewWindow(entry)
@@ -61,7 +61,7 @@ func TestCompletionEntry_Navigate(t *testing.T) {
 	assert.False(t, entry.popupMenu.Visible())
 }
 
-// Hide the menu on Escape key
+// Hide the menu on Escape key.
 func TestCompletionEntry_Escape(t *testing.T) {
 	entry := createEntry()
 	win := test.NewWindow(entry)
@@ -76,7 +76,7 @@ func TestCompletionEntry_Escape(t *testing.T) {
 	assert.False(t, entry.popupMenu.Visible())
 }
 
-// Hide the menu on rune pressed
+// Hide the menu on rune pressed.
 func TestCompletionEntry_Rune(t *testing.T) {
 	entry := createEntry()
 	win := test.NewWindow(entry)
@@ -99,7 +99,7 @@ func TestCompletionEntry_Rune(t *testing.T) {
 	assert.True(t, entry.popupMenu.Visible())
 }
 
-// Hide the menu on rune pressed
+// Hide the menu on rune pressed.
 func TestCompletionEntry_Rotation(t *testing.T) {
 	entry := createEntry()
 	win := test.NewWindow(entry)
@@ -119,4 +119,43 @@ func TestCompletionEntry_Rotation(t *testing.T) {
 	// Do the same in reverse order, here, onlh one time to go on the last item
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyUp})
 	assert.Equal(t, len(entry.Options)-1, entry.navigableList.selected)
+}
+
+// Test sumbission with opened completion.
+func TestCompletionEntry_OnSubmit(t *testing.T) {
+	entry := createEntry()
+	win := test.NewWindow(entry)
+	win.Resize(fyne.NewSize(500, 300))
+	defer win.Close()
+
+	entry.OnSubmitted = func(s string) {
+		entry.HideCompletion()
+		assert.True(t, entry.popupMenu.Hidden)
+	}
+	entry.OnChanged = func(s string) {
+		entry.ShowCompletion()
+	}
+
+	entry.SetText("foo")
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
+}
+
+func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
+	entry := createEntry()
+	entry.SetOptions([]string{"foofoo", "bar", "baz"})
+	win := test.NewWindow(entry)
+	win.Resize(fyne.NewSize(500, 300))
+	defer win.Close()
+
+	entry.OnSubmitted = func(s string) {
+		t.Log("The entry should not submit value if Enter was press to select an option.")
+		t.Fail()
+	}
+
+	entry.OnChanged = func(s string) {
+		entry.ShowCompletion()
+	}
+	entry.SetText("foo")
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})  // select foofoo
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyEnter}) // OnSubmitted should NOT be called
 }
