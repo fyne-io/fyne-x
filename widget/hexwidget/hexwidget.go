@@ -49,8 +49,8 @@ type hexRenderer struct {
 
 func (h *hexRenderer) MinSize() fyne.Size {
 	return fyne.NewSize(
-		float32(h.hex.hexWidth)+theme.Padding()*2+h.hex.hexOffset,
-		float32(h.hex.hexHeight)+theme.Padding()*2,
+		h.hex.size.Width+theme.Padding()*2+h.hex.hexOffset,
+		h.hex.size.Height+theme.Padding()*2,
 	)
 }
 
@@ -65,9 +65,9 @@ func (h *hexRenderer) BackgroundColor() color.Color {
 }
 
 func (h *hexRenderer) Refresh() {
-	hexSegmentWidth := 0.2 * h.hex.hexWidth
-	hexSegmentVLength := (9.14 / (2 * 14)) * h.hex.hexHeight
-	hexSegmentHLength := (4.8 / 7.5) * h.hex.hexWidth
+	hexSegmentWidth := 0.2 * h.hex.size.Width
+	hexSegmentVLength := (9.14 / (2 * 14)) * h.hex.size.Height
+	hexSegmentHLength := (4.8 / 7.5) * h.hex.size.Width
 
 	h.segmentObjects[0].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 	h.segmentObjects[1].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
@@ -79,15 +79,15 @@ func (h *hexRenderer) Refresh() {
 
 	pos := fyne.NewPos(0, 0)
 
-	pt0Center := fyne.NewPos(pos.X+h.hex.hexWidth/2.0+h.hex.hexOffset, pos.Y)
+	pt0Center := fyne.NewPos(pos.X+h.hex.size.Width/2.0+h.hex.hexOffset, pos.Y)
 	pt05 := fyne.NewPos(float32(pt0Center.X)-(hexSegmentHLength/2), pt0Center.Y)
 	pt01 := fyne.NewPos(float32(pt0Center.X)+(hexSegmentHLength/2), pt0Center.Y)
 
-	pt6Center := fyne.NewPos(pos.X+h.hex.hexWidth/2.0, float32(pt0Center.Y)+hexSegmentVLength)
+	pt6Center := fyne.NewPos(pos.X+h.hex.size.Width/2.0, float32(pt0Center.Y)+hexSegmentVLength)
 	pt65 := fyne.NewPos(float32(pt6Center.X)-(hexSegmentHLength/2), pt6Center.Y)
 	pt61 := fyne.NewPos(float32(pt6Center.X)+(hexSegmentHLength/2), pt6Center.Y)
 
-	pt3Center := fyne.NewPos(pos.X+h.hex.hexWidth/2.0-h.hex.hexOffset, float32(pt0Center.Y)+2*hexSegmentVLength)
+	pt3Center := fyne.NewPos(pos.X+h.hex.size.Width/2.0-h.hex.hexOffset, float32(pt0Center.Y)+2*hexSegmentVLength)
 	pt34 := fyne.NewPos(float32(pt3Center.X)-(hexSegmentHLength/2), pt3Center.Y)
 	pt32 := fyne.NewPos(float32(pt3Center.X)+(hexSegmentHLength/2), pt3Center.Y)
 
@@ -131,8 +131,7 @@ type HexWidget struct {
 	segments uint8
 
 	// size of the hex widget
-	hexHeight float32
-	hexWidth  float32
+	size fyne.Size
 
 	// slant angle
 	hexOffset float32
@@ -160,8 +159,7 @@ func (h *HexWidget) SetOffColor(c color.RGBA) {
 
 // SetSize changes the size of the hex widget.
 func (h *HexWidget) SetSize(s fyne.Size) {
-	h.hexHeight = s.Height
-	h.hexWidth = s.Width
+	h.size = s
 	h.Refresh()
 }
 
@@ -212,8 +210,7 @@ func (h *HexWidget) CreateRenderer() fyne.WidgetRenderer {
 func NewHexWidget() *HexWidget {
 	h := &HexWidget{
 		segments:    0xff,
-		hexHeight:   defaultHexHeight,
-		hexWidth:    defaultHexWidth,
+		size:        fyne.NewSize(defaultHexWidth, defaultHexHeight),
 		hexOffset:   defaultHexOffset,
 		hexOnColor:  defaultHexOnColor,
 		hexOffColor: defaultHexOffColor,
