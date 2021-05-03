@@ -32,7 +32,7 @@ var segmentLookupTable []uint8 = []uint8{
 	(1<<1 | (1 << 2) | (1 << 3)),
 }
 
-// size in pixels of the hex widget
+// size of the hex widget
 const defaultHexHeight float32 = 75.0
 const defaultHexWidth float32 = defaultHexHeight * (7.5 / 14.0)
 
@@ -130,7 +130,7 @@ type HexWidget struct {
 	widget.BaseWidget
 	segments uint8
 
-	// size in "pixels" of the hex widget
+	// size of the hex widget
 	hexHeight float32
 	hexWidth  float32
 
@@ -165,9 +165,9 @@ func (h *HexWidget) SetSize(s fyne.Size) {
 	h.Refresh()
 }
 
-// SetSlant changes the amount of "slant" i nthe hex widgets. The topmost
-// segment is offset by slant many virtual pixels to the right. A value of 0
-// means no slant at all.
+// SetSlant changes the amount of "slant" in the hex widgets. The topmost
+// segment is offset by slant many units to the right. A value of 0 means no
+// slant at all.
 func (h *HexWidget) SetSlant(s float32) {
 	h.hexOffset = s
 	h.Refresh()
