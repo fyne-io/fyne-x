@@ -2,7 +2,6 @@
 package hexwidget
 
 import (
-	"image"
 	"image/color"
 
 	"fyne.io/fyne/v2"
@@ -78,19 +77,19 @@ func (h *hexRenderer) Refresh() {
 	h.segmentObjects[5].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 	h.segmentObjects[6].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 
-	pos := image.Pt(0, 0)
+	pos := fyne.NewPos(0, 0)
 
-	pt0Center := image.Pt(pos.X+int(h.hex.hexWidth/2.0+h.hex.hexOffset), pos.Y)
-	pt05 := image.Pt(int(float32(pt0Center.X)-(hexSegmentHLength/2)), pt0Center.Y)
-	pt01 := image.Pt(int(float32(pt0Center.X)+(hexSegmentHLength/2)), pt0Center.Y)
+	pt0Center := fyne.NewPos(pos.X+h.hex.hexWidth/2.0+h.hex.hexOffset, pos.Y)
+	pt05 := fyne.NewPos(float32(pt0Center.X)-(hexSegmentHLength/2), pt0Center.Y)
+	pt01 := fyne.NewPos(float32(pt0Center.X)+(hexSegmentHLength/2), pt0Center.Y)
 
-	pt6Center := image.Pt(pos.X+int(h.hex.hexWidth/2.0), int(float32(pt0Center.Y)+hexSegmentVLength))
-	pt65 := image.Pt(int(float32(pt6Center.X)-(hexSegmentHLength/2)), pt6Center.Y)
-	pt61 := image.Pt(int(float32(pt6Center.X)+(hexSegmentHLength/2)), pt6Center.Y)
+	pt6Center := fyne.NewPos(pos.X+h.hex.hexWidth/2.0, float32(pt0Center.Y)+hexSegmentVLength)
+	pt65 := fyne.NewPos(float32(pt6Center.X)-(hexSegmentHLength/2), pt6Center.Y)
+	pt61 := fyne.NewPos(float32(pt6Center.X)+(hexSegmentHLength/2), pt6Center.Y)
 
-	pt3Center := image.Pt(pos.X+int(h.hex.hexWidth/2.0-h.hex.hexOffset), int(float32(pt0Center.Y)+2*hexSegmentVLength))
-	pt34 := image.Pt(int(float32(pt3Center.X)-(hexSegmentHLength/2)), pt3Center.Y)
-	pt32 := image.Pt(int(float32(pt3Center.X)+(hexSegmentHLength/2)), pt3Center.Y)
+	pt3Center := fyne.NewPos(pos.X+h.hex.hexWidth/2.0-h.hex.hexOffset, float32(pt0Center.Y)+2*hexSegmentVLength)
+	pt34 := fyne.NewPos(float32(pt3Center.X)-(hexSegmentHLength/2), pt3Center.Y)
+	pt32 := fyne.NewPos(float32(pt3Center.X)+(hexSegmentHLength/2), pt3Center.Y)
 
 	setLineEndpoints(h.segmentObjects[0].(*canvas.Line), pt05, pt01)
 	setLineEndpoints(h.segmentObjects[1].(*canvas.Line), pt01, pt61)
@@ -174,7 +173,7 @@ func (h *HexWidget) SetSlant(s float32) {
 	h.Refresh()
 }
 
-func setLineEndpoints(l *canvas.Line, pt1, pt2 image.Point) {
+func setLineEndpoints(l *canvas.Line, pt1, pt2 fyne.Position) {
 	l.Move(fyne.NewPos(float32(pt1.X), float32(pt1.Y)))
 	l.Resize(fyne.NewSize(float32(pt2.X-pt1.X), float32(pt2.Y-pt1.Y)))
 }
