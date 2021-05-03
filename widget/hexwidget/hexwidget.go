@@ -60,10 +60,6 @@ func (h *hexRenderer) Layout(size fyne.Size) {
 func (h *hexRenderer) ApplyTheme() {
 }
 
-func (h *hexRenderer) BackgroundColor() color.Color {
-	return theme.BackgroundColor()
-}
-
 func (h *hexRenderer) Refresh() {
 	hexSegmentWidth := 0.2 * h.hex.size.Width
 	hexSegmentVLength := (9.14 / (2 * 14)) * h.hex.size.Height
@@ -165,7 +161,8 @@ func (h *HexWidget) SetSize(s fyne.Size) {
 
 // SetSlant changes the amount of "slant" in the hex widgets. The topmost
 // segment is offset by slant many units to the right. A value of 0 means no
-// slant at all.
+// slant at all. For example, setting the slant equal to the height should
+// result in a 45 degree angle.
 func (h *HexWidget) SetSlant(s float32) {
 	h.hexOffset = s
 	h.Refresh()
