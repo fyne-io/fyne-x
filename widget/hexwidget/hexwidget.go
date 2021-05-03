@@ -49,7 +49,7 @@ type hexRenderer struct {
 
 func (h *hexRenderer) MinSize() fyne.Size {
 	return fyne.NewSize(
-		h.hex.size.Width+theme.Padding()*2+h.hex.hexOffset,
+		h.hex.size.Width+theme.Padding()*2+2*h.hex.hexOffset,
 		h.hex.size.Height+theme.Padding()*2,
 	)
 }
@@ -73,7 +73,7 @@ func (h *hexRenderer) Refresh() {
 	h.segmentObjects[5].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 	h.segmentObjects[6].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 
-	pos := fyne.NewPos(0, 0)
+	pos := fyne.NewPos(h.hex.hexOffset, 0)
 
 	pt0Center := fyne.NewPos(pos.X+h.hex.size.Width/2.0+h.hex.hexOffset, pos.Y)
 	pt05 := fyne.NewPos(float32(pt0Center.X)-(hexSegmentHLength/2), pt0Center.Y)
