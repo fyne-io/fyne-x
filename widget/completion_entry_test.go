@@ -121,6 +121,22 @@ func TestCompletionEntry_Rotation(t *testing.T) {
 	assert.Equal(t, len(entry.Options)-1, entry.navigableList.selected)
 }
 
+// Test if completion is hidden when there is no options.
+func TestCompletionEntry_WithEmptyOptions(t *testing.T) {
+	entry := createEntry()
+	win := test.NewWindow(entry)
+	win.Resize(fyne.NewSize(500, 300))
+	defer win.Close()
+
+	entry.OnChanged = func(s string) {
+		entry.ShowCompletion()
+	}
+
+	entry.SetOptions([]string{})
+	entry.SetText("foo")
+	assert.Nil(t, entry.popupMenu) // popupMenu should not being created
+}
+
 // Test sumbission with opened completion.
 func TestCompletionEntry_OnSubmit(t *testing.T) {
 	entry := createEntry()

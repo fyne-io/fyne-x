@@ -28,6 +28,10 @@ func (c *CompletionEntry) ShowCompletion() {
 	if c.pause {
 		return
 	}
+	if len(c.Options) == 0 {
+		c.HideCompletion()
+		return
+	}
 
 	if c.navigableList == nil {
 		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion)
