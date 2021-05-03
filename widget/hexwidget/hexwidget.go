@@ -11,7 +11,7 @@ import (
 )
 
 // segmentLookupTable is used by h.Set() - the i-th index into this table
-// represents the raw value that should be sent to updateSegments to show
+// represents the raw value that should be sent to UpdateSegments to show
 // the value i.
 var segmentLookupTable []uint8 = []uint8{
 	1 << 6,
@@ -217,9 +217,11 @@ func NewHexWidget() *HexWidget {
 	return h
 }
 
-// updateSegments changes the state of the segments and causes the widget to
-// refresh so the changes are visible to the user.
-func (h *HexWidget) updateSegments(segments uint8) {
+// UpdateSegments changes the state of the segments and causes the widget to
+// refresh so the changes are visible to the user. Segments values are packed
+// into the 8-bit segments integer, see the documentation for HexWidget for
+// more information on the appropriate packing.
+func (h *HexWidget) UpdateSegments(segments uint8) {
 	h.segments = segments
 	h.Refresh()
 }
@@ -229,5 +231,5 @@ func (h *HexWidget) updateSegments(segments uint8) {
 // it will be modulo-ed by 16.
 func (h *HexWidget) Set(val uint) {
 	val = val % 16
-	h.updateSegments(segmentLookupTable[val])
+	h.UpdateSegments(segmentLookupTable[val])
 }
