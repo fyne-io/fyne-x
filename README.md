@@ -17,10 +17,35 @@ This is in early development and more information will appear soon.
 
 Community contributed layouts.
 
-`import fyne.io/x/fyne/layout`
+`import "fyne.io/x/fyne/layout"`
 
 ## Widgets
 
 Community contributed widgets.
 
-`import fyne.io/x/fyne/widget`
+`import "fyne.io/x/fyne/widget"`
+
+### Animated Gif
+
+A widget that will run animated gifs.
+
+```go
+gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
+gif.Start()
+```
+
+### FileTree
+
+An extension of widget.Tree for displaying a file system hierarchy.
+
+```go
+tree := widget.NewFileTree(storage.NewFileURI("~")) // Start from home directory
+tree.Filter = storage.NewExtensionFileFilter([]string{".txt"}) // Filter files
+tree.Sorter = func(u1, u2 fyne.URI) bool {
+    return u1.String() < u2.String() // Sort alphabetically
+}
+```
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widget-filetree.png" width="1024" height="880" alt="FileTree Widget" style="max-width: 100%" />
+</p>
