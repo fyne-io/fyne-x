@@ -61,6 +61,29 @@ func TestCompletionEntry_Navigate(t *testing.T) {
 	assert.False(t, entry.popupMenu.Visible())
 }
 
+// Ensure the cursor is set to the end of entry after completion.
+func TestCompletionEntry_CursorPosition(t *testing.T) {
+	entry := createEntry()
+	win := test.NewWindow(entry)
+	win.Resize(fyne.NewSize(500, 300))
+	defer win.Close()
+
+	entry.OnChanged = func(s string) {
+		entry.SetOptions([]string{"foofoo", "barbar", "bazbaz"})
+		entry.ShowCompletion()
+	}
+	entry.SetText("barb")
+
+	// navigate to "bar" and press enter, the entry should contain
+	// "bar" in value
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
+
+	assert.Equal(t, 6, entry.CursorColumn)
+
+}
+
 // Hide the menu on Escape key.
 func TestCompletionEntry_Escape(t *testing.T) {
 	entry := createEntry()
@@ -129,10 +152,10 @@ func TestCompletionEntry_WithEmptyOptions(t *testing.T) {
 	defer win.Close()
 
 	entry.OnChanged = func(s string) {
+		entry.SetOptions([]string{})
 		entry.ShowCompletion()
 	}
 
-	entry.SetOptions([]string{})
 	entry.SetText("foo")
 	assert.Nil(t, entry.popupMenu) // popupMenu should not being created
 }
