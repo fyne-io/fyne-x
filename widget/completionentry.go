@@ -109,7 +109,7 @@ func (c *CompletionEntry) Move(pos fyne.Position) {
 func (c *CompletionEntry) setTextFromMenu(s string) {
 	c.pause = true
 	c.Entry.SetText(s)
-	c.Entry.CursorColumn = len([]byte(s))
+	c.Entry.CursorColumn = len([]rune(s))
 	c.Entry.Refresh()
 	c.pause = false
 	c.popupMenu.Hide()
