@@ -182,6 +182,9 @@ func TestCompletionEntry_OnSubmit(t *testing.T) {
 	assert.True(t, submitted)
 }
 
+// Test double submission issue, when the user select an option in list and press "Enter", then
+// the "OnSubmitted" method should not be called. It should be called only after the user pressed a
+// second time.
 func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
 	entry := createEntry()
 	entry.SetOptions([]string{"foofoo", "bar", "baz"})
