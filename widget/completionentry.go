@@ -184,8 +184,8 @@ func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
 		n.Select(n.selected)
 	case fyne.KeyReturn, fyne.KeyEnter:
 		if n.selected == -1 { // so the user want to submit the entry
-			n.entry.TypedKey(event)
 			n.hide()
+			n.entry.TypedKey(event)
 		} else {
 			n.navigating = false
 			n.OnSelected(n.selected)
