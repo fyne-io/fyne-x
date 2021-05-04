@@ -113,7 +113,6 @@ func (c *CompletionEntry) setTextFromMenu(s string) {
 	c.Entry.Refresh()
 	c.pause = false
 	c.popupMenu.Hide()
-	fyne.CurrentApp().Driver().CanvasForObject(c).Focus(c) // regain focus
 }
 
 type navigableList struct {

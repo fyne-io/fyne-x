@@ -194,8 +194,8 @@ func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
 		submitted = true
 	}
 
+	win.Canvas().Focus(entry)
 	entry.SetText("foo")
-
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown}) // select foofoo
 	assert.False(t, submitted)
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn}) // OnSubmitted should NOT be called
