@@ -167,7 +167,9 @@ func TestCompletionEntry_OnSubmit(t *testing.T) {
 	win.Resize(fyne.NewSize(500, 300))
 	defer win.Close()
 
+	submitted := false
 	entry.OnSubmitted = func(s string) {
+		submitted = true
 		entry.HideCompletion()
 		assert.True(t, entry.popupMenu.Hidden)
 	}
@@ -177,6 +179,7 @@ func TestCompletionEntry_OnSubmit(t *testing.T) {
 
 	entry.SetText("foo")
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
+	assert.True(t, submitted)
 }
 
 func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
@@ -186,15 +189,18 @@ func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
 	win.Resize(fyne.NewSize(500, 300))
 	defer win.Close()
 
+	submitted := false
 	entry.OnSubmitted = func(s string) {
-		t.Log("The entry should not submit value if Enter was press to select an option.")
-		t.Fail()
+		submitted = true
 	}
 
-	entry.OnChanged = func(s string) {
-		entry.ShowCompletion()
-	}
 	entry.SetText("foo")
-	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})  // select foofoo
-	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyEnter}) // OnSubmitted should NOT be called
+
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown}) // select foofoo
+	assert.False(t, submitted)
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn}) // OnSubmitted should NOT be called
+	assert.False(t, submitted)
+	assert.False(t, entry.popupMenu.Visible())
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn}) // OnSubmitted should be called
+	assert.True(t, submitted)
 }

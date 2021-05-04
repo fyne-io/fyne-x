@@ -113,6 +113,7 @@ func (c *CompletionEntry) setTextFromMenu(s string) {
 	c.Entry.Refresh()
 	c.pause = false
 	c.popupMenu.Hide()
+	fyne.CurrentApp().Driver().CanvasForObject(c).Focus(c) // regain focus
 }
 
 type navigableList struct {
@@ -184,6 +185,7 @@ func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
 	case fyne.KeyReturn, fyne.KeyEnter:
 		if n.selected == -1 { // so the user want to submit the entry
 			n.entry.TypedKey(event)
+			n.hide()
 		} else {
 			n.navigating = false
 			n.OnSelected(n.selected)
