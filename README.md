@@ -60,9 +60,9 @@ off.
 Check out the [demo](./cmd/hexwidget_demo/main.go) for an example of usage.
 
 
-![](hexwidget_00abcdef.png)
+![](img/hexwidget_00abcdef.png)
 
-![](hexwidget_12345678.png)
+![](img/hexwidget_12345678.png)
 
 ```go
 h := widget.NewHexWidget()
