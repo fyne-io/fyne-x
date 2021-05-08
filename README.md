@@ -17,13 +17,13 @@ This is in early development and more information will appear soon.
 
 Community contributed layouts.
 
-`import fyne.io/x/fyne/layout`
+`import "fyne.io/x/fyne/layout"`
 
 ## Widgets
 
 Community contributed widgets.
 
-`import fyne.io/x/fyne/widget`
+`import "fyne.io/x/fyne/widget"`
 
 ### Animated Gif
 
@@ -94,3 +94,17 @@ entry.OnChanged = func(s string) {
   <img src="img/widget-completion-entry.png" width="886" height="649" alt="CompletionEntry Widget" style="max-width: 100%" />
 </p>
 
+## Validation
+
+Community contributed validators.
+
+`import fyne.io/x/fyne/data/validation`
+
+### Password
+
+A validator for validating passwords. Uses https://github.com/wagslane/go-password-validator
+for validation using an entropy system.
+
+```go
+pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 70.
+```
