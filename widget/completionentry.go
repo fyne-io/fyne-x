@@ -23,6 +23,38 @@ func NewCompletionEntry(options []string) *CompletionEntry {
 	return c
 }
 
+// HideCompletion hides the completion menu.
+func (c *CompletionEntry) HideCompletion() {
+	if c.popupMenu != nil {
+		c.popupMenu.Hide()
+	}
+}
+
+// Move changes the relative position of the select entry.
+//
+// Implements: fyne.Widget
+func (c *CompletionEntry) Move(pos fyne.Position) {
+	c.Entry.Move(pos)
+	if c.popupMenu != nil {
+		c.popupMenu.Resize(c.maxSize())
+		c.popupMenu.Move(c.popUpPos())
+	}
+}
+
+// Refresh the list to update the options to display.
+func (c *CompletionEntry) Refresh() {
+	c.Entry.Refresh()
+	if c.navigableList != nil {
+		c.navigableList.SetOptions(c.Options)
+	}
+}
+
+// SetOptions set the completion list with itemList and update the view.
+func (c *CompletionEntry) SetOptions(itemList []string) {
+	c.Options = itemList
+	c.Refresh()
+}
+
 // ShowCompletion displays the completion menu
 func (c *CompletionEntry) ShowCompletion() {
 	if c.pause {
@@ -46,33 +78,6 @@ func (c *CompletionEntry) ShowCompletion() {
 	holder.Focus(c.navigableList)
 }
 
-// HideCompletion hides the completion menu.
-func (c *CompletionEntry) HideCompletion() {
-	if c.popupMenu != nil {
-		c.popupMenu.Hide()
-	}
-}
-
-// SetOptions set the completion list with itemList and update the view.
-func (c *CompletionEntry) SetOptions(itemList []string) {
-	c.Options = itemList
-	c.Refresh()
-}
-
-// Refresh the list to update the options to display.
-func (c *CompletionEntry) Refresh() {
-	c.Entry.Refresh()
-	if c.navigableList != nil {
-		c.navigableList.SetOptions(c.Options)
-	}
-}
-
-// calculate where the popup should appear
-func (c *CompletionEntry) popUpPos() fyne.Position {
-	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
-	return entryPos.Add(fyne.NewPos(0, c.Size().Height))
-}
-
 // calculate the max size to make the popup to cover everything below the entry
 func (c *CompletionEntry) maxSize() fyne.Size {
 	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
@@ -94,15 +99,10 @@ func (c *CompletionEntry) maxSize() fyne.Size {
 		canvasSize.Height-c.Position().Y-entrySize.Height-theme.InputBorderSize()-theme.Padding())
 }
 
-// Move changes the relative position of the select entry.
-//
-// Implements: fyne.Widget
-func (c *CompletionEntry) Move(pos fyne.Position) {
-	c.Entry.Move(pos)
-	if c.popupMenu != nil {
-		c.popupMenu.Resize(c.maxSize())
-		c.popupMenu.Move(c.popUpPos())
-	}
+// calculate where the popup should appear
+func (c *CompletionEntry) popUpPos() fyne.Position {
+	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
+	return entryPos.Add(fyne.NewPos(0, c.Size().Height))
 }
 
 // Prevent the menu to open when the user validate value from the menu.
@@ -155,6 +155,9 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 	return n
 }
 
+func (n *navigableList) FocusGained() {}
+func (n *navigableList) FocusLost()   {}
+
 func (n *navigableList) SetOptions(items []string) {
 	n.Unselect(n.selected)
 	n.items = items
@@ -196,8 +199,7 @@ func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
 
 	}
 }
+
 func (n *navigableList) TypedRune(r rune) {
 	n.entry.TypedRune(r)
 }
-func (n *navigableList) FocusGained() {}
-func (n *navigableList) FocusLost()   {}
