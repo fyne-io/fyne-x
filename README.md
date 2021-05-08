@@ -71,6 +71,7 @@ entry.OnChanged = func(s string) {
     )
     if err != nil {
         entry.HideCompletion()
+        return
     }
 
     // Get the list of possible completion
