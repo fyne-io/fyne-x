@@ -49,3 +49,19 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
 <p align="center" markdown="1" style="max-width: 100%">
   <img src="img/widget-filetree.png" width="1024" height="880" alt="FileTree Widget" style="max-width: 100%" />
 </p>
+
+
+## Validation
+
+Community contributed validators.
+
+`import fyne.io/x/fyne/data/validation`
+
+### Password
+
+A validator for validating passwords. Uses https://github.com/wagslane/go-password-validator
+for validation using an entropy system.
+
+```go
+pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 70.
+```
