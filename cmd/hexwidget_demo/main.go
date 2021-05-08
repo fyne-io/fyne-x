@@ -6,7 +6,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 
-	"fyne.io/x/fyne/widget/hexwidget"
+	xwidget "fyne.io/x/fyne/widget"
 
 	"image/color"
 	"strconv"
@@ -15,16 +15,16 @@ import (
 func main() {
 	app := app.New()
 
-	h1 := hexwidget.NewHexWidget()
-	h2 := hexwidget.NewHexWidget()
-	h3 := hexwidget.NewHexWidget()
-	h4 := hexwidget.NewHexWidget()
-	h5 := hexwidget.NewHexWidget()
-	h6 := hexwidget.NewHexWidget()
-	h7 := hexwidget.NewHexWidget()
-	h8 := hexwidget.NewHexWidget()
+	h1 := xwidget.NewHexWidget()
+	h2 := xwidget.NewHexWidget()
+	h3 := xwidget.NewHexWidget()
+	h4 := xwidget.NewHexWidget()
+	h5 := xwidget.NewHexWidget()
+	h6 := xwidget.NewHexWidget()
+	h7 := xwidget.NewHexWidget()
+	h8 := xwidget.NewHexWidget()
 
-	hexes := []*hexwidget.HexWidget{h1, h2, h3, h4, h5, h6, h7, h8}
+	hexes := []*xwidget.HexWidget{h1, h2, h3, h4, h5, h6, h7, h8}
 
 	e := widget.NewEntry()
 	e.PlaceHolder = "enter a 32-bit number"

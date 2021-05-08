@@ -60,9 +60,15 @@ off.
 Check out the [demo](./cmd/hexwidget_demo/main.go) for an example of usage.
 
 
-![](widget/hexwidget/hexwidget_00abcdef.png)
+![](hexwidget_00abcdef.png)
 
-![](widget/hexwidget/hexwidget_12345678.png)
+![](hexwidget_12345678.png)
+
+```go
+h := xwidget.NewHexWidget()
+// show the value 'F' on the display
+h.Set(0xf)
+```
 
 ## Validation
 

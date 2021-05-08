@@ -1,5 +1,4 @@
-// Package hexwidget implements a 7-segment style hexadecimal display
-package hexwidget
+package widget
 
 import (
 	"image/color"
