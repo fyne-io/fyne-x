@@ -65,7 +65,7 @@ Check out the [demo](./cmd/hexwidget_demo/main.go) for an example of usage.
 ![](hexwidget_12345678.png)
 
 ```go
-h := xwidget.NewHexWidget()
+h := widget.NewHexWidget()
 // show the value 'F' on the display
 h.Set(0xf)
 ```
