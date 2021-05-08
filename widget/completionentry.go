@@ -155,8 +155,8 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 	return n
 }
 
-func (n *navigableList) FocusGained() {}
-func (n *navigableList) FocusLost()   {}
+func (n *navigableList) FocusGained() {} // Implements fyne.Focusable
+func (n *navigableList) FocusLost()   {} // Implements fyne.Focusable
 
 func (n *navigableList) SetOptions(items []string) {
 	n.Unselect(n.selected)
