@@ -53,7 +53,7 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
 
 ### 7-Segment ("Hex") Display
 
-A skeuomorphic widget simulating a 7-segment "hex" display. Support setting
+A skeuomorphic widget simulating a 7-segment "hex" display. Supports setting
 digits by value, as well as directly controlling which segments are on or
 off.
 
