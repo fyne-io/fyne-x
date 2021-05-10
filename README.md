@@ -91,7 +91,7 @@ entry.OnChanged = func(s string) {
 ```
 
 <p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/widget-completion-entry.png" width="886" height="649" alt="CompletionEntry Widget" style="max-width: 100%" />
+  <img src="img/widget-completion-entry.png" width="825" height="634" alt="CompletionEntry Widget" style="max-width: 100%" />
 </p>
 
 ## Validation
