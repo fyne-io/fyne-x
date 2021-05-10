@@ -51,6 +51,25 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
 </p>
 
 
+### 7-Segment ("Hex") Display
+
+A skeuomorphic widget simulating a 7-segment "hex" display. Supports setting
+digits by value, as well as directly controlling which segments are on or
+off.
+
+Check out the [demo](./cmd/hexwidget_demo/main.go) for an example of usage.
+
+
+![](img/hexwidget_00abcdef.png)
+
+![](img/hexwidget_12345678.png)
+
+```go
+h := widget.NewHexWidget()
+// show the value 'F' on the display
+h.Set(0xf)
+```
+
 ## Validation
 
 Community contributed validators.
@@ -65,3 +84,4 @@ for validation using an entropy system.
 ```go
 pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 70.
 ```
+
