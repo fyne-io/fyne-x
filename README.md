@@ -50,6 +50,49 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
   <img src="img/widget-filetree.png" width="1024" height="880" alt="FileTree Widget" style="max-width: 100%" />
 </p>
 
+### CompletionEntry
+
+An extension of widget.Entry for displaying a popup menu for completion. The "up" and "down" keys on the keyboard are used to navigate through the menu, the "Enter" key is used to confirm the selection. The options can also be selected with the mouse. The "Escape" key closes the selection list.
+
+```go
+entry := widget.NewCompletionEntry([]string{})
+
+// When the use typed text, complete the list.
+entry.OnChanged = func(s string) {
+    // completion start for text length >= 3
+    if len(s) < 3 {
+        entry.HideCompletion()
+        return
+    }
+
+    // Make a search on wikipedia
+    resp, err := http.Get(
+        "https://en.wikipedia.org/w/api.php?action=opensearch&search=" + entry.Text,
+    )
+    if err != nil {
+        entry.HideCompletion()
+        return
+    }
+
+    // Get the list of possible completion
+    var results [][]string
+    json.NewDecoder(resp.Body).Decode(&results)
+
+    // no results
+    if len(results) == 0 {
+        entry.HideCompletion()
+        return
+    }
+
+    // then show them
+    entry.SetOptions(results[1])
+    entry.ShowCompletion()
+}
+```
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/widget-completion-entry.png" width="825" height="634" alt="CompletionEntry Widget" style="max-width: 100%" />
+</p>
 
 ### 7-Segment ("Hex") Display
 
