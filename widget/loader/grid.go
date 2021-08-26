@@ -1,4 +1,4 @@
-package loaders
+package loader
 
 import (
 	"image/color"

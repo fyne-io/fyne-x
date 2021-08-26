@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/x/fyne/widget/loaders"
+	"fyne.io/x/fyne/widget/loader"
 )
 
 // OTPDialog represents an implementation of the GriddedInput in a dialog
@@ -41,7 +41,7 @@ func NewOTPDialog(title, dismiss string, onComplete fyne.StringValidator, onDism
 	input := NewGriddedEntry(Digits, 6)
 	input.Separator = canvas.NewText("-", theme.FocusColor())
 	errField := NewWarningLabel()
-	progress := loaders.NewGridLoader()
+	progress := loader.NewGridLoader()
 	progress.Hide()
 
 	// Create the dialog
