@@ -80,7 +80,7 @@ func (g *SegmentedEntry) TypedRune(r rune) {
 	g.entries[g.selected].TypedRune(r)
 }
 
-// Disbale disables all entries in the grid.
+// Disable disables all entries in the grid.
 func (g *SegmentedEntry) Disable() {
 	for _, e := range g.entries {
 		e.Disable()
