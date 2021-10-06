@@ -1,0 +1,42 @@
+
+### Project Specific
+cmd/hexwidget_demo/hexwidget_demo
+fyne-cross
+
+### Tests
+**/testdata/failed
+
+### Go
+# Output of the coverage tool
+*.out
+
+### macOS
+# General
+.DS_Store
+
+# Thumbnails
+._*
+
+### JetBrains
+.idea
+
+### VSCode
+.vscode
+
+### Vim
+# Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-v][a-z]
+[._]sw[a-p]
+
+# Session
+Session.vim
+
+# Temporary
+.netrwhist
+*~
+# Auto-generated tag files
+tags
+# Persistent undo
+[._]*.un~
