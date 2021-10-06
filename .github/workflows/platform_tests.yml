@@ -1,4 +1,3 @@
-
 name: Platform Tests
 on: [push, pull_request]
 
