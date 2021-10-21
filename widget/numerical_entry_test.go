@@ -8,7 +8,7 @@ import (
 )
 
 func TestNumericalnEntry_Int(t *testing.T) {
-	entry := NewNumericalEntry(false)
+	entry := NewNumericalEntry()
 
 	test.Type(entry, "Not a number")
 	assert.Empty(t, entry.Text)
@@ -19,7 +19,8 @@ func TestNumericalnEntry_Int(t *testing.T) {
 }
 
 func TestNumericalnEntry_Float(t *testing.T) {
-	entry := NewNumericalEntry(true)
+	entry := NewNumericalEntry()
+	entry.AllowFloat = true
 
 	test.Type(entry, "Not a number")
 	assert.Empty(t, entry.Text)

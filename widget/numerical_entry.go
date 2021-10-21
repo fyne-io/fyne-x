@@ -9,16 +9,15 @@ import (
 )
 
 // NumericalEntry is an extended entry that only allows numerical input.
-// It allows integers by defaults, but floats can be enabled by setting AllowFloat.
+// Only integers are allowed by default. Support for floats can be enabled by setting AllowFloat.
 type NumericalEntry struct {
 	widget.Entry
 	AllowFloat bool
 }
 
 // NewNumericalEntry returns an extended entry that only allows numerical input.
-// The floats input parameter specifies if floating point numbers are allowed or not.
-func NewNumericalEntry(floats bool) *NumericalEntry {
-	entry := &NumericalEntry{AllowFloat: floats}
+func NewNumericalEntry() *NumericalEntry {
+	entry := &NumericalEntry{}
 	entry.ExtendBaseWidget(entry)
 	return entry
 }
