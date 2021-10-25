@@ -4,11 +4,14 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"path/filepath"
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/storage"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -73,6 +76,29 @@ func TestFileTree_filter(t *testing.T) {
 	}
 
 	assert.Equal(t, expected, tree.filter(given))
+}
+
+func TestFileTree_ShowRootPath(t *testing.T) {
+	testPath, _ := filepath.Abs("./testdata")
+	root, err := storage.ParseURI("file://" + testPath)
+	assert.NoError(t, err)
+
+	tree := NewFileTree(root)
+	firstNodeContent := func() *widget.Label {
+		renderer := tree.CreateRenderer()
+		assert.Equal(t, 1, len(renderer.Objects()))
+		content := renderer.Objects()[0].(*container.Scroll).Content.(fyne.Widget).CreateRenderer()
+		content.Layout(fyne.NewSize(100, 100))
+
+		node := content.Objects()[0].(fyne.Widget).CreateRenderer()
+		return node.Objects()[1].(*fyne.Container).Objects[0].(*widget.Label)
+	}
+
+	assert.Equal(t, "testdata", firstNodeContent().Text)
+
+	tree.ShowRootPath = true
+	tree.Refresh()
+	assert.Equal(t, "file://", firstNodeContent().Text[:7])
 }
 
 func TestFileTree_sort(t *testing.T) {

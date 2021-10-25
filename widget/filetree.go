@@ -13,8 +13,9 @@ import (
 // FileTree extends widget.Tree to display a file system hierarchy.
 type FileTree struct {
 	widget.Tree
-	Filter storage.FileFilter
-	Sorter func(fyne.URI, fyne.URI) bool
+	Filter       storage.FileFilter
+	ShowRootPath bool
+	Sorter       func(fyne.URI, fyne.URI) bool
 
 	listableCache map[widget.TreeNodeID]fyne.ListableURI
 	uriCache      map[widget.TreeNodeID]fyne.URI
@@ -85,7 +86,7 @@ func NewFileTree(root fyne.URI) *FileTree {
 		}
 
 		var l string
-		if tree.Root == id {
+		if tree.Root == id && tree.ShowRootPath {
 			l = id
 		} else {
 			l = uri.Name()
