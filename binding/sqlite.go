@@ -336,9 +336,12 @@ func (ds *SQLiteDatastore) metadataGet(key string) (string, error) {
 		return "", err
 	}
 
-	_, err = stmt.Step()
+	haveRow, err := stmt.Step()
 	if err != nil {
 		return "", err
+	}
+	if !haveRow {
+		return "", fmt.Errorf("missing key '%s' from metadata table", key)
 	}
 
 	var value string
@@ -348,7 +351,6 @@ func (ds *SQLiteDatastore) metadataGet(key string) (string, error) {
 	}
 	return value, nil
 
-	return "", fmt.Errorf("missing key '%s' from metadata table", key)
 }
 
 func (ds *SQLiteDatastore) metadataSet(key, value string) error {
