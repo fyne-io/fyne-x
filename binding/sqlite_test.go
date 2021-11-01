@@ -2,11 +2,63 @@ package binding
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 
 	"fyne.io/fyne/v2/data/binding"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestSQLiteDatastore_Version(t *testing.T) {
+	ds, err := NewSQLiteDatastore(":memory:")
+	assert.Nil(t, err)
+
+	version, err := ds.GetVersion()
+	assert.Nil(t, err)
+	assert.Equal(t, SQLiteDatastoreVersion, version)
+}
+
+func TestSqliteDatastore_Metadata(t *testing.T) {
+	// This test uses a temporary file, to ensure metadata correctly
+	// persists across closing/opening the database.
+
+	tempFile, err := ioutil.TempFile(os.TempDir(), "TestSqliteDatastore_Metadata")
+	if err != nil {
+		t.Fatal("failed to create temporary file", err)
+	}
+
+	defer os.Remove(tempFile.Name())
+
+	ds, err := NewSQLiteDatastore(tempFile.Name())
+	assert.Nil(t, err)
+
+	err = ds.SetAppName("test app")
+	assert.Nil(t, err)
+	err = ds.SetAppVersion(123)
+	assert.Nil(t, err)
+
+	name, err := ds.GetAppName()
+	assert.Nil(t, err)
+	assert.Equal(t, "test app", name)
+
+	version, err := ds.GetAppVersion()
+	assert.Nil(t, err)
+	assert.Equal(t, 123, version)
+
+	ds.Close()
+
+	ds2, err := NewSQLiteDatastore(tempFile.Name())
+	assert.Nil(t, err)
+
+	name, err = ds2.GetAppName()
+	assert.Nil(t, err)
+	assert.Equal(t, "test app", name)
+
+	version, err = ds2.GetAppVersion()
+	assert.Nil(t, err)
+	assert.Equal(t, 123, version)
+}
 
 func TestSQLiteDatastore_String(t *testing.T) {
 	ds, err := NewSQLiteDatastore(":memory:")
@@ -118,6 +170,7 @@ func TestSQLiteDatastore_KeysAndTypes(t *testing.T) {
 	assert.Contains(t, keys, "bar")
 	assert.Contains(t, keys, "baz")
 	assert.Contains(t, keys, "quux")
+	t.Logf("keys=%v", keys)
 	assert.Equal(t, len(keys), 4)
 
 	assert.Contains(t, types, "int")
@@ -240,4 +293,46 @@ func TestSQLiteDatastore_binding(t *testing.T) {
 	ds.RemoveValue("foo")
 
 	assert.Equal(t, 5, count)
+}
+
+func TestSQLiteDatastore_TypeChange(t *testing.T) {
+	// Make sure that changing the type of a key works correctly, and does
+	// not lead to creating any duplicate keys.
+	ds, err := NewSQLiteDatastore(":memory:")
+	assert.Nil(t, err)
+
+	ds.SetString("abc", "xyz")
+	keys, types, err := ds.KeysAndTypes()
+	t.Logf("1 keys=%v types=%v", keys, types)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(keys))
+	assert.Equal(t, 1, len(types))
+
+	ds.SetFloat("abc", 1.234)
+	keys, types, err = ds.KeysAndTypes()
+	t.Logf("2 keys=%v types=%v", keys, types)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(keys))
+	assert.Equal(t, 1, len(types))
+
+	ds.SetInt("abc", 5)
+	keys, types, err = ds.KeysAndTypes()
+	t.Logf("3 keys=%v types=%v", keys, types)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(keys))
+	assert.Equal(t, 1, len(types))
+
+	ds.SetBool("abc", false)
+	keys, types, err = ds.KeysAndTypes()
+	t.Logf("4 keys=%v types=%v", keys, types)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(keys))
+	assert.Equal(t, 1, len(types))
+
+	ds.SetString("abc", "xyz")
+	keys, types, err = ds.KeysAndTypes()
+	t.Logf("5 keys=%v types=%v", keys, types)
+	assert.Nil(t, err)
+	assert.Equal(t, 1, len(keys))
+	assert.Equal(t, 1, len(types))
 }

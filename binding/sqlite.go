@@ -3,6 +3,7 @@ package binding
 import (
 	"fmt"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -11,6 +12,16 @@ import (
 
 	"github.com/bvinc/go-sqlite-lite/sqlite3"
 )
+
+// sqliteDatastoreMagic is stored in the special "metadata" table and is
+// used to verify that this database really came from SQLiteDatatore.
+const SQLiteDatastoreMagic = "9e1f63f7-a6b1-4d50-88e8-269ccca04d89"
+
+// SQLiteDatastoreVersion identifies the file format version of
+// SQLiteDatastore. The version history is as follows:
+//
+// 1 - initial version
+const SQLiteDatastoreVersion = 1
 
 // assert compliance with the Preferences interface
 var _ fyne.Preferences = &SQLiteDatastore{}
@@ -109,9 +120,9 @@ func NewSQLiteDatastore(path string) (*SQLiteDatastore, error) {
 		value INTEGER
 	);
 
-	CREATE TABLE IF NOT EXISTS kvp_map(
+	CREATE TABLE IF NOT EXISTS sqlitedatastore_metadata(
 		key TEXT PRIMARY KEY,
-		value INTEGER
+		value TEXT
 	);
 
 	PRAGMA optimize;
@@ -123,16 +134,43 @@ func NewSQLiteDatastore(path string) (*SQLiteDatastore, error) {
 		return nil, err
 	}
 
-	err = db.Exec(schema)
-	if err != nil {
-		return nil, err
-	}
-
 	ds := &SQLiteDatastore{
 		db:           db,
 		keytypes:     make(map[string]string),
 		keyListeners: make(map[string][]binding.DataListener),
 		listeners:    make([]func(), 0),
+	}
+
+	// Check if this is a new database - if not, make sure it matches our
+	// SQLiteDataStore version number.
+	tables, err := ds.getTables()
+	if err != nil {
+		return nil, err
+	}
+	if len(tables) > 0 {
+		magic, err := ds.metadataGet("SQLiteDatastoreMagic")
+		if err != nil {
+			return nil, fmt.Errorf("failed to get magic string for non-empty database due to error: %v", err)
+		}
+
+		if magic != SQLiteDatastoreMagic {
+			return nil, fmt.Errorf("magic '%s' did not match expected '%s'", magic, SQLiteDatastoreMagic)
+		}
+
+	}
+
+	err = db.Exec(schema)
+	if err != nil {
+		return nil, err
+	}
+
+	err = ds.metadataSet("SQLiteDatastoreVersion", fmt.Sprintf("%d", SQLiteDatastoreVersion))
+	if err != nil {
+		return nil, err
+	}
+	err = ds.metadataSet("SQLiteDatastoreMagic", SQLiteDatastoreMagic)
+	if err != nil {
+		return nil, err
 	}
 
 	// Ensure that the database is closed automatically when the datastore
@@ -144,16 +182,16 @@ func NewSQLiteDatastore(path string) (*SQLiteDatastore, error) {
 }
 
 func (ds *SQLiteDatastore) addKeyListener(key string, listener binding.DataListener) {
-	ds.metaLock.Lock()
-	defer ds.metaLock.Unlock()
 
 	// Ensure the listener list for this key is initialized.
+	ds.metaLock.Lock()
 	_, ok := ds.keyListeners[key]
 	if !ok {
 		ds.keyListeners[key] = make([]binding.DataListener, 0)
 	}
 
 	ds.keyListeners[key] = append(ds.keyListeners[key], listener)
+	ds.metaLock.Unlock()
 }
 
 func (ds *SQLiteDatastore) removeKeyListener(key string, listener binding.DataListener) {
@@ -182,9 +220,8 @@ func (ds *SQLiteDatastore) removeKeyListener(key string, listener binding.DataLi
 // AddChangeListener implements fyne.Preferences
 func (ds *SQLiteDatastore) AddChangeListener(listener func()) {
 	ds.metaLock.Lock()
-	defer ds.metaLock.Unlock()
-
 	ds.listeners = append(ds.listeners, listener)
+	ds.metaLock.Unlock()
 }
 
 func (ds *SQLiteDatastore) triggerListeners(key string) {
@@ -212,15 +249,154 @@ func (ds *SQLiteDatastore) triggerListeners(key string) {
 	}
 }
 
+// GetVersion gets the format version of the SQLiteDatastore file. This
+// may be useful for detecting when upgrades need to be performed, if the
+// format version is ever updated.
+func (ds *SQLiteDatastore) GetVersion() (int, error) {
+	versionString, err := ds.metadataGet("SQLiteDatastoreVersion")
+	if err != nil {
+		return -1, err
+	}
+
+	version, err := strconv.Atoi(versionString)
+	if err != nil {
+		return -1, err
+	}
+
+	return version, nil
+}
+
+// GetAppName returns the application name if one has been set, and otherwise
+// an empty string an error.
+func (ds *SQLiteDatastore) GetAppName() (string, error) {
+	appName, err := ds.metadataGet("SQLiteDatastoreAppName")
+	if err != nil {
+		return "", err
+	}
+
+	return appName, nil
+}
+
+// SetAppName sets the application name overwriting any which already exists.
+//
+// This functionality can be useful to allow applications to determine if
+// a particular SQLiteDatastore file originated from an instance of that
+// application.
+func (ds *SQLiteDatastore) SetAppName(name string) error {
+	return ds.metadataSet("SQLiteDatastoreAppName", name)
+}
+
+// GetAppVersion returns the application name if one has been set, and otherwise
+// an empty string an error.
+func (ds *SQLiteDatastore) GetAppVersion() (int, error) {
+	versionString, err := ds.metadataGet("SQLiteDatastoreAppVersion")
+	if err != nil {
+		return -1, err
+	}
+
+	version, err := strconv.Atoi(versionString)
+	if err != nil {
+		return -1, err
+	}
+
+	return version, nil
+}
+
+// Close closes the underlying database connection, and removes all listeners
+// from the datastore.
+func (ds *SQLiteDatastore) Close() error {
+	err := ds.db.Close()
+	ds.keytypes = nil
+	ds.listeners = nil
+	ds.keyListeners = nil
+	return err
+}
+
+// SetAppVersion sets the application name overwriting any which already
+// exists.
+//
+// This functionality can be useful to allow applications to track changes to
+// its own file format version, for example to determine if data from an
+// older version needs to be migrated to a newer one.
+func (ds *SQLiteDatastore) SetAppVersion(version int) error {
+	return ds.metadataSet("SQLiteDatastoreAppVersion", fmt.Sprintf("%d", version))
+}
+
+// metadataGet is sued to read from the internal metadata table.
+func (ds *SQLiteDatastore) metadataGet(key string) (string, error) {
+	query := "SELECT value FROM sqlitedatastore_metadata WHERE key = ?;"
+	stmt, err := ds.db.Prepare(query)
+	if err != nil {
+		return "", err
+	}
+	defer stmt.Close()
+
+	err = stmt.Exec(key)
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		hasRow, err := stmt.Step()
+		if err != nil {
+			return "", err
+		}
+		if !hasRow {
+			break
+		}
+
+		var value string
+		err = stmt.Scan(&value)
+		if err != nil {
+			return "", err
+		}
+		return value, nil
+
+	}
+
+	return "", fmt.Errorf("missing key '%s' from metadata table", key)
+}
+
+func (ds *SQLiteDatastore) metadataSet(key, value string) error {
+	query := "INSERT INTO sqlitedatastore_metadata VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value;"
+
+	var err error
+
+	// Note that the type assertions here should never panic, because this
+	// is a private method, and we're always calling it from a context
+	// where we can guarantee the proper type.
+	err = ds.db.Exec(query, key, value)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // set inserts the specified value into the appropriate table per it's typ[e]
 // parameter. It will type-assert the value to the correct type, intentionally
 // causing a panic if this fails.
 func (ds *SQLiteDatastore) set(key, typ string, value interface{}) error {
 	defer ds.triggerListeners(key)
 
+	// Because we delete the old value, and we want set() to be atomic,
+	// we will do this within a transaction.
+	err := ds.db.Begin()
+	if err != nil {
+		return err
+	}
+
 	query := fmt.Sprintf("INSERT INTO kvp_%s VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value;", typ)
 
-	var err error
+	// Note that we need to remove the value before we set it, since it may
+	// have changed type and thus need to be removed from its previous
+	// table.
+	err = ds.remove(key)
+	if (err != nil) && (!IsErrSQLiteDatastoreNoSuchKey(err)) {
+		// It's OK if we get a no such key error, but anything else
+		// is an SQLite error that we need to propagate.
+		return err
+	}
 
 	// Note that the type assertions here should never panic, because this
 	// is a private method, and we're always calling it from a context
@@ -242,9 +418,15 @@ func (ds *SQLiteDatastore) set(key, typ string, value interface{}) error {
 		return err
 	}
 
+	// Commit the DELETE and INSERT together.
+	err = ds.db.Commit()
+	if err != nil {
+		return err
+	}
+
 	ds.metaLock.Lock()
-	defer ds.metaLock.Unlock()
 	ds.keytypes[key] = typ
+	ds.metaLock.Unlock()
 
 	return nil
 }
@@ -253,6 +435,42 @@ func (ds *SQLiteDatastore) set(key, typ string, value interface{}) error {
 func (ds *SQLiteDatastore) Keys() ([]string, error) {
 	keys, _, err := ds.KeysAndTypes()
 	return keys, err
+}
+
+// getTables returns a list of all SQLite tables in the database.
+func (ds *SQLiteDatastore) getTables() ([]string, error) {
+	tables := []string{}
+	query := "SELECT name FROM sqlite_master WHERE type='table';"
+	stmt, err := ds.db.Prepare(query)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	err = stmt.Exec()
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		hasRow, err := stmt.Step()
+		if err != nil {
+			return nil, err
+		}
+		if !hasRow {
+			break
+		}
+
+		var name string
+		err = stmt.Scan(&name)
+		if err != nil {
+			return nil, err
+		}
+
+		tables = append(tables, name)
+	}
+
+	return tables, nil
 }
 
 // KeysAndTypes returns a list of keys, as well as their corresponding data
@@ -268,53 +486,32 @@ func (ds *SQLiteDatastore) KeysAndTypes() ([]string, []string, error) {
 	// There is no good technical reason not to also use ds.keytypes
 	// to construct the keys and types lists, other than paranoia.
 
-	// Select all tables...
-	tables := []string{}
-	query := "SELECT name FROM sqlite_master WHERE type='table';"
-	stmt, err := ds.db.Prepare(query)
+	// Select all tables and keep any that have a prefix kvp_; this is not
+	// robust against malformed, corrupt, or tampered-with databases, but
+	// this is safe so long as we are the only ones who have touched it.
+	tables, err := ds.getTables()
 	if err != nil {
 		return nil, nil, err
 	}
-
-	err = stmt.Exec()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	for {
-		hasRow, err := stmt.Step()
-		if err != nil {
-			return nil, nil, err
-		}
-		if !hasRow {
-			break
-		}
-
-		var name string
-		err = stmt.Scan(&name)
-		if err != nil {
-			return nil, nil, err
-		}
-
-		// ... and keep any that have a prefix kvp_; this is not robust
-		// against malformed, corrupt, or tampered-with databases, but
-		// this is safe so long as we are the only ones who have
-		// touched it.
+	prefixedTables := []string{}
+	for _, name := range tables {
 		if strings.HasPrefix(name, "kvp_") {
-			tables = append(tables, name)
+			prefixedTables = append(prefixedTables, name)
 		}
 	}
+	tables = prefixedTables
 
 	// Scan each table, then scan each key from it. We can infer the type
 	// by just slicing the kvp_ off the table name.
 	keys := []string{}
 	types := []string{}
 	for _, table := range tables {
-		query = fmt.Sprintf("SELECT key FROM %s;", table)
-		stmt, err = ds.db.Prepare(query)
+		query := fmt.Sprintf("SELECT key FROM %s;", table)
+		stmt, err := ds.db.Prepare(query)
 		if err != nil {
 			return nil, nil, err
 		}
+		defer stmt.Close()
 
 		err = stmt.Exec()
 		if err != nil {
@@ -348,13 +545,33 @@ func (ds *SQLiteDatastore) KeysAndTypes() ([]string, []string, error) {
 // CheckedRemoveValue works identically to RemoveValue(), but returns an error
 // if one was encountered.
 func (ds *SQLiteDatastore) CheckedRemoveValue(key string) error {
-	// Determine the key type so we know what table to remove it from.
+	err := ds.remove(key)
+	if err != nil {
+		return err
+	}
+
+	// Deletion counts as a change.
+	ds.triggerListeners(key)
+
+	return nil
+}
+
+// remove removes the specified key from the database, but does not trigger
+// any data bindings. This function should only be used internally within
+// functions that will correctly trigger listeners.
+//
+// This exists because set() needs to be able to remove any old values of the
+// key in cases where the type has changed without triggering listeners
+// multiple times.
+func (ds *SQLiteDatastore) remove(key string) error {
 	ds.metaLock.Lock()
+	defer ds.metaLock.Unlock()
+
+	// Determine the key type so we know what table to remove it from.
 	typ, ok := ds.keytypes[key]
 	if !ok {
 		return &ErrSQLiteDatastoreNoSuchKey{key: key, typ: "unknown"}
 	}
-	ds.metaLock.Unlock()
 
 	query := fmt.Sprintf("DELETE FROM kvp_%s WHERE key=?;", typ)
 	err := ds.db.Exec(query, key)
@@ -362,14 +579,9 @@ func (ds *SQLiteDatastore) CheckedRemoveValue(key string) error {
 		return err
 	}
 
-	ds.metaLock.Lock()
 	// NOTE: the key is intentionally not removed from the keyListeners
 	// map, as it may be re-added in the future.
 	delete(ds.keytypes, key)
-	ds.metaLock.Unlock()
-
-	// Deletion counts as a change.
-	ds.triggerListeners(key)
 
 	return nil
 }
@@ -389,10 +601,10 @@ func (ds *SQLiteDatastore) RemoveValue(key string) {
 func (ds *SQLiteDatastore) get(key, typ string) (interface{}, error) {
 	query := fmt.Sprintf("SELECT value FROM kvp_%s WHERE key = ?;", typ)
 	stmt, err := ds.db.Prepare(query)
-
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
 
 	err = stmt.Exec(key)
 	if err != nil {
