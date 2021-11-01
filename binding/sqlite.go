@@ -67,9 +67,6 @@ func IsErrSQLiteDatastoreNoSuchKey(e error) bool {
 // different type, the original value is deleted and the key is now of the
 // second type.
 //
-// The path may be either a file on-disk, or ":memory:" for an in-memory
-// database.
-//
 // NOTE: this API assumes that overwriting a key with the same value should
 // still trigger event listeners. e.g. X.SetString("foo", "bar");
 // X.SetString("foo", "bar") would cause a data binding for key "foo" to update
@@ -86,6 +83,10 @@ type SQLiteDatastore struct {
 	keyListeners map[string][]binding.DataListener
 }
 
+// NewSQLiteDatastore instances a new SQLiteDatastore object.
+//
+// The path may be either a file on-disk, or ":memory:" for an in-memory
+// database.
 func NewSQLiteDatastore(path string) (*SQLiteDatastore, error) {
 	schema := `
 	CREATE TABLE IF NOT EXISTS kvp_string (
@@ -146,6 +147,7 @@ func (ds *SQLiteDatastore) addKeyListener(key string, listener binding.DataListe
 	ds.metaLock.Lock()
 	defer ds.metaLock.Unlock()
 
+	// Ensure the listener list for this key is initialized.
 	_, ok := ds.keyListeners[key]
 	if !ok {
 		ds.keyListeners[key] = make([]binding.DataListener, 0)
@@ -158,20 +160,26 @@ func (ds *SQLiteDatastore) removeKeyListener(key string, listener binding.DataLi
 	ds.metaLock.Lock()
 	defer ds.metaLock.Unlock()
 
+	// If there is no listener list for this key, there is nothing to do.
 	_, ok := ds.keyListeners[key]
 	if !ok {
 		return
 	}
 
+	// Iteratively create a new listener list excluding the one to be
+	// removed. This trades simplicity for performance; it may cause
+	// slowdowns linear on the number of listeners.
 	newListeners := make([]binding.DataListener, 0)
 	for _, l := range ds.keyListeners[key] {
 		if l != listener {
 			newListeners = append(newListeners, l)
 		}
 	}
+
 	ds.keyListeners[key] = newListeners
 }
 
+// AddChangeListener implements fyne.Preferences
 func (ds *SQLiteDatastore) AddChangeListener(listener func()) {
 	ds.metaLock.Lock()
 	defer ds.metaLock.Unlock()
@@ -183,10 +191,15 @@ func (ds *SQLiteDatastore) triggerListeners(key string) {
 	ds.metaLock.Lock()
 	defer ds.metaLock.Unlock()
 
+	// Trigger all listeners for the preferences listeners.
 	for _, l := range ds.listeners {
 		l()
 	}
 
+	// If a key is provided, trigger the listeners registered for that key
+	// (e.g. the ones associated with our own data binding types - this is
+	// where the performance comes from vs just using vanilla BindPrefernce
+	// methods).
 	if key != "" {
 		listeners, ok := ds.keyListeners[key]
 		if !ok {
@@ -199,6 +212,9 @@ func (ds *SQLiteDatastore) triggerListeners(key string) {
 	}
 }
 
+// set inserts the specified value into the appropriate table per it's typ[e]
+// parameter. It will type-assert the value to the correct type, intentionally
+// causing a panic if this fails.
 func (ds *SQLiteDatastore) set(key, typ string, value interface{}) error {
 	defer ds.triggerListeners(key)
 
@@ -234,7 +250,7 @@ func (ds *SQLiteDatastore) set(key, typ string, value interface{}) error {
 }
 
 // Keys returns a list of all keys in the datastore irrespective of type.
-func (ds *SQLiteDatastore) KeysTypes() ([]string, error) {
+func (ds *SQLiteDatastore) Keys() ([]string, error) {
 	keys, _, err := ds.KeysAndTypes()
 	return keys, err
 }
@@ -244,6 +260,15 @@ func (ds *SQLiteDatastore) KeysTypes() ([]string, error) {
 //
 // keys, types, err := X.KeysAndTypes()
 func (ds *SQLiteDatastore) KeysAndTypes() ([]string, []string, error) {
+	// NOTE: for internal use, it is faster to use ds.keytypes, which is
+	// maintained to have the correct state, assuming that the database
+	// file isn't tampered with under us (this is why access from multiple
+	// processes isn't supported, among other things).
+	//
+	// There is no good technical reason not to also use ds.keytypes
+	// to construct the keys and types lists, other than paranoia.
+
+	// Select all tables...
 	tables := []string{}
 	query := "SELECT name FROM sqlite_master WHERE type='table';"
 	stmt, err := ds.db.Prepare(query)
@@ -271,11 +296,17 @@ func (ds *SQLiteDatastore) KeysAndTypes() ([]string, []string, error) {
 			return nil, nil, err
 		}
 
+		// ... and keep any that have a prefix kvp_; this is not robust
+		// against malformed, corrupt, or tampered-with databases, but
+		// this is safe so long as we are the only ones who have
+		// touched it.
 		if strings.HasPrefix(name, "kvp_") {
 			tables = append(tables, name)
 		}
 	}
 
+	// Scan each table, then scan each key from it. We can infer the type
+	// by just slicing the kvp_ off the table name.
 	keys := []string{}
 	types := []string{}
 	for _, table := range tables {
@@ -317,15 +348,13 @@ func (ds *SQLiteDatastore) KeysAndTypes() ([]string, []string, error) {
 // CheckedRemoveValue works identically to RemoveValue(), but returns an error
 // if one was encountered.
 func (ds *SQLiteDatastore) CheckedRemoveValue(key string) error {
-
+	// Determine the key type so we know what table to remove it from.
 	ds.metaLock.Lock()
 	typ, ok := ds.keytypes[key]
 	if !ok {
 		return &ErrSQLiteDatastoreNoSuchKey{key: key, typ: "unknown"}
 	}
 	ds.metaLock.Unlock()
-
-	ds.triggerListeners(key)
 
 	query := fmt.Sprintf("DELETE FROM kvp_%s WHERE key=?;", typ)
 	err := ds.db.Exec(query, key)
@@ -334,8 +363,13 @@ func (ds *SQLiteDatastore) CheckedRemoveValue(key string) error {
 	}
 
 	ds.metaLock.Lock()
+	// NOTE: the key is intentionally not removed from the keyListeners
+	// map, as it may be re-added in the future.
 	delete(ds.keytypes, key)
 	ds.metaLock.Unlock()
+
+	// Deletion counts as a change.
+	ds.triggerListeners(key)
 
 	return nil
 }
@@ -348,6 +382,10 @@ func (ds *SQLiteDatastore) RemoveValue(key string) {
 	}
 }
 
+// get returns the value of the specified key, from the table corresponding
+// to the specified type. Values read from the database are intentionally
+// read into variables of the correct type in order to trigger type
+// errors if they end up with the wrong type on disk somehow.
 func (ds *SQLiteDatastore) get(key, typ string) (interface{}, error) {
 	query := fmt.Sprintf("SELECT value FROM kvp_%s WHERE key = ?;", typ)
 	stmt, err := ds.db.Prepare(query)
@@ -427,7 +465,7 @@ func (ds *SQLiteDatastore) String(key string) string {
 	return ds.StringWithFallback(key, "")
 }
 
-// String implements the fyne.Preferences interface.
+// StringWithFallback implements the fyne.Preferences interface.
 func (ds *SQLiteDatastore) StringWithFallback(key, fallback string) string {
 	value, err := ds.CheckedString(key)
 	if err != nil {
@@ -472,7 +510,7 @@ func (ds *SQLiteDatastore) Bool(key string) bool {
 	return ds.BoolWithFallback(key, false)
 }
 
-// Bool implements the fyne.Preferences interface.
+// BoolWithFallback implements the fyne.Preferences interface.
 func (ds *SQLiteDatastore) BoolWithFallback(key string, fallback bool) bool {
 	value, err := ds.CheckedBool(key)
 	if err != nil {
@@ -517,7 +555,7 @@ func (ds *SQLiteDatastore) Float(key string) float64 {
 	return ds.FloatWithFallback(key, 0.0)
 }
 
-// Float implements the fyne.Preferences interface.
+// FloatWithFallback implements the fyne.Preferences interface.
 func (ds *SQLiteDatastore) FloatWithFallback(key string, fallback float64) float64 {
 	value, err := ds.CheckedFloat(key)
 	if err != nil {
@@ -562,7 +600,7 @@ func (ds *SQLiteDatastore) Int(key string) int {
 	return ds.IntWithFallback(key, 0)
 }
 
-// Int implements the fyne.Preferences interface.
+// IntWithFallback implements the fyne.Preferences interface.
 func (ds *SQLiteDatastore) IntWithFallback(key string, fallback int) int {
 	value, err := ds.CheckedInt(key)
 	if err != nil {
@@ -606,15 +644,18 @@ type sqlDsBoolBinding struct {
 	*sqlDsBinding
 }
 
+// BindBool creates a new bool binding for a key in the datastore.
 func (ds *SQLiteDatastore) BindBool(key string) binding.Bool {
-	bb := &sqlDsBoolBinding{sqlDsBinding: newSqlDsBinding(ds, key)}
+	bb := &sqlDsBoolBinding{sqlDsBinding: newSQLDsBinding(ds, key)}
 	return bb
 }
 
+// Get implements binding.Bool
 func (bb *sqlDsBoolBinding) Get() (bool, error) {
 	return bb.ds.CheckedBool(bb.key)
 }
 
+// Set implements binding.Bool
 func (bb *sqlDsBoolBinding) Set(value bool) error {
 	return bb.ds.CheckedSetBool(bb.key, value)
 }
@@ -626,15 +667,18 @@ type sqlDsFloatBinding struct {
 	*sqlDsBinding
 }
 
+// BindFloat creates a new float binding for a key in the datastore.
 func (ds *SQLiteDatastore) BindFloat(key string) binding.Float {
-	bb := &sqlDsFloatBinding{sqlDsBinding: newSqlDsBinding(ds, key)}
+	bb := &sqlDsFloatBinding{sqlDsBinding: newSQLDsBinding(ds, key)}
 	return bb
 }
 
+// Get implements binding.Float
 func (bb *sqlDsFloatBinding) Get() (float64, error) {
 	return bb.ds.CheckedFloat(bb.key)
 }
 
+// Set implements binding.Float
 func (bb *sqlDsFloatBinding) Set(value float64) error {
 	return bb.ds.CheckedSetFloat(bb.key, value)
 }
@@ -646,15 +690,18 @@ type sqlDsIntBinding struct {
 	*sqlDsBinding
 }
 
+// BindInt creates a new int binding for a key in the datastore.
 func (ds *SQLiteDatastore) BindInt(key string) binding.Int {
-	bb := &sqlDsIntBinding{sqlDsBinding: newSqlDsBinding(ds, key)}
+	bb := &sqlDsIntBinding{sqlDsBinding: newSQLDsBinding(ds, key)}
 	return bb
 }
 
+// Get implements binding.Int
 func (bb *sqlDsIntBinding) Get() (int, error) {
 	return bb.ds.CheckedInt(bb.key)
 }
 
+// Set implements binding.Int
 func (bb *sqlDsIntBinding) Set(value int) error {
 	return bb.ds.CheckedSetInt(bb.key, value)
 }
@@ -666,27 +713,39 @@ type sqlDsStringBinding struct {
 	*sqlDsBinding
 }
 
+// BindString creates a new string binding for a key in the datastore.
 func (ds *SQLiteDatastore) BindString(key string) binding.String {
-	bb := &sqlDsStringBinding{sqlDsBinding: newSqlDsBinding(ds, key)}
+	bb := &sqlDsStringBinding{sqlDsBinding: newSQLDsBinding(ds, key)}
 	return bb
 }
 
+// Get implements binding.String
 func (bb *sqlDsStringBinding) Get() (string, error) {
 	return bb.ds.CheckedString(bb.key)
 }
 
+// Set implements binding.String
 func (bb *sqlDsStringBinding) Set(value string) error {
 	return bb.ds.CheckedSetString(bb.key, value)
 }
 
+// sqlDsBinding is the underlying plumbing below all of our other bindings.
+// This structure simply gets embedded into the corresponding structures for
+// typed bindings.
 type sqlDsBinding struct {
-	ds          *SQLiteDatastore
-	key         string
-	listeners   []binding.DataListener
+	ds  *SQLiteDatastore
+	key string
+
+	// listeners stores our own list of data listeners
+	listeners []binding.DataListener
+
+	// ownListner is the data listener we give back to the DataStore;
+	// this is a wrapper around .triggerListeners(), which will in turn
+	// call our own listeners.
 	ownListener binding.DataListener
 }
 
-func newSqlDsBinding(ds *SQLiteDatastore, key string) *sqlDsBinding {
+func newSQLDsBinding(ds *SQLiteDatastore, key string) *sqlDsBinding {
 	b := &sqlDsBinding{
 		ds:        ds,
 		key:       key,
@@ -695,7 +754,8 @@ func newSqlDsBinding(ds *SQLiteDatastore, key string) *sqlDsBinding {
 	b.ownListener = binding.NewDataListener(b.triggerListeners)
 
 	// Ensure that if this binding is garbage collected, we properly
-	// remove its callback from the datastore.
+	// remove its callback from the datastore. This avoids leaking
+	// memory in the datastore's key listener map.
 	runtime.SetFinalizer(b, func(b *sqlDsBinding) {
 		b.ds.removeKeyListener(b.key, b.ownListener)
 	})

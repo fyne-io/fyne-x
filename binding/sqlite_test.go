@@ -225,7 +225,7 @@ func TestSQLiteDatastore_binding(t *testing.T) {
 	count := 0
 
 	fmt.Printf("----\n")
-	b := newSqlDsBinding(ds, "foo")
+	b := newSQLDsBinding(ds, "foo")
 	b.AddListener(binding.NewDataListener(func() { count++ }))
 
 	ds.SetInt("foo", 7)
