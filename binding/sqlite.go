@@ -13,7 +13,7 @@ import (
 	"github.com/bvinc/go-sqlite-lite/sqlite3"
 )
 
-// sqliteDatastoreMagic is stored in the special "metadata" table and is
+// SQLiteDatastoreMagic is stored in the special "metadata" table and is
 // used to verify that this database really came from SQLiteDatatore.
 const SQLiteDatastoreMagic = "9e1f63f7-a6b1-4d50-88e8-269ccca04d89"
 
@@ -336,23 +336,17 @@ func (ds *SQLiteDatastore) metadataGet(key string) (string, error) {
 		return "", err
 	}
 
-	for {
-		hasRow, err := stmt.Step()
-		if err != nil {
-			return "", err
-		}
-		if !hasRow {
-			break
-		}
-
-		var value string
-		err = stmt.Scan(&value)
-		if err != nil {
-			return "", err
-		}
-		return value, nil
-
+	_, err = stmt.Step()
+	if err != nil {
+		return "", err
 	}
+
+	var value string
+	err = stmt.Scan(&value)
+	if err != nil {
+		return "", err
+	}
+	return value, nil
 
 	return "", fmt.Errorf("missing key '%s' from metadata table", key)
 }
@@ -360,12 +354,10 @@ func (ds *SQLiteDatastore) metadataGet(key string) (string, error) {
 func (ds *SQLiteDatastore) metadataSet(key, value string) error {
 	query := "INSERT INTO sqlitedatastore_metadata VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value=excluded.value;"
 
-	var err error
-
 	// Note that the type assertions here should never panic, because this
 	// is a private method, and we're always calling it from a context
 	// where we can guarantee the proper type.
-	err = ds.db.Exec(query, key, value)
+	err := ds.db.Exec(query, key, value)
 	if err != nil {
 		return err
 	}
@@ -997,12 +989,4 @@ func (b *sqlDsBinding) RemoveListener(listener binding.DataListener) {
 		}
 	}
 	b.listeners = newListeners
-}
-
-func (b *sqlDsBinding) get(key, typ string) (interface{}, error) {
-	return b.ds.get(key, typ)
-}
-
-func (b *sqlDsBinding) set(key, typ string, value interface{}) error {
-	return b.ds.set(key, typ, value)
 }
