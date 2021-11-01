@@ -277,7 +277,6 @@ func TestSQLiteDatastore_binding(t *testing.T) {
 
 	count := 0
 
-	fmt.Printf("----\n")
 	b := newSQLDsBinding(ds, "foo")
 	b.AddListener(binding.NewDataListener(func() { count++ }))
 
@@ -335,4 +334,79 @@ func TestSQLiteDatastore_TypeChange(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, 1, len(keys))
 	assert.Equal(t, 1, len(types))
+}
+
+func TestSQLiteDatastore_StringList(t *testing.T) {
+	fmt.Printf("----\n")
+	ds, err := NewSQLiteDatastore(":memory:")
+	assert.Nil(t, err)
+
+	err = ds.CheckedSetStringList("foo", []string{"one", "two", "three"})
+	assert.Nil(t, err)
+
+	list, err := ds.CheckedStringList("foo")
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"one", "two", "three"}, list)
+
+	list = ds.StringListWithFallback("foo", []string{"four"})
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"one", "two", "three"}, list)
+
+	list = ds.StringListWithFallback("bar", []string{"four"})
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"four"}, list)
+
+	list = ds.StringList("bar")
+	assert.Equal(t, ([]string)(nil), list)
+
+	sb := ds.BindStringList("foo")
+	list, err = sb.Get()
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"one", "two", "three"}, list)
+
+	err = sb.SetValue(2, "frob")
+	assert.Nil(t, err)
+	list, err = sb.Get()
+	assert.Nil(t, err)
+	assert.Equal(t, []string{"one", "two", "frob"}, list)
+
+	err = sb.SetValue(-1, "frob")
+	assert.NotNil(t, err)
+
+	err = sb.SetValue(3, "frob")
+	assert.NotNil(t, err)
+
+	two, err := sb.GetValue(1)
+	assert.Nil(t, err)
+	assert.Equal(t, "two", two)
+
+	assert.Equal(t, 3, sb.Length())
+
+	firstItem, err := sb.GetItem(0)
+	assert.Nil(t, err)
+
+	value, err := firstItem.(binding.String).Get()
+	assert.Nil(t, err)
+	assert.Equal(t, "one", value)
+
+	count := 0
+	firstItem.AddListener(binding.NewDataListener(func() { count++ }))
+
+	err = firstItem.(binding.String).Set("spam")
+	assert.Nil(t, err)
+	assert.Equal(t, 1, count)
+
+	err = ds.CheckedSetStringList("foo", []string{"eggs"})
+	assert.Nil(t, err)
+	assert.Equal(t, 2, count)
+
+	err = sb.SetValue(0, "quux")
+	assert.Nil(t, err)
+	assert.Equal(t, 3, count)
+
+	firstItem.RemoveListener(firstItem.(*sqlDsStringListItem).listeners[0])
+
+	err = firstItem.(binding.String).Set("abc")
+	assert.Nil(t, err)
+	assert.Equal(t, 3, count)
 }

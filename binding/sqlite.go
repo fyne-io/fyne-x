@@ -1,6 +1,7 @@
 package binding
 
 import (
+	"encoding/json"
 	"fmt"
 	"runtime"
 	"strconv"
@@ -118,6 +119,11 @@ func NewSQLiteDatastore(path string) (*SQLiteDatastore, error) {
 	CREATE TABLE IF NOT EXISTS kvp_int(
 		key TEXT PRIMARY KEY,
 		value INTEGER
+	);
+
+	CREATE TABLE IF NOT EXISTS kvp_string_list (
+		key TEXT PRIMARY KEY,
+		value TEXT
 	);
 
 	CREATE TABLE IF NOT EXISTS sqlitedatastore_metadata(
@@ -403,6 +409,13 @@ func (ds *SQLiteDatastore) set(key, typ string, value interface{}) error {
 		err = ds.db.Exec(query, key, value.(float64))
 	} else if typ == "int" {
 		err = ds.db.Exec(query, key, value.(int))
+	} else if typ == "string_list" {
+		var marshaled []byte
+		marshaled, err = json.Marshal(value.([]string))
+		if err != nil {
+			return err
+		}
+		err = ds.db.Exec(query, key, string(marshaled))
 	} else {
 		// This should never happen, since this is a private method.
 		panic(typ)
@@ -652,6 +665,18 @@ func (ds *SQLiteDatastore) get(key, typ string) (interface{}, error) {
 			}
 			return value, err
 
+		} else if typ == "string_list" {
+			var raw string
+			err = stmt.Scan(&raw)
+			if err != nil {
+				return nil, err
+			}
+
+			value := []string{}
+			err := json.Unmarshal([]byte(raw), &value)
+
+			return value, err
+
 		} else {
 			// This should never happen, since get() is an internal
 			// method.
@@ -706,6 +731,50 @@ func (ds *SQLiteDatastore) SetString(key, value string) {
 // if one occurred.
 func (ds *SQLiteDatastore) CheckedSetString(key, value string) error {
 	return ds.set(key, "string", value)
+}
+
+// StringList returns the string list associated with the given key, or nil if
+// it does not exist or is not of type string.
+func (ds *SQLiteDatastore) StringList(key string) []string {
+	return ds.StringListWithFallback(key, nil)
+}
+
+// StringListWithFallback returns either the string list associated with the
+// given key, or else a fallback list.
+func (ds *SQLiteDatastore) StringListWithFallback(key string, fallback []string) []string {
+	value, err := ds.CheckedStringList(key)
+	if err != nil {
+		if !IsErrSQLiteDatastoreNoSuchKey(err) {
+			// no need to log errors if it's just a missing key
+			fyne.LogError(fmt.Sprintf("SQLiteDatastore: failed to get string '%s'", key), err)
+		}
+		return fallback
+	}
+	return value
+}
+
+// CheckedStringList works similarly to StringList(), but also returns an error
+// if one was encountered.
+func (ds *SQLiteDatastore) CheckedStringList(key string) ([]string, error) {
+	value, err := ds.get(key, "string_list")
+	if err != nil {
+		return nil, err
+	}
+	return value.([]string), nil
+}
+
+// SetStringList implements the fyne.Preferences interface.
+func (ds *SQLiteDatastore) SetStringList(key string, value []string) {
+	err := ds.CheckedSetStringList(key, value)
+	if err != nil {
+		fyne.LogError(fmt.Sprintf("SQLiteDatastore: failed to set string list '%s'", key), err)
+	}
+}
+
+// CheckedSetStringList works identically to SetStringList(), but also returns an error
+// if one occurred.
+func (ds *SQLiteDatastore) CheckedSetStringList(key string, value []string) error {
+	return ds.set(key, "string_list", value)
 }
 
 // Bool returns the bool associated with the given key, or false if it does not
@@ -933,6 +1002,170 @@ func (bb *sqlDsStringBinding) Get() (string, error) {
 // Set implements binding.String
 func (bb *sqlDsStringBinding) Set(value string) error {
 	return bb.ds.CheckedSetString(bb.key, value)
+}
+
+// Declare conformance with binding.StringList
+var _ binding.StringList = (*sqlDsStringListBinding)(nil)
+
+type sqlDsStringListBinding struct {
+	*sqlDsBinding
+}
+
+// BindStringList creates a new string binding for a key in the datastore.
+func (ds *SQLiteDatastore) BindStringList(key string) binding.StringList {
+	bb := &sqlDsStringListBinding{sqlDsBinding: newSQLDsBinding(ds, key)}
+	return bb
+}
+
+// Get implements binding.StringList
+func (bb *sqlDsStringListBinding) Get() ([]string, error) {
+	value, err := bb.ds.CheckedStringList(bb.key)
+	if err != nil {
+		return nil, err
+	}
+	return value, nil
+}
+
+// Set implements binding.StringList
+func (bb *sqlDsStringListBinding) Set(value []string) error {
+	return bb.ds.set(bb.key, "string_list", value)
+}
+
+// Append implements binding.StringList
+//
+// NOTE: this implies a read-modify-write of the entire list.
+func (bb *sqlDsStringListBinding) Append(value string) error {
+	list, err := bb.Get()
+	if err != nil {
+		return err
+	}
+	list = append(list, value)
+	return bb.ds.set(bb.key, "string_list", list)
+}
+
+// Prepend implements binding.StringList
+//
+// NOTE: this implies a read-modify-write of the entire list.
+func (bb *sqlDsStringListBinding) Prepend(value string) error {
+	list, err := bb.Get()
+	if err != nil {
+		return err
+	}
+	list = append([]string{value}, list...)
+	return bb.ds.set(bb.key, "string_list", list)
+}
+
+// GetValue implements binding.StringList
+//
+// NOTE: this implies a read of the entire list.
+func (bb *sqlDsStringListBinding) GetValue(index int) (string, error) {
+	list, err := bb.Get()
+	if err != nil {
+		return "", err
+	}
+
+	if index < 0 || index >= len(list) {
+		return "", fmt.Errorf("index %d out of bounds for list of length %d", index, len(list))
+	}
+
+	return list[index], nil
+}
+
+// SetValue implements binding.StringList
+//
+// NOTE: this implies a read-modify-write of the entire list.
+func (bb *sqlDsStringListBinding) SetValue(index int, value string) error {
+	list, err := bb.Get()
+	if err != nil {
+		return err
+	}
+
+	if index < 0 || index >= len(list) {
+		return fmt.Errorf("index %d out of bounds for list of length %d", index, len(list))
+	}
+
+	list[index] = value
+
+	return bb.Set(list)
+}
+
+// GetItem implements binding.DataList
+func (bb *sqlDsStringListBinding) GetItem(index int) (binding.DataItem, error) {
+	li := &sqlDsStringListItem{
+		list:      bb,
+		index:     index,
+		listeners: make([]binding.DataListener, 0),
+	}
+	li.myListener = binding.NewDataListener(func() {
+		li.triggerListeners()
+	})
+	bb.AddListener(li.myListener)
+
+	runtime.SetFinalizer(li, func(li *sqlDsStringListItem) {
+		bb.RemoveListener(li.myListener)
+	})
+
+	return li, nil
+}
+
+// Length implements binding.DataList
+//
+// NOTE: this implies a read of the entire list.
+func (bb *sqlDsStringListBinding) Length() int {
+	list, err := bb.Get()
+	if err != nil {
+		fyne.LogError("SQLiteDatastore: failed to get length of list", err)
+		return 0
+	}
+
+	return len(list)
+}
+
+func (li *sqlDsStringListItem) triggerListeners() {
+	for _, l := range li.listeners {
+		l.DataChanged()
+	}
+}
+
+// AddListener implements binding.DataItem
+func (li *sqlDsStringListItem) AddListener(listener binding.DataListener) {
+	li.listeners = append(li.listeners, listener)
+}
+
+// RemoveListener implements binding.DataItem
+func (li *sqlDsStringListItem) RemoveListener(listener binding.DataListener) {
+	newListeners := make([]binding.DataListener, 0)
+	for _, l := range li.listeners {
+		if l != listener {
+			newListeners = append(newListeners, l)
+		}
+	}
+	li.listeners = newListeners
+}
+
+// Get implements binding.String
+func (li *sqlDsStringListItem) Get() (string, error) {
+	return li.list.GetValue(li.index)
+}
+
+// Set implements binding.String
+func (li *sqlDsStringListItem) Set(value string) error {
+	return li.list.SetValue(li.index, value)
+}
+
+// Declare conformance with String (implying DataItem)
+var _ binding.String = (*sqlDsStringListItem)(nil)
+
+// sqlDsStringListItem is used to create a DataItem from a specific element
+// in a string list. It tracks the element by index only; the index does
+// not adjust automatically if the data shifts, eg. due to a prepend.
+//
+// The listener will fire any time any element in the list is modified.
+type sqlDsStringListItem struct {
+	list       *sqlDsStringListBinding
+	index      int
+	listeners  []binding.DataListener
+	myListener binding.DataListener
 }
 
 // sqlDsBinding is the underlying plumbing below all of our other bindings.
