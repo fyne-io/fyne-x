@@ -19,6 +19,7 @@ import (
 
 const tileSize = 256
 
+// Map widget renders an interactive map using OpenStreetMap tile data.
 type Map struct {
 	widget.BaseWidget
 
@@ -27,16 +28,22 @@ type Map struct {
 	zoom, x, y int
 }
 
+// NewMap creates a new instance of the map widget.
 func NewMap() *Map {
 	m := &Map{}
 	m.ExtendBaseWidget(m)
 	return m
 }
 
+// MinSize returns the smallest possible size for a widget.
+// For our map this is a constant size representing a single tile on a device with
+// the highest known DPI (4x).
 func (m *Map) MinSize() fyne.Size {
 	return fyne.NewSize(64, 64)
 }
 
+// CreateRenderer returns the renderer for this widget.
+// A map renderer is simply the map Raster with user interface elements overlaid.
 func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	license, _ := url.Parse("https://openstreetmap.org")
 	copyright := widget.NewHyperlink("OpenStreetMap", license)
