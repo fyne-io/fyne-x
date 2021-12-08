@@ -113,7 +113,27 @@ h := widget.NewHexWidget()
 h.Set(0xf)
 ```
 
-## Validation
+## Data Binding
+
+Community contributed data sources for binding.
+
+`import fyne.io/x/fyne/data/binding`
+
+### WebString
+
+A `WebSocketString` binding creates a data binding of type `String` to the specified web socket URL.
+It is also `Closable` so you should be sure to call `Close()` once you are completed using it.
+
+```go
+s, err := binding.NewWebSocketString("wss://demo.piesocket.com/v3/channel_1?api_key=oCdCMcMPQpbvNjUIzqtvF1d2X2okWpDQj4AwARJuAgtjhzKxVEjQU6IdCjwm&notify_self")
+l := widget.NewLabelWithData(s)
+```
+
+The code above uses a test web sockets server from "PieSocket", you can run the code above
+and go to [their test page](https://www.piesocket.com/websocket-tester) to send messages.
+The widget will automatically update to the latest data sent through the socket.
+
+## Data Validation
 
 Community contributed validators.
 
