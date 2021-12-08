@@ -121,7 +121,8 @@ Community contributed data sources for binding.
 
 ### WebString
 
-A `WebSocketString` binding creates a data binding of type `String` to the specified web socket URL.
+A `WebSocketString` binding creates a `String` data binding to the specified web socket URL.
+Each time a message is read the value will be converted to a `string` and set on the binding.
 It is also `Closable` so you should be sure to call `Close()` once you are completed using it.
 
 ```go

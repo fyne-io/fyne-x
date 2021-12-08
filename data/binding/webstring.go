@@ -29,14 +29,14 @@ type webSocketString struct {
 // You should also call `Close()` on the binding once you are done to free the connection.
 func NewWebSocketString(url string) (StringCloser, error) {
 	s := binding.NewString()
-	sock, _, err := websocket.DefaultDialer.Dial(url, http.Header{})
+	conn, _, err := websocket.DefaultDialer.Dial(url, http.Header{})
 	if err != nil {
 		return nil, err
 	}
 
 	go func() {
 		for {
-			_, p, err := sock.ReadMessage()
+			_, p, err := conn.ReadMessage()
 			if err != nil {
 				log.Println(err)
 				return
@@ -48,7 +48,7 @@ func NewWebSocketString(url string) (StringCloser, error) {
 			}
 		}
 	}()
-	ret := &webSocketString{String: s, conn: sock}
+	ret := &webSocketString{String: s, conn: conn}
 	return ret, nil
 }
 
