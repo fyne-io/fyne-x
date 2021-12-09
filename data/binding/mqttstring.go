@@ -20,17 +20,15 @@ type mqttString struct {
 func NewMqttString(conn mqtt.Client, topic string) (StringCloser, error) {
 	ret := &mqttString{String: binding.NewString(), conn: conn, topic: topic}
 
-	go func() {
-		token := conn.Subscribe(topic, 1, func(c mqtt.Client, m mqtt.Message) {
-			ret.String.Set(string(m.Payload()))
-		})
+	token := conn.Subscribe(topic, 1, func(c mqtt.Client, m mqtt.Message) {
+		ret.String.Set(string(m.Payload()))
+	})
 
-		token.Wait()
+	token.Wait()
 
-		if token.Error() != nil {
-			ret.err = token.Error()
-		}
-	}()
+	if token.Error() != nil {
+		return nil, token.Error()
+	}
 
 	return ret, nil
 }
