@@ -26,8 +26,8 @@ func NewMqttString(conn mqtt.Client, topic string) (StringCloser, error) {
 
 	token.Wait()
 
-	if token.Error() != nil {
-		return nil, token.Error()
+	if err := token.Error(); err != nil {
+		return nil, err
 	}
 
 	return ret, nil
@@ -37,9 +37,8 @@ func (s *mqttString) Set(val string) error {
 	token := s.conn.Publish(s.topic, 0, false, val)
 
 	token.Wait()
-	if token.Error() != nil {
-		s.err = token.Error()
-		return token.Error()
+	if s.err = token.Error(); s.err != nil {
+		return s.err
 	}
 	s.err = nil
 
