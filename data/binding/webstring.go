@@ -3,10 +3,8 @@ package binding
 
 import (
 	"io"
-	"log"
 	"net/http"
 
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 
 	"github.com/gorilla/websocket"
@@ -22,6 +20,7 @@ type StringCloser interface {
 type webSocketString struct {
 	binding.String
 	conn *websocket.Conn
+	prev error
 }
 
 // NewWebSocketString returns a `String` binding to a web socket server specified as `url`.
@@ -34,21 +33,8 @@ func NewWebSocketString(url string) (StringCloser, error) {
 		return nil, err
 	}
 
-	go func() {
-		for {
-			_, p, err := conn.ReadMessage()
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			err = s.Set(string(p))
-			if err != nil {
-				fyne.LogError("Failed to set string from web socket", err)
-			}
-		}
-	}()
 	ret := &webSocketString{String: s, conn: conn}
+	go ret.readMessages()
 	return ret, nil
 }
 
@@ -58,4 +44,29 @@ func (s *webSocketString) Close() error {
 	}
 
 	return s.conn.Close()
+}
+
+func (s *webSocketString) Get() (string, error) {
+	if s.prev != nil {
+		err := s.prev
+		s.prev = nil
+		return "", err
+	}
+
+	return s.String.Get()
+}
+
+func (s *webSocketString) readMessages() {
+	for {
+		_, p, err := s.conn.ReadMessage()
+		if err != nil { // permanent (could be connection closed)
+			s.prev = err
+			return
+		}
+
+		err = s.Set(string(p))
+		if err != nil { // not permanent
+			s.prev = err
+		}
+	}
 }
