@@ -46,8 +46,7 @@ func (s *webSocketString) Close() error {
 }
 
 func (s *webSocketString) Get() (string, error) {
-	if s.prev != nil {
-		err := s.prev
+	if err := s.prev; err != nil {
 		return "", err
 	}
 
