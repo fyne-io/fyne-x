@@ -27,13 +27,12 @@ type webSocketString struct {
 // The resulting string will be set to the content of the latest message sent through the socket.
 // You should also call `Close()` on the binding once you are done to free the connection.
 func NewWebSocketString(url string) (StringCloser, error) {
-	s := binding.NewString()
 	conn, _, err := websocket.DefaultDialer.Dial(url, http.Header{})
 	if err != nil {
 		return nil, err
 	}
 
-	ret := &webSocketString{String: s, conn: conn}
+	ret := &webSocketString{String: binding.NewString(), conn: conn}
 	go ret.readMessages()
 	return ret, nil
 }
@@ -49,7 +48,6 @@ func (s *webSocketString) Close() error {
 func (s *webSocketString) Get() (string, error) {
 	if s.prev != nil {
 		err := s.prev
-		s.prev = nil
 		return "", err
 	}
 
@@ -59,14 +57,11 @@ func (s *webSocketString) Get() (string, error) {
 func (s *webSocketString) readMessages() {
 	for {
 		_, p, err := s.conn.ReadMessage()
+		s.prev = err // if no error we clear the state
 		if err != nil { // permanent (could be connection closed)
-			s.prev = err
 			return
 		}
 
-		err = s.Set(string(p))
-		if err != nil { // not permanent
-			s.prev = err
-		}
+		_ = s.Set(string(p)) // we control s, Set will not error
 	}
 }
