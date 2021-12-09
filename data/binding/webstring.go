@@ -57,7 +57,7 @@ func (s *webSocketString) Get() (string, error) {
 func (s *webSocketString) readMessages() {
 	for {
 		_, p, err := s.conn.ReadMessage()
-		s.prev = err // if no error we clear the state
+		s.prev = err    // if no error we clear the state
 		if err != nil { // permanent (could be connection closed)
 			return
 		}
