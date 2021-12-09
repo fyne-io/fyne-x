@@ -2,7 +2,6 @@
 package binding
 
 import (
-	"io"
 	"log"
 	"net/http"
 
@@ -11,13 +10,6 @@ import (
 
 	"github.com/gorilla/websocket"
 )
-
-// StringCloser is an extension of the String interface that allows resources to be freed
-// using the standard `Close()` method.
-type StringCloser interface {
-	binding.String
-	io.Closer
-}
 
 type webSocketString struct {
 	binding.String
