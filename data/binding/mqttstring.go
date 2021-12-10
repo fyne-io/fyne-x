@@ -1,4 +1,3 @@
-// Package binding provides extended sources of data binding.
 package binding
 
 import (
@@ -14,7 +13,8 @@ type mqttString struct {
 	err   error
 }
 
-// NewMqttString returns a `String` binding to a web socket server specified as `url`.
+// NewMqttString returns a `String` binding to a MQTT topic specified by combining a connected
+// mqtt.Client and a `topic`.
 // The resulting string will be set to the content of the latest message sent through the socket.
 // You should also call `Close()` on the binding once you are done to free the connection.
 func NewMqttString(conn mqtt.Client, topic string) (StringCloser, error) {
@@ -37,12 +37,8 @@ func (s *mqttString) Set(val string) error {
 	token := s.conn.Publish(s.topic, 0, false, val)
 
 	token.Wait()
-	if s.err = token.Error(); s.err != nil {
-		return s.err
-	}
-	s.err = nil
-
-	return nil
+	s.err = token.Error()
+	return s.err
 }
 
 func (s *mqttString) Get() (string, error) {

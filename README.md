@@ -150,6 +150,9 @@ client := mqtt.NewClient(opts)
 
 token := client.Connect()
 token.Wait()
+if err := token.Error(); err != nil {
+    // Handle connection error
+}
 
 s, err := binding.NewMqttString(client, "fyne.io/x/string")
 ```

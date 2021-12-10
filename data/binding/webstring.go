@@ -1,4 +1,3 @@
-// Package binding provides extended sources of data binding.
 package binding
 
 import (
