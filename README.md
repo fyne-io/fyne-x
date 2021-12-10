@@ -134,6 +134,29 @@ The code above uses a test web sockets server from "PieSocket", you can run the 
 and go to [their test page](https://www.piesocket.com/websocket-tester) to send messages.
 The widget will automatically update to the latest data sent through the socket.
 
+### MqttString
+
+A `MqttString` binding creates a `String` data binding to the specified _topic_ associated with
+the specified **MQTT** client connection. Each time a message is received the value will be converted
+to a `string` and set on the binding. Each time the value is edited, it will be sent back over
+**MQTT** on the specified _topic_. It is also a `Closer` so you should be sure to call `Close`
+once you are completed using it to disconnect the _topic_ handler from the **MQTT** client connection.
+
+```go
+opts := mqtt.NewClientOptions()
+opts.AddBroker("tcp://broker.emqx.io:1883")
+opts.SetClientID("fyne_demo")
+client := mqtt.NewClient(opts)
+
+token := client.Connect()
+token.Wait()
+if err := token.Error(); err != nil {
+    // Handle connection error
+}
+
+s, err := binding.NewMqttString(client, "fyne.io/x/string")
+```
+
 ## Data Validation
 
 Community contributed validators.
