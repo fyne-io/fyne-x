@@ -10,3 +10,5 @@ require (
 	github.com/stretchr/testify v1.7.0
 	github.com/wagslane/go-password-validator v0.3.0
 )
+
+replace github.com/Andrew-M-C/go.jsonvalue => github.com/Bluebugs/go.jsonvalue v1.1.2-0.20211221170544-a7820e650cf7

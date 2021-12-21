@@ -266,7 +266,7 @@ func (child *childJSONFloat) Set(val float64) error {
 		return err
 	}
 
-	structured.SetFloat64(val, -1).At(child.generic.target)
+	structured.SetFloat64(val).At(child.generic.target)
 	return child.generic.source.Set(structured)
 }
 
