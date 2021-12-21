@@ -11,4 +11,4 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 )
 
-replace github.com/Andrew-M-C/go.jsonvalue => github.com/Bluebugs/go.jsonvalue v1.1.2-0.20211221170544-a7820e650cf7
+replace github.com/Andrew-M-C/go.jsonvalue => github.com/Bluebugs/go.jsonvalue v1.1.2-0.20211221182320-e9c53f859561
