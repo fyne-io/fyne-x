@@ -1,7 +1,7 @@
 fyne.io/fyne/v2 v2.1.0 h1:qzdkaXL/UpmMtG4FlsX9xMZ0Q93CRzLxkoiSXyplP/I=
 fyne.io/fyne/v2 v2.1.0/go.mod h1:c1vwI38Ebd0dAdxVa6H1Pj6/+cK1xtDy61+I31g+s14=
-github.com/Bluebugs/go.jsonvalue v1.1.2-0.20211221182320-e9c53f859561 h1:ZJ9ykZ5scAij4FRr1xkeQi7oOfN9tH3igYVLtm7o5Co=
-github.com/Bluebugs/go.jsonvalue v1.1.2-0.20211221182320-e9c53f859561/go.mod h1:oTJGG91FhtsxvUFVwHSvr6zuaTcAuroj/ToxfT7Ox8U=
+github.com/Andrew-M-C/go.jsonvalue v1.1.2-0.20211223013816-e873b56b4a84 h1:L2C3QKBQwuHuiKwaBj8HDs2r0bAUGqtBYe3ymG0S6Z4=
+github.com/Andrew-M-C/go.jsonvalue v1.1.2-0.20211223013816-e873b56b4a84/go.mod h1:oTJGG91FhtsxvUFVwHSvr6zuaTcAuroj/ToxfT7Ox8U=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/toml v0.4.1/go.mod h1:CxXYINrC8qIiEnFrOxCa7Jy5BFHlXnUU2pbicEuybxQ=
 github.com/Kodeworks/golang-image-ico v0.0.0-20141118225523-73f0f4cfade9/go.mod h1:7uhhqiBaR4CpN0k9rMjOtjpcfGd6DG2m04zQxKnWQ0I=
