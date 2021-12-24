@@ -36,7 +36,7 @@ func TestJSONFromDataStringWithString(t *testing.T) {
 
 	assert.NotNil(t, s)
 
-	json, err := xbinding.NewJSONFromDataString(s)
+	json, err := xbinding.NewJSONFromString(s)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, json)
@@ -96,7 +96,7 @@ func TestJSONFromDataStringWithNumber(t *testing.T) {
 
 	assert.NotNil(t, s)
 
-	json, err := xbinding.NewJSONFromDataString(s)
+	json, err := xbinding.NewJSONFromString(s)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, json)
@@ -141,7 +141,7 @@ func TestJSONFromDataStringWithBool(t *testing.T) {
 
 	assert.NotNil(t, s)
 
-	json, err := xbinding.NewJSONFromDataString(s)
+	json, err := xbinding.NewJSONFromString(s)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, json)

@@ -61,9 +61,9 @@ var (
 	errWrongType = errors.New("wrong type provided")
 )
 
-// NewJSONFromDataString return a data binding to a `jsonvalue.V{}` synchronized with the `String`
+// NewJSONFromString return a data binding to a `jsonvalue.V{}` synchronized with the `String`
 // binding used to create the new binding.
-func NewJSONFromDataString(data binding.String) (JSONValue, error) {
+func NewJSONFromString(data binding.String) (JSONValue, error) {
 	ret := &databoundJSON{self: binding.NewUntyped(), lock: sync.RWMutex{}, source: data, last: ""}
 	data.AddListener(binding.NewDataListener(ret.changed))
 
