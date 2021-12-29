@@ -25,11 +25,13 @@ type Map struct {
 	pixels     *image.NRGBA
 	w, h       int
 	zoom, x, y int
+
+	cl *http.Client
 }
 
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
-	m := &Map{}
+	m := &Map{cl: &http.Client{}}
 	m.ExtendBaseWidget(m)
 	return m
 }
@@ -109,14 +111,13 @@ func (m *Map) draw(w, h int) image.Image {
 	firstTileX := mx - int(math.Ceil(float64(midTileX)/float64(tileSize)))
 	firstTileY := my - int(math.Ceil(float64(midTileY)/float64(tileSize)))
 
-	cl := &http.Client{}
 	for x := firstTileX; (x-firstTileX)*tileSize <= w+tileSize; x++ {
 		for y := firstTileY; (y-firstTileY)*tileSize <= h+tileSize; y++ {
 			if x < 0 || y < 0 || x >= int(count) || y >= int(count) {
 				continue
 			}
 
-			src, err := getTile(x, y, m.zoom, cl)
+			src, err := getTile(x, y, m.zoom, m.cl)
 			if err != nil {
 				fyne.LogError("tile fetch error", err)
 				continue
