@@ -110,8 +110,8 @@ func (m *Map) draw(w, h int) image.Image {
 	firstTileY := my - int(math.Ceil(float64(midTileY)/float64(tileSize)))
 
 	cl := &http.Client{}
-	for x := firstTileX; (x-firstTileX)*tileSize <= w+tileSize/2; x++ {
-		for y := firstTileY; (y-firstTileY)*tileSize <= h+tileSize/2; y++ {
+	for x := firstTileX; (x-firstTileX)*tileSize <= w+tileSize; x++ {
+		for y := firstTileY; (y-firstTileY)*tileSize <= h+tileSize; y++ {
 			if x < 0 || y < 0 || x >= int(count) || y >= int(count) {
 				continue
 			}
