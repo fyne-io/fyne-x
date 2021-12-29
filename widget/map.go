@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/nfnt/resize"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
@@ -94,6 +96,17 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (m *Map) draw(w, h int) image.Image {
+	scale := 1
+	tileSize := tileSize
+	// TODO use retina tiles once OSM supports it in their server (text scaling issues)...
+	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
+		scale = int(c.Scale())
+		if scale < 1 {
+			scale = 1
+		}
+		tileSize = tileSize * scale
+	}
+
 	if m.w != w || m.h != h {
 		m.pixels = image.NewNRGBA(image.Rect(0, 0, w, h))
 	}
@@ -125,7 +138,11 @@ func (m *Map) draw(w, h int) image.Image {
 
 			pos := image.Pt(midTileX+(x-mx)*tileSize,
 				midTileY+(y-my)*tileSize)
-			draw.Copy(m.pixels, pos, src, src.Bounds(), draw.Over, nil)
+			scaled := src
+			if scale > 1 {
+				scaled = resize.Resize(uint(tileSize), uint(tileSize), src, resize.Lanczos2)
+			}
+			draw.Copy(m.pixels, pos, scaled, image.Rect(0, 0, tileSize, tileSize), draw.Over, nil)
 		}
 	}
 
