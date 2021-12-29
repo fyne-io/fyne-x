@@ -1,9 +1,7 @@
 package widget
 
 import (
-	"fmt"
 	"image"
-	"image/png"
 	"math"
 	"net/http"
 	"net/url"
@@ -14,6 +12,7 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
+
 	"golang.org/x/image/draw"
 )
 
@@ -117,24 +116,9 @@ func (m *Map) draw(w, h int) image.Image {
 				continue
 			}
 
-			u := fmt.Sprintf("https://tile.openstreetmap.org/%d/%d/%d.png", m.zoom, x, y)
-			req, err := http.NewRequest("GET", u, nil)
+			src, err := getTile(x, y, m.zoom, cl)
 			if err != nil {
-				fyne.LogError("download error", err)
-				continue
-			}
-
-			req.Header.Set("User-Agent", "Fyne-X Map Widget/0.1")
-			res, err := cl.Do(req)
-			if err != nil {
-				fyne.LogError("decode error", err)
-				continue
-			}
-
-			src, err := png.Decode(res.Body)
-			_ = res.Body.Close()
-			if err != nil {
-				fyne.LogError("decode error", err)
+				fyne.LogError("tile fetch error", err)
 				continue
 			}
 
