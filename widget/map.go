@@ -48,7 +48,7 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	copyright := widget.NewHyperlink("OpenStreetMap", license)
 	copyright.Alignment = fyne.TextAlignTrailing
 	zoom := container.NewVBox(
-		widget.NewButtonWithIcon("", theme.ZoomInIcon(), func() {
+		newMapButton(theme.ZoomInIcon(), func() {
 			if m.zoom >= 19 {
 				return
 			}
@@ -57,7 +57,7 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 			m.y *= 2
 			m.Refresh()
 		}),
-		widget.NewButtonWithIcon("", theme.ZoomOutIcon(), func() {
+		newMapButton(theme.ZoomOutIcon(), func() {
 			if m.zoom <= 0 {
 				return
 			}
@@ -68,19 +68,19 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 		}))
 
 	move := container.NewGridWithColumns(3, layout.NewSpacer(),
-		widget.NewButtonWithIcon("", theme.MoveUpIcon(), func() {
+		newMapButton(theme.MoveUpIcon(), func() {
 			m.y--
 			m.Refresh()
 		}), layout.NewSpacer(),
-		widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
+		newMapButton(theme.NavigateBackIcon(), func() {
 			m.x--
 			m.Refresh()
 		}), layout.NewSpacer(),
-		widget.NewButtonWithIcon("", theme.NavigateNextIcon(), func() {
+		newMapButton(theme.NavigateNextIcon(), func() {
 			m.x++
 			m.Refresh()
 		}), layout.NewSpacer(),
-		widget.NewButtonWithIcon("", theme.MoveDownIcon(), func() {
+		newMapButton(theme.MoveDownIcon(), func() {
 			m.y++
 			m.Refresh()
 		}), layout.NewSpacer())
