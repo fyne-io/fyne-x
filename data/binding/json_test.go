@@ -63,6 +63,8 @@ func TestJSONFromDataStringWithString(t *testing.T) {
 
 	propagatedICV := NewListener(intChildV)
 
+	assert.Equal(t, false, json.IsEmpty())
+
 	err = s.Set(`{ "value": "7", "array": [ "test" ] }`)
 
 	assert.NoError(t, err)
@@ -71,6 +73,8 @@ func TestJSONFromDataStringWithString(t *testing.T) {
 	waitOnChan(t, propagatedCV)
 	waitOnChan(t, propagatedCA)
 	waitOnChan(t, propagatedICV)
+
+	assert.Equal(t, true, json.IsEmpty())
 
 	vs, err := childV.Get()
 
