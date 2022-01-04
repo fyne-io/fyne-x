@@ -118,9 +118,9 @@ func (m *Map) draw(w, h int) image.Image {
 		midTileY += tileSize / 2
 	}
 
-	count := math.Pow(2, float64(m.zoom))
-	mx := m.x + int(count/2-0.5)
-	my := m.y + int(count/2-0.5)
+	count := 1 << m.zoom
+	mx := m.x + int(float32(count)/2-0.5)
+	my := m.y + int(float32(count)/2-0.5)
 	firstTileX := mx - int(math.Ceil(float64(midTileX)/float64(tileSize)))
 	firstTileY := my - int(math.Ceil(float64(midTileY)/float64(tileSize)))
 
