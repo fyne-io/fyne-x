@@ -67,6 +67,7 @@ func NewJSONFromString(data binding.String) (JSONValue, error) {
 	return ret, nil
 }
 
+// IsEmpty report true only if the data binding has already received a fully valid JSON object
 func (json *databoundJSON) IsEmpty() bool {
 	v, err := json.get()
 	if err != nil {
@@ -84,19 +85,10 @@ func (json *databoundJSON) unlock() {
 	json.rwlock.Unlock()
 }
 
-// RLock locks rw for reading.
-//
-// It should not be used for recursive read locking; a blocked Lock
-// call excludes new readers from acquiring the lock. See the
-// documentation on the RWMutex type.
 func (json *databoundJSON) rlock() {
 	json.rwlock.RLock()
 }
 
-// RUnlock undoes a single RLock call;
-// it does not affect other simultaneous readers.
-// It is a run-time error if rw is not locked for reading
-// on entry to RUnlock.
 func (json *databoundJSON) runlock() {
 	json.rwlock.RUnlock()
 }
