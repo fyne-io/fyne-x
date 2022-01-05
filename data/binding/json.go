@@ -32,7 +32,7 @@ type databoundJSON struct {
 
 // Internal type for the children accessor
 type childJSON struct {
-	source JSONValue
+	source *databoundJSON
 	err    error
 
 	target []interface{}
@@ -61,7 +61,7 @@ var (
 // NewJSONFromString return a data binding to a `jsonvalue.V{}` synchronized with the `String`
 // binding used to create the new binding.
 func NewJSONFromString(data binding.String) (JSONValue, error) {
-	ret := &databoundJSON{self: binding.NewUntyped(), rwlock: sync.RWMutex{}, source: data, last: ""}
+	ret := &databoundJSON{self: binding.NewUntyped(), rwlock: sync.RWMutex{}, source: data, last: "{}"}
 	data.AddListener(binding.NewDataListener(ret.changed))
 
 	return ret, nil
@@ -71,10 +71,14 @@ func NewJSONFromString(data binding.String) (JSONValue, error) {
 func (json *databoundJSON) IsEmpty() bool {
 	v, err := json.get()
 	if err != nil {
-		return false
+		return true
 	}
 
-	return v.IsObject()
+	if !v.IsObject() {
+		return true
+	}
+
+	return v.Len() == 0
 }
 
 func (json *databoundJSON) lock() {
@@ -168,10 +172,10 @@ func (json *databoundJSON) GetItemString(firstParam interface{}, params ...inter
 }
 
 func (child *childJSONString) changed() {
-	child.generic.source.(*databoundJSON).rlock()
-	defer child.generic.source.(*databoundJSON).runlock()
+	child.generic.source.rlock()
+	defer child.generic.source.runlock()
 
-	structured, err := child.generic.source.(*databoundJSON).get()
+	structured, err := child.generic.source.get()
 	child.generic.err = err
 	if err != nil {
 		return
@@ -198,16 +202,16 @@ func (child *childJSONString) Get() (string, error) {
 }
 
 func (child *childJSONString) Set(val string) error {
-	child.generic.source.(*databoundJSON).lock()
-	defer child.generic.source.(*databoundJSON).unlock()
+	child.generic.source.lock()
+	defer child.generic.source.unlock()
 
-	structured, err := child.generic.source.(*databoundJSON).get()
+	structured, err := child.generic.source.get()
 	if err != nil {
 		return err
 	}
 
 	structured.SetString(val).At(child.generic.target)
-	return child.generic.source.(*databoundJSON).set(structured)
+	return child.generic.source.set(structured)
 }
 
 // Return a `Float` binding linked with the specificed path to the JSON structure provided by this data binding.
@@ -226,10 +230,10 @@ func (json *databoundJSON) GetItemFloat(firstParam interface{}, params ...interf
 }
 
 func (child *childJSONFloat) changed() {
-	child.generic.source.(*databoundJSON).rlock()
-	defer child.generic.source.(*databoundJSON).runlock()
+	child.generic.source.rlock()
+	defer child.generic.source.runlock()
 
-	structured, err := child.generic.source.(*databoundJSON).get()
+	structured, err := child.generic.source.get()
 	child.generic.err = err
 	if err != nil {
 		return
@@ -256,16 +260,16 @@ func (child *childJSONFloat) Get() (float64, error) {
 }
 
 func (child *childJSONFloat) Set(val float64) error {
-	child.generic.source.(*databoundJSON).lock()
-	defer child.generic.source.(*databoundJSON).unlock()
+	child.generic.source.lock()
+	defer child.generic.source.unlock()
 
-	structured, err := child.generic.source.(*databoundJSON).get()
+	structured, err := child.generic.source.get()
 	if err != nil {
 		return err
 	}
 
 	structured.SetFloat64(val).At(child.generic.target)
-	return child.generic.source.(*databoundJSON).set(structured)
+	return child.generic.source.set(structured)
 }
 
 // Return a `Bool` binding linked with the specificed path to the JSON structure provided by this data binding.
@@ -284,10 +288,10 @@ func (json *databoundJSON) GetItemBool(firstParam interface{}, params ...interfa
 }
 
 func (child *childJSONBool) changed() {
-	child.generic.source.(*databoundJSON).rlock()
-	defer child.generic.source.(*databoundJSON).runlock()
+	child.generic.source.rlock()
+	defer child.generic.source.runlock()
 
-	structured, err := child.generic.source.(*databoundJSON).get()
+	structured, err := child.generic.source.get()
 	child.generic.err = err
 	if err != nil {
 		return
@@ -314,14 +318,14 @@ func (child *childJSONBool) Get() (bool, error) {
 }
 
 func (child *childJSONBool) Set(val bool) error {
-	child.generic.source.(*databoundJSON).lock()
-	defer child.generic.source.(*databoundJSON).unlock()
+	child.generic.source.lock()
+	defer child.generic.source.unlock()
 
-	structured, err := child.generic.source.(*databoundJSON).get()
+	structured, err := child.generic.source.get()
 	if err != nil {
 		return err
 	}
 
 	structured.SetBool(val).At(child.generic.target)
-	return child.generic.source.(*databoundJSON).set(structured)
+	return child.generic.source.set(structured)
 }

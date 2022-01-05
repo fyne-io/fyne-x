@@ -31,7 +31,7 @@ func NewListener(data binding.DataItem) chan bool {
 	return propagated
 }
 
-func TestJSONFromDataStringWithString(t *testing.T) {
+func TestJSONFromStringWithString(t *testing.T) {
 	s := binding.NewString()
 
 	assert.NotNil(t, s)
@@ -63,7 +63,7 @@ func TestJSONFromDataStringWithString(t *testing.T) {
 
 	propagatedICV := NewListener(intChildV)
 
-	assert.Equal(t, false, json.IsEmpty())
+	assert.Equal(t, true, json.IsEmpty())
 
 	err = s.Set(`{ "value": "7", "array": [ "test" ] }`)
 
@@ -74,7 +74,7 @@ func TestJSONFromDataStringWithString(t *testing.T) {
 	waitOnChan(t, propagatedCA)
 	waitOnChan(t, propagatedICV)
 
-	assert.Equal(t, true, json.IsEmpty())
+	assert.Equal(t, false, json.IsEmpty())
 
 	vs, err := childV.Get()
 
@@ -95,7 +95,7 @@ func TestJSONFromDataStringWithString(t *testing.T) {
 	assert.Equal(t, 7, vi)
 }
 
-func TestJSONFromDataStringWithNumber(t *testing.T) {
+func TestJSONFromStringWithNumber(t *testing.T) {
 	s := binding.NewString()
 
 	assert.NotNil(t, s)
@@ -140,7 +140,7 @@ func TestJSONFromDataStringWithNumber(t *testing.T) {
 	assert.Equal(t, 42.8, vs)
 }
 
-func TestJSONFromDataStringWithBool(t *testing.T) {
+func TestJSONFromStringWithBool(t *testing.T) {
 	s := binding.NewString()
 
 	assert.NotNil(t, s)
