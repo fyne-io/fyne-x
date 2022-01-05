@@ -113,6 +113,18 @@ h := widget.NewHexWidget()
 h.Set(0xf)
 ```
 
+### Map
+
+An OpenStreetMap widget that can the user can pan and zoom.
+To use this in your app and be compliant with their requirements you may need to request
+permission to embed in your specific software.
+
+```go
+m := NewMap()
+```
+
+![](img/map.png)
+
 ## Data Binding
 
 Community contributed data sources for binding.
