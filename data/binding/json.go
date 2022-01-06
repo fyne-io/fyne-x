@@ -9,7 +9,7 @@ import (
 	jsonvalue "github.com/Andrew-M-C/go.jsonvalue"
 )
 
-// JSONValue supports binding a jsonvalue.V{}
+// JSONValue supports binding a JSON object
 type JSONValue interface {
 	binding.DataItem
 
@@ -64,8 +64,9 @@ var (
 	errWrongType = errors.New("wrong type provided")
 )
 
-// NewJSONFromString return a data binding to a `jsonvalue.V{}` synchronized with the `String`
-// binding used to create the new binding.
+// NewJSONFromString return a data binding to a JSON object synchronized with the `String`
+// binding used to create the new binding. The JSON object is not exposed. You have to get children
+// data binding targeting a specific path to actually get a data out of that JSON.
 func NewJSONFromString(data binding.String) (JSONValue, error) {
 	ret := &databoundJSON{self: binding.NewUntyped(), rwlock: sync.RWMutex{}, source: data, last: "{}"}
 	data.AddListener(binding.NewDataListener(ret.changed))
@@ -162,7 +163,7 @@ func (json *databoundJSON) RemoveListener(listener binding.DataListener) {
 	json.self.RemoveListener(listener)
 }
 
-// Return a `String` binding linked with the specificed path to the JSON structure provided by this data binding.
+// Return a `String` binding linked with the specificed path to the JSON object provided by this data binding.
 //
 // The parameters follow the jsonvalue.GetString logic and only a String value can be fetched by this binding from
 // the JSON object.
@@ -220,9 +221,9 @@ func (child *childJSONString) Set(val string) error {
 	return child.generic.source.set(structured)
 }
 
-// Return a `Float` binding linked with the specificed path to the JSON structure provided by this data binding.
+// Return a `Float` binding linked with the specificed path to the JSON object provided by this data binding.
 //
-// The parameters follow the jsonvalue.GetString logic and only a Numeric value can be fetched by this binding
+// The parameters follow the jsonvalue.GetFloat64 logic and only a Numeric value can be fetched by this binding
 // from the JSON object.
 func (json *databoundJSON) GetItemFloat(firstParam interface{}, params ...interface{}) (binding.Float, error) {
 	ret := &childJSONFloat{Float: binding.NewFloat(), generic: childJSON{source: json, target: make([]interface{}, 0)}}
@@ -338,7 +339,7 @@ func (child *childJSONInt) Set(val int) error {
 
 // Return a `Bool` binding linked with the specificed path to the JSON object provided by this data binding.
 //
-// The parameters follow the jsonvalue.GetString logic and only a boolean value can be fetched by this binding
+// The parameters follow the jsonvalue.GetBool logic and only a boolean value can be fetched by this binding
 // from the JSON object.
 func (json *databoundJSON) GetItemBool(firstParam interface{}, params ...interface{}) (binding.Bool, error) {
 	ret := &childJSONBool{Bool: binding.NewBool(), generic: childJSON{source: json, target: make([]interface{}, 0)}}
