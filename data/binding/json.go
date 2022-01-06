@@ -15,6 +15,7 @@ type JSONValue interface {
 
 	GetItemString(firstParam interface{}, params ...interface{}) (binding.String, error)
 	GetItemFloat(firstParam interface{}, params ...interface{}) (binding.Float, error)
+	GetItemInt(firstParam interface{}, params ...interface{}) (binding.Int, error)
 	GetItemBool(firstParam interface{}, params ...interface{}) (binding.Bool, error)
 
 	IsEmpty() bool
@@ -46,6 +47,11 @@ type childJSONString struct {
 
 type childJSONFloat struct {
 	binding.Float
+	generic childJSON
+}
+
+type childJSONInt struct {
+	binding.Int
 	generic childJSON
 }
 
@@ -272,7 +278,65 @@ func (child *childJSONFloat) Set(val float64) error {
 	return child.generic.source.set(structured)
 }
 
-// Return a `Bool` binding linked with the specificed path to the JSON structure provided by this data binding.
+// Return a `Int` binding linked with the specificed path to the JSON object provided by this data binding.
+//
+// The parameters follow the jsonvalue.GetInt logic and only a Numeric value can be fetched by this binding
+// from the JSON object.
+func (json *databoundJSON) GetItemInt(firstParam interface{}, params ...interface{}) (binding.Int, error) {
+	ret := &childJSONInt{Int: binding.NewInt(), generic: childJSON{source: json, target: make([]interface{}, 0)}}
+
+	ret.generic.first = firstParam
+	ret.generic.target = append(ret.generic.target, params...)
+
+	json.AddListener(binding.NewDataListener(ret.changed))
+
+	return ret, nil
+}
+
+func (child *childJSONInt) changed() {
+	child.generic.source.rlock()
+	defer child.generic.source.runlock()
+
+	structured, err := child.generic.source.get()
+	child.generic.err = err
+	if err != nil {
+		return
+	}
+
+	var f int
+
+	if structured.IsObject() {
+		f, err = structured.GetInt(child.generic.first, child.generic.target...)
+		child.generic.err = err
+		if err != nil {
+			return
+		}
+	}
+
+	child.Int.Set(f)
+}
+
+func (child *childJSONInt) Get() (int, error) {
+	if child.generic.err != nil {
+		return 0, child.generic.err
+	}
+	return child.Int.Get()
+}
+
+func (child *childJSONInt) Set(val int) error {
+	child.generic.source.lock()
+	defer child.generic.source.unlock()
+
+	structured, err := child.generic.source.get()
+	if err != nil {
+		return err
+	}
+
+	structured.SetInt(val).At(child.generic.target)
+	return child.generic.source.set(structured)
+}
+
+// Return a `Bool` binding linked with the specificed path to the JSON object provided by this data binding.
 //
 // The parameters follow the jsonvalue.GetString logic and only a boolean value can be fetched by this binding
 // from the JSON object.

@@ -95,7 +95,7 @@ func TestJSONFromStringWithString(t *testing.T) {
 	assert.Equal(t, 7, vi)
 }
 
-func TestJSONFromStringWithNumber(t *testing.T) {
+func TestJSONFromStringWithFloat(t *testing.T) {
 	s := binding.NewString()
 
 	assert.NotNil(t, s)
@@ -138,6 +138,51 @@ func TestJSONFromStringWithNumber(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 42.8, vs)
+}
+
+func TestJSONFromStringWithInt(t *testing.T) {
+	s := binding.NewString()
+
+	assert.NotNil(t, s)
+
+	json, err := xbinding.NewJSONFromString(s)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, json)
+
+	propagatedJSON := NewListener(json)
+
+	childV, err := json.GetItemInt("value")
+
+	assert.NoError(t, err)
+	assert.NotNil(t, childV)
+
+	propagatedCV := NewListener(childV)
+
+	childA, err := json.GetItemInt("array", 0)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, childA)
+
+	propagatedCA := NewListener(childA)
+
+	err = s.Set(`{ "value": 7, "array": [ 42 ] }`)
+
+	assert.NoError(t, err)
+
+	waitOnChan(t, propagatedJSON)
+	waitOnChan(t, propagatedCV)
+	waitOnChan(t, propagatedCA)
+
+	vs, err := childV.Get()
+
+	assert.NoError(t, err)
+	assert.Equal(t, 7, vs)
+
+	vs, err = childA.Get()
+
+	assert.NoError(t, err)
+	assert.Equal(t, 42, vs)
 }
 
 func TestJSONFromStringWithBool(t *testing.T) {
