@@ -9,11 +9,12 @@ import (
 // CompletionEntry is an Entry with options displayed in a PopUpMenu.
 type CompletionEntry struct {
 	widget.Entry
-	popupMenu     *widget.PopUp
-	navigableList *navigableList
-	Options       []string
-	pause         bool
-	itemHeight    float32
+	popupMenu        *widget.PopUp
+	navigableList    *navigableList
+	Options          []string
+	pause            bool
+	itemHeight       float32
+	OnMenuNavigation func(widget.ListItemID)
 }
 
 // NewCompletionEntry creates a new CompletionEntry which creates a popup menu that responds to keystrokes to navigate through the items without losing the editing ability of the text input.
@@ -66,7 +67,8 @@ func (c *CompletionEntry) ShowCompletion() {
 	}
 
 	if c.navigableList == nil {
-		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion)
+		c.navigableList = newNavigableList(
+			c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion, c.OnMenuNavigation)
 	}
 	holder := fyne.CurrentApp().Driver().CanvasForObject(c)
 
@@ -125,7 +127,7 @@ type navigableList struct {
 	items           []string
 }
 
-func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func()) *navigableList {
+func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func(), navigate func(widget.ListItemID)) *navigableList {
 	n := &navigableList{
 		entry:           entry,
 		selected:        -1,
@@ -148,7 +150,9 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 			if !n.navigating && id > -1 {
 				setTextFromMenu(n.items[id])
 			}
+
 			n.navigating = false
+			navigate(id)
 		},
 	}
 	n.ExtendBaseWidget(n)
