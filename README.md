@@ -94,6 +94,11 @@ entry.OnChanged = func(s string) {
   <img src="img/widget-completion-entry.png" width="825" height="634" alt="CompletionEntry Widget" style="max-width: 100%" />
 </p>
 
+### LimitedWidthEntry
+
+An extended Entry widget that sets the width, and limits entry of a given number of chars.
+
+
 ### 7-Segment ("Hex") Display
 
 A skeuomorphic widget simulating a 7-segment "hex" display. Supports setting
