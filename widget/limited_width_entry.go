@@ -15,7 +15,7 @@ type LimitedWidthEntry struct {
 	CharsWide int
 }
 
-// LimitedWidthEntry returns an extended entry that has a minimum width and is limited
+// NewLimitedWidthEntry returns an extended entry that has a minimum width and is limited
 // to a CharsWide number of characters
 func NewLimitedWidthEntry() *LimitedWidthEntry {
 	entry := &LimitedWidthEntry{}
