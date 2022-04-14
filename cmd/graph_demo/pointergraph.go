@@ -30,7 +30,7 @@ func (c *LineChartWithMouse) IsMouseOver() bool {
 	return c.mouseOver
 }
 
-// MouseDown is called when the mouse enters the chart. Here we only forward
+// MouseIn is called when the mouse enters the chart. Here we only forward
 // the "moved" event handler to draw the pointer + 2 lines over the chart.
 func (c *LineChartWithMouse) MouseIn(e *desktop.MouseEvent) {
 	c.mouseOver = true
