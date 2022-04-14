@@ -95,9 +95,10 @@ func main() {
 }
 
 func animateData(g *LineChartWithMouse) {
+	g.SetGraphRange(&charts.GraphRange{YMin: -1, YMax: 150})
 	data := make([]float64, 64)
 	for d := range data {
-		data[d] = rand.Float64() * 100
+		data[d] = rand.Float64()*100 + 20
 	}
 	go func() {
 		// Contiuously update the data
@@ -107,7 +108,7 @@ func animateData(g *LineChartWithMouse) {
 			if g.IsMouseOver() {
 				continue
 			}
-			data = append(data[1:], rand.Float64()*50)
+			data = append(data[1:], rand.Float64()*50+20)
 			g.SetData(data)
 		}
 	}()
@@ -115,10 +116,11 @@ func animateData(g *LineChartWithMouse) {
 }
 
 func animateBarChart(chart *charts.BarChart) {
+	chart.SetGraphRange(&charts.GraphRange{YMin: 0, YMax: 150})
 	initialColor := chart.GetOptions().FillColor
 	data := make([]float64, 10)
 	for d := range data {
-		data[d] = rand.Float64() * 100
+		data[d] = rand.Float64()*100 + 20
 	}
 
 	go func() {
@@ -126,7 +128,7 @@ func animateBarChart(chart *charts.BarChart) {
 
 		// remove the first data point and add a new one each 500ms
 		for range time.Tick(500 * time.Millisecond) {
-			data = append(data[1:], rand.Float64()*50)
+			data = append(data[1:], rand.Float64()*50+20)
 			max := 0.0
 			for _, v := range data[3:] {
 				if v > max {

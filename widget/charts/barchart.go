@@ -64,18 +64,18 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 	stepX := width / float64(len(chart.data))
 	maxY := float64(0)
 	minY := float64(0)
-	for _, v := range chart.data {
-		if v > maxY {
-			maxY = v
+	if chart.graphRange == nil {
+		for _, v := range chart.data {
+			if v > maxY {
+				maxY = v
+			}
+			if v < minY {
+				minY = v
+			}
 		}
-		if v < minY {
-			minY = v
-		}
-	}
-
-	// Move the graph to avoid the "zero" line
-	if minY > 0 {
-		minY = 0
+	} else {
+		maxY = chart.graphRange.YMax
+		minY = chart.graphRange.YMin
 	}
 
 	// reduction factor

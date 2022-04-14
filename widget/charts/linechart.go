@@ -201,18 +201,23 @@ func (g *LineChart) rasterize(w, h int) image.Image {
 	stepX := width / float64(len(g.data))
 	maxY := float64(0)
 	minY := float64(0)
-	for _, v := range g.data {
-		if v > maxY {
-			maxY = v
+	if g.graphRange == nil {
+		for _, v := range g.data {
+			if v > maxY {
+				maxY = v
+			}
+			if v < minY {
+				minY = v
+			}
 		}
-		if v < minY {
-			minY = v
-		}
-	}
 
-	// Move the graph to avoid the "zero" line
-	if minY > 0 {
-		minY = 0
+		// Move the graph to avoid the "zero" line
+		if minY > 0 {
+			minY = 0
+		}
+	} else {
+		maxY = g.graphRange.YMax
+		minY = g.graphRange.YMin
 	}
 
 	// reduction factor

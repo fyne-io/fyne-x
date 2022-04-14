@@ -1,6 +1,7 @@
 package charts
 
 import (
+	"fmt"
 	"text/template"
 
 	"fyne.io/fyne/v2/widget"
@@ -15,9 +16,36 @@ const svgLineTplString = `<svg xmlns="http://www.w3.org/2000/svg" width="{{.Widt
 
 var svgLineTpl *template.Template
 
+// GraphRange set the range of the graph.
+type GraphRange struct {
+	// Set the Y range of the graph.
+	YMin, YMax float64
+
+	// Set the X range of the graph.
+	// XMin, XMax float64
+}
+
 // base struct for any Graph object.
 type graph struct {
 	widget.BaseWidget
+	graphRange *GraphRange
+}
+
+// SetGraphRange set the GraphRange of the chart. If the range is nil, so the
+// chart will generallly auto scale the range.
+func (g *graph) SetGraphRange(gr *GraphRange) error {
+
+	if gr == nil {
+		return nil
+	}
+
+	// check that min < max
+	if gr.YMin >= gr.YMax {
+		return fmt.Errorf("YMin must be less than YMax")
+	}
+
+	g.graphRange = gr
+	return nil
 }
 
 // return initialized svgLineTpl
