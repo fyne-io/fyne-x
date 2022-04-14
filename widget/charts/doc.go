@@ -1,4 +1,4 @@
-// The charts package provides a simple way to create charts.
+// Package charts provides a simple way to create charts.
 //
 // Each chart can change the stroke color, line width, and fille color. They are all redreshed when you change data (via `SetData()` method).
 //
