@@ -31,7 +31,7 @@ func main() {
 
 	// create n graphs
 	g := NewLineChartWithMouse()
-	animateData(g)
+	animateLineChart(g)
 
 	// Set a title for the graph, use nice Border layout
 	graphWidgets = append(graphWidgets, container.NewBorder(
@@ -56,8 +56,8 @@ func main() {
 	// Create a lineChart with custom color
 	lineChartWithColor := charts.NewLineChart(nil)
 	lineChartWithColor.SetData([]float64{1, 3, -2, -4, 0, 4, 5, 6, 4})
-	lineChartWithColor.GetOptions().StrokeColor = theme.PrimaryColor()
-	lineChartWithColor.GetOptions().FillColor = theme.ButtonColor()
+	lineChartWithColor.Options().StrokeColor = theme.PrimaryColor()
+	lineChartWithColor.Options().FillColor = theme.ButtonColor()
 	graphWidgets = append(graphWidgets, container.NewBorder(
 		widget.NewLabelWithStyle("LineChart with custom color", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		nil,
@@ -94,11 +94,11 @@ func main() {
 	w.ShowAndRun()
 }
 
-func animateData(g *LineChartWithMouse) {
-	g.SetGraphRange(&charts.GraphRange{YMin: -1, YMax: 150})
+func animateLineChart(g *LineChartWithMouse) {
+	g.Options().SetGraphRange(&charts.GraphRange{YMin: 0, YMax: 90})
 	data := make([]float64, 64)
 	for d := range data {
-		data[d] = rand.Float64()*100 + 20
+		data[d] = rand.Float64()*50 + 20
 	}
 	go func() {
 		// Contiuously update the data
@@ -116,11 +116,11 @@ func animateData(g *LineChartWithMouse) {
 }
 
 func animateBarChart(chart *charts.BarChart) {
-	chart.SetGraphRange(&charts.GraphRange{YMin: 0, YMax: 150})
-	initialColor := chart.GetOptions().FillColor
+	chart.Options().SetGraphRange(&charts.GraphRange{YMin: 0, YMax: 90})
+	initialColor := chart.Options().FillColor
 	data := make([]float64, 10)
 	for d := range data {
-		data[d] = rand.Float64()*100 + 20
+		data[d] = rand.Float64()*50 + 20
 	}
 
 	go func() {
@@ -129,18 +129,18 @@ func animateBarChart(chart *charts.BarChart) {
 		// remove the first data point and add a new one each 500ms
 		for range time.Tick(500 * time.Millisecond) {
 			data = append(data[1:], rand.Float64()*50+20)
-			max := 0.0
-			for _, v := range data[3:] {
-				if v > max {
-					max = v
-				}
+			mean := 0.0
+			for _, d := range data {
+				mean += d
 			}
+			mean /= float64(len(data))
+
 			// let's play with color, it changes when latest values are higher a certain threshold
-			chart.GetOptions().FillColor = initialColor
-			if max > 45 {
-				chart.GetOptions().FillColor = theme.ErrorColor()
-			} else if max > 35 {
-				chart.GetOptions().FillColor = theme.PrimaryColor()
+			chart.Options().FillColor = initialColor
+			if mean > 50 {
+				chart.Options().FillColor = theme.ErrorColor()
+			} else if mean > 45 {
+				chart.Options().FillColor = theme.PrimaryColor()
 			}
 			chart.SetData(data)
 		}

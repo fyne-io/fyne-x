@@ -19,6 +19,7 @@ import (
 
 // LineCharthOpts provides options for the graph.
 type LineCharthOpts struct {
+	*globalOpts
 
 	// FillColor is the color of the fill. Alpha is ignored.
 	FillColor color.Color
@@ -56,6 +57,7 @@ func NewLineChart(options *LineCharthOpts) *LineChart {
 		g.opts = options
 	} else {
 		g.opts = &LineCharthOpts{
+			globalOpts:  newGlobalOpts(),
 			StrokeWidth: 1,
 			StrokeColor: theme.ForegroundColor(),
 			FillColor:   theme.DisabledButtonColor(),
@@ -121,17 +123,20 @@ func (g *LineChart) GetDataPosAt(pos fyne.Position) (float64, fyne.Position) {
 	return value, fyne.NewPos(xp, float32(y))
 }
 
-// GetOptions returns the options of the graph. You can change the options after the graph is created.
-func (g *LineChart) GetOptions() *LineCharthOpts {
-	return g.opts
-}
-
 // MinSize returns the smallest size this widget can shrink to.
 func (g *LineChart) MinSize() fyne.Size {
 	if g.image == nil {
 		return fyne.NewSize(0, 0)
 	}
 	return g.BaseWidget.MinSize()
+}
+
+// Options returns the options of the graph. You can change the options after the graph is created.
+func (g *LineChart) Options() *LineCharthOpts {
+	if g.opts == nil {
+		g.opts = &LineCharthOpts{}
+	}
+	return g.opts
 }
 
 // Refresh refreshes the graph.
@@ -201,7 +206,7 @@ func (g *LineChart) rasterize(w, h int) image.Image {
 	stepX := width / float64(len(g.data))
 	maxY := float64(0)
 	minY := float64(0)
-	if g.graphRange == nil {
+	if g.Options().GraphRange == nil {
 		for _, v := range g.data {
 			if v > maxY {
 				maxY = v
@@ -216,8 +221,8 @@ func (g *LineChart) rasterize(w, h int) image.Image {
 			minY = 0
 		}
 	} else {
-		maxY = g.graphRange.YMax
-		minY = g.graphRange.YMin
+		maxY = g.Options().GraphRange.YMax
+		minY = g.Options().GraphRange.YMin
 	}
 
 	// reduction factor
