@@ -42,7 +42,7 @@ func NewSliderGraph(nMin, nMax float64, precision float64) *SliderGraph {
 	return sg
 }
 
-// Container returns the container of the widget
+// Container returns the container of the widget.
 func (sg *SliderGraph) Container() fyne.CanvasObject {
 	return sg.container
 }

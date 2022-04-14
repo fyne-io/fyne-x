@@ -25,7 +25,7 @@ func NewLineChartWithMouse() *LineChartWithMouse {
 	}
 }
 
-// IsMouseOver is true when the mouse is over the graph
+// IsMouseOver is true when the mouse is over the graph.
 func (c *LineChartWithMouse) IsMouseOver() bool {
 	return c.mouseOver
 }

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"math/rand"
 	"time"
 
@@ -36,7 +35,7 @@ func main() {
 
 	// Set a title for the graph, use nice Border layout
 	graphWidgets = append(graphWidgets, container.NewBorder(
-		widget.NewLabelWithStyle(fmt.Sprintf("Custom mouse event"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Custom mouse event", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		nil,
 		nil,
 		nil,
@@ -71,7 +70,7 @@ func main() {
 	bar := charts.NewBarChart(nil)
 	animateBarChart(bar)
 	graphWidgets = append(graphWidgets, container.NewBorder(
-		widget.NewLabelWithStyle(fmt.Sprintf("Animated Bar Chart"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Animated Bar Chart", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		nil,
 		nil,
 		nil,
@@ -81,7 +80,7 @@ func main() {
 	// Create a overrided LineChart that has got a slider to scale the data
 	sinContainer := NewSliderGraph(100, 1000, 10)
 	graphWidgets = append(graphWidgets, container.NewBorder(
-		widget.NewLabelWithStyle(fmt.Sprintf("Custom zommable"), fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
+		widget.NewLabelWithStyle("Custom zommable", fyne.TextAlignCenter, fyne.TextStyle{Bold: true}),
 		nil,
 		nil,
 		nil,

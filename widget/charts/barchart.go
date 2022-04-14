@@ -15,13 +15,13 @@ import (
 
 // BarChart or BarChart (alias).
 type BarChart struct {
-	*LineChart // actually it's the same, we only need to change the rasterize method
+	*LineChart // BarChart overrides LineChart rasterization.
 }
 
 // BarChartOptions aliased to LineCharthOpts
 type BarChartOptions = LineCharthOpts
 
-// NewBarChart returns a HistrogramChart.
+// NewBarChart returns a new BarChart.
 func NewBarChart(opts *BarChartOptions) *BarChart {
 	chart := new(BarChart)
 	chart.LineChart = NewLineChart(opts)
@@ -119,7 +119,7 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 	bgR, bgG, bgB, _ := chart.opts.FillColor.RGBA()
 	// convert the svg to an image.Image
 	buff := new(bytes.Buffer)
-	getLineSVGTemplate().Execute(buff, svgTplLineStruct{
+	err := getLineSVGTemplate().Execute(buff, svgTplLineStruct{
 		Data:        points,
 		Width:       w,
 		Height:      h,
@@ -127,6 +127,11 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 		StrokeColor: fmt.Sprintf("#%02x%02x%02x", uint8(fgR/0x101), uint8(fgG/0x101), uint8(fgB/0x101)),
 		Fill:        fmt.Sprintf("#%02x%02x%02x", uint8(bgR/0x101), uint8(bgG/0x101), uint8(bgB/0x101)),
 	})
+
+	if err != nil {
+		log.Println(err)
+		return image.NewAlpha(image.Rect(0, 0, w, h))
+	}
 
 	graph, err := oksvg.ReadIconStream(buff)
 	if err != nil {

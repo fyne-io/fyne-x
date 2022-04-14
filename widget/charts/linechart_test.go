@@ -1,7 +1,6 @@
 package charts
 
 import (
-	"image"
 	"image/color"
 	"testing"
 
@@ -23,56 +22,21 @@ func createTestLineChartWithOptions() *LineChart {
 	})
 }
 
-func makeRasterize(win fyne.Window, graph *LineChart) image.Image {
-	win.Resize(fyne.NewSize(500, 300))
-	img := graph.rasterize(int(graph.Size().Width), int(graph.Size().Height))
-	return img
-}
-
-func assertSize(t *testing.T, img image.Image, graph *LineChart) {
-	assert.Greater(t, img.Bounds().Size().X, 0)
-	assert.Greater(t, img.Bounds().Size().Y, 0)
-	assert.Equal(t, img.Bounds().Size().X, int(graph.Size().Width))
-	assert.Equal(t, img.Bounds().Size().Y, int(graph.Size().Height))
-}
-
 func TestLineChart_Creation(t *testing.T) {
 	graph := createTestLineChart()
 
-	win := test.NewWindow(graph)
-	win.Resize(fyne.NewSize(500, 300))
-	defer win.Close()
-
-	assert.Equal(t, len(graph.data), 0)
+	assert.Len(t, graph.data, 0)
 	assert.Equal(t, graph.opts.StrokeColor, theme.ForegroundColor())
 	assert.Equal(t, graph.opts.FillColor, theme.DisabledButtonColor())
 	assert.Equal(t, graph.opts.StrokeWidth, float32(1))
-
-	data := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	graph.SetData(data)
-	assert.Equal(t, len(graph.data), len(data))
-
-	// rasterize should be called
-	assert.NotEqual(t, graph.image, nil)
 }
 
 func TestLineChart_CreationWithOptions(t *testing.T) {
 	graph := createTestLineChartWithOptions()
 
-	win := test.NewWindow(graph)
-	win.Resize(fyne.NewSize(500, 300))
-	defer win.Close()
-
 	assert.Equal(t, graph.opts.StrokeColor, color.RGBA{0x11, 0x22, 0x33, 255})
 	assert.Equal(t, graph.opts.FillColor, color.RGBA{0x44, 0x55, 0x66, 255})
 	assert.Equal(t, graph.opts.StrokeWidth, float32(5))
-
-	data := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	graph.SetData(data)
-	assert.Equal(t, len(graph.data), len(data))
-
-	// rasterize should be called
-	assert.NotEqual(t, graph.image, nil)
 }
 
 func TestLineChart_Rasterizer(t *testing.T) {
@@ -120,7 +84,7 @@ func TestLineChart_WithNoData(t *testing.T) {
 	win.Resize(fyne.NewSize(500, 300))
 	defer win.Close()
 
-	assert.Equal(t, len(graph.data), 0)
+	assert.Len(t, graph.data, 0)
 	assert.Equal(t, graph.opts.StrokeColor, theme.ForegroundColor())
 	assert.Equal(t, graph.opts.FillColor, theme.DisabledButtonColor())
 	assert.Equal(t, graph.opts.StrokeWidth, float32(1))
