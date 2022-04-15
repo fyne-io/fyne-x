@@ -15,7 +15,7 @@ func createTestLineChart() *LineChart {
 }
 
 func createTestLineChartWithOptions() *LineChart {
-	return NewLineChart(&LineCharthOpts{
+	return NewLineChart(&PolygonCharthOpts{
 		StrokeColor: color.RGBA{0x11, 0x22, 0x33, 255},
 		FillColor:   color.RGBA{0x44, 0x55, 0x66, 255},
 		StrokeWidth: 5,
@@ -47,7 +47,6 @@ func TestLineChart_Rasterizer(t *testing.T) {
 	win.Resize(fyne.NewSize(50, 70))
 	defer win.Close()
 
-	graph = createTestLineChartWithOptions()
 	graph.Resize(fyne.NewSize(50, 70))
 	graph.SetData(data)
 	img := makeRasterize(win, graph)
@@ -70,7 +69,6 @@ func TestLineChart_RasterizerWithNegative(t *testing.T) {
 	img := makeRasterize(win, graph)
 	assertSize(t, img, graph)
 
-	graph = createTestLineChartWithOptions()
 	data = []float64{-5, -4, -3, -2, -1, 0, 1, 2, 3, 4}
 	graph.SetData(data)
 	graph.Resize(fyne.NewSize(500, 300))
@@ -95,7 +93,7 @@ func TestLineChart_WithNoData(t *testing.T) {
 }
 
 func TestLineChart_GetOpts(t *testing.T) {
-	opts := &LineCharthOpts{
+	opts := &PolygonCharthOpts{
 		StrokeColor: color.RGBA{0x11, 0x22, 0x33, 255},
 		FillColor:   color.RGBA{0x44, 0x55, 0x66, 255},
 		StrokeWidth: 5,

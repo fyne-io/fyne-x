@@ -7,10 +7,7 @@ import (
 	"log"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
-	"github.com/srwiley/oksvg"
-	"github.com/srwiley/rasterx"
 )
 
 // BarChart or BarChart (alias).
@@ -19,7 +16,7 @@ type BarChart struct {
 }
 
 // BarChartOptions aliased to LineCharthOpts
-type BarChartOptions = LineCharthOpts
+type BarChartOptions = PolygonCharthOpts
 
 // NewBarChart returns a new BarChart.
 func NewBarChart(opts *BarChartOptions) *BarChart {
@@ -31,11 +28,11 @@ func NewBarChart(opts *BarChartOptions) *BarChart {
 // CreateRenderer creates a simple renderer
 func (chart *BarChart) CreateRenderer() fyne.WidgetRenderer {
 	w := chart.LineChart.CreateRenderer()
-	chart.LineChart.image = canvas.NewRaster(chart.rasterize) // force the HistrogramChart rasterizer
+	chart.SetRasterizerFunc(chart.rasterize)
 
 	// recreate the container
 	chart.LineChart.canvas = container.NewWithoutLayout(
-		chart.LineChart.image,
+		chart.LineChart.Rasterizer(),
 		chart.LineChart.overlay,
 	)
 
@@ -54,8 +51,8 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 	// <!> Force the width and height to be the same as the image size
 	// To not do this will cause the graph to be scaled down.
 	// TODO: why is this needed?
-	w = int(chart.image.Size().Width)
-	h = int(chart.image.Size().Height)
+	w = int(chart.Rasterizer().Size().Width)
+	h = int(chart.Rasterizer().Size().Height)
 
 	// Calculate the max and min values to scale the graph
 	// and the step on X to move for each "point"
@@ -119,13 +116,13 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 	bgR, bgG, bgB, _ := chart.opts.FillColor.RGBA()
 	// convert the svg to an image.Image
 	buff := new(bytes.Buffer)
-	err := getLineSVGTemplate().Execute(buff, svgTplLineStruct{
+	err := getPolygonSVGTemplate().Execute(buff, svgTplLineStruct{
 		Data:        points,
 		Width:       w,
 		Height:      h,
 		StrokeWidth: chart.opts.StrokeWidth,
 		StrokeColor: fmt.Sprintf("#%02x%02x%02x", uint8(fgR/0x101), uint8(fgG/0x101), uint8(fgB/0x101)),
-		Fill:        fmt.Sprintf("#%02x%02x%02x", uint8(bgR/0x101), uint8(bgG/0x101), uint8(bgB/0x101)),
+		FillColor:   fmt.Sprintf("#%02x%02x%02x", uint8(bgR/0x101), uint8(bgG/0x101), uint8(bgB/0x101)),
 	})
 
 	if err != nil {
@@ -133,15 +130,5 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 		return image.NewAlpha(image.Rect(0, 0, w, h))
 	}
 
-	graph, err := oksvg.ReadIconStream(buff)
-	if err != nil {
-		log.Println(err)
-		return image.NewRGBA(image.Rect(0, 0, w, h))
-	}
-	rgba := image.NewRGBA(image.Rect(0, 0, w, h))
-	graph.SetTarget(0, 0, float64(w), float64(h))
-	scanner := rasterx.NewScannerGV(w, h, rgba, rgba.Bounds())
-	graph.Draw(rasterx.NewDasher(w, h, scanner), 1)
-
-	return rgba
+	return chart.Render(buff, w, h)
 }

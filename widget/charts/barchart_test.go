@@ -15,7 +15,7 @@ func createTestBarChart() *BarChart {
 }
 
 func createTestBarChartWithOptions() *BarChart {
-	return NewBarChart(&LineCharthOpts{
+	return NewBarChart(&PolygonCharthOpts{
 		StrokeColor: color.RGBA{0x11, 0x22, 0x33, 255},
 		FillColor:   color.RGBA{0x44, 0x55, 0x66, 255},
 		StrokeWidth: 5,
