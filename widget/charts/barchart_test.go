@@ -29,6 +29,8 @@ func TestBarChart_Create(t *testing.T) {
 	assert.Equal(t, histo.opts.StrokeColor, theme.ForegroundColor())
 
 	assert.Len(t, histo.data, 0)
+	histo.CreateRenderer()
+	assert.NotNil(t, histo.GetDrawable())
 }
 
 func TestBarChart_CreateWithOptions(t *testing.T) {
@@ -47,6 +49,8 @@ func TestBarChart_Rasterize(t *testing.T) {
 
 	data := []float64{1, 2, 3, 4, 5}
 	graph.SetData(data)
+	graph.Resize(win.Canvas().Size())
+	graph.Refresh()
 
 	img := makeRasterize(win, graph)
 
@@ -79,7 +83,6 @@ func TestBarChart_CreateRender(t *testing.T) {
 	assert.NotNil(t, r)
 
 	assert.NotNil(t, graph.canvas)
-	assert.NotNil(t, graph.image)
 	assert.NotNil(t, graph.overlay)
 
 	assert.Len(t, graph.canvas.Objects, 2)

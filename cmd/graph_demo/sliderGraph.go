@@ -54,4 +54,5 @@ func (sg *SliderGraph) slided(value float64) {
 		siny[i] = math.Sin(float64(i) / float64(sg.precision))
 	}
 	sg.LineChart.SetData(siny)
+	sg.LineChart.Refresh()
 }

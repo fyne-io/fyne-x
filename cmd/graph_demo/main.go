@@ -110,6 +110,7 @@ func animateLineChart(g *LineChartWithMouse) {
 			}
 			data = append(data[1:], rand.Float64()*50+20)
 			g.SetData(data)
+			g.Refresh()
 		}
 	}()
 
@@ -122,6 +123,8 @@ func animateBarChart(chart *charts.BarChart) {
 	for d := range data {
 		data[d] = rand.Float64()*50 + 20
 	}
+	chart.SetData(data)
+	chart.Refresh()
 
 	go func() {
 		// Contiuously update the data
@@ -143,6 +146,7 @@ func animateBarChart(chart *charts.BarChart) {
 				chart.Options().FillColor = theme.PrimaryColor()
 			}
 			chart.SetData(data)
+			chart.Refresh()
 		}
 		// let's play with color
 	}()
