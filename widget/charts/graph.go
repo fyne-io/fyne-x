@@ -24,7 +24,7 @@ func (g *sizeOpts) SetGraphRange(r *GraphRange) {
 	g.GraphRange = r
 }
 
-// base struct for any Graph object.
+// BaseChart struct for any Graph object.
 type BaseChart struct{}
 
 // BaseSVGChart uses SVG to render the graph.

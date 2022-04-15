@@ -24,7 +24,7 @@ var svgPolygonTpl *template.Template
 // GetPolygonSVGTemplate return initialized and executed template.Template for polygon.
 func GetPolygonSVGTemplate() *template.Template {
 	if svgPolygonTpl == nil {
-		svgPolygonTpl = template.Must(template.New("svg").Parse(svgLineTplString))
+		svgPolygonTpl = template.Must(template.New("polygon").Parse(svgLineTplString))
 	}
 	return svgPolygonTpl
 }
@@ -37,7 +37,7 @@ type SVGTplPolygonStruct struct {
 	// Height of the chart
 	Height int
 
-	// Data points (X,Y) to draw the line
+	// Data points (X,Y) to draw the SVG polygon
 	Data [][2]float64
 
 	// Fill color in SVG/HTML format (e.g. #ff0000, red, none, ...)
