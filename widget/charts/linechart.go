@@ -25,34 +25,33 @@ func NewLineChart(options *PolygonCharthOpts) *LineChart {
 	return g
 }
 
-func (g *LineChart) rasterize(w, h int) image.Image {
+func (chart *LineChart) rasterize(w, h int) image.Image {
+	chart.Lock()
+	defer chart.Unlock()
 
-	g.locker.Lock()
-	defer g.locker.Unlock()
-
-	if len(g.data) == 0 {
+	if len(chart.data) == 0 {
 		return image.NewRGBA(image.Rect(0, 0, w, h))
 	}
 
 	// <!> Force the width and height to be the same as the image size
 	// To not do this will cause the graph to be scaled down.
 	// TODO: why is this needed?
-	w = int(g.Rasterizer().Size().Width)
-	h = int(g.Rasterizer().Size().Height)
+	w = int(chart.Rasterizer().Size().Width)
+	h = int(chart.Rasterizer().Size().Height)
 
 	// prepare points
-	points := make([][2]float64, len(g.data)+3)
+	points := make([][2]float64, len(chart.data)+3)
 
 	// colors
 	strokeColor := "none"
 	fillColor := "none"
 	transp := color.RGBA{0, 0, 0, 0}
-	if g.opts.StrokeColor != transp {
-		fgR, fgG, fgB, _ := g.opts.StrokeColor.RGBA()
+	if chart.opts.StrokeColor != transp {
+		fgR, fgG, fgB, _ := chart.opts.StrokeColor.RGBA()
 		strokeColor = fmt.Sprintf("#%02x%02x%02x", uint8(fgR/0x101), uint8(fgG/0x101), uint8(fgB/0x101))
 	}
-	if g.opts.FillColor != transp {
-		bgR, bgG, bgB, _ := g.opts.FillColor.RGBA()
+	if chart.opts.FillColor != transp {
+		bgR, bgG, bgB, _ := chart.opts.FillColor.RGBA()
 		fillColor = fmt.Sprintf("#%02x%02x%02x", uint8(bgR/0x101), uint8(bgG/0x101), uint8(bgB/0x101))
 	}
 
@@ -63,18 +62,26 @@ func (g *LineChart) rasterize(w, h int) image.Image {
 
 	// build point positions
 	var currentX float64
-	minY, _, stepX, reduce := g.CalculateGraphScale(w, h)
-	sw := float64(g.opts.StrokeWidth)
-	points[0] = [2]float64{sw, height + minY*reduce + sw}
-	points[len(points)-2] = [2]float64{width + sw, height - g.data[len(g.data)-1]*reduce + minY*reduce}
-	points[len(points)-1] = [2]float64{width + sw*2, height + minY*reduce + sw}
+	minY, _, stepX, reduce := chart.GraphScale(w, h)
+	strokeWidth := float64(chart.opts.StrokeWidth)
+	// place some start and end points to make the graph look nicer
+	points[0] = [2]float64{strokeWidth, height + minY*reduce + strokeWidth}
+	points[len(points)-2] = [2]float64{
+		width + strokeWidth,
+		height - chart.data[len(chart.data)-1]*reduce + minY*reduce,
+	}
+	points[len(points)-1] = [2]float64{
+		width + strokeWidth*2,
+		height + minY*reduce + strokeWidth,
+	}
 
-	for i, d := range g.data {
+	// add points from data
+	for i, d := range chart.data {
 		y := float64(0)
 		if d < 0 {
-			y = height - sw - d*reduce + minY*reduce
+			y = height - strokeWidth - d*reduce + minY*reduce
 		} else if d > 0 {
-			y = height + sw - d*reduce + minY*reduce
+			y = height + strokeWidth - d*reduce + minY*reduce
 		} else {
 			y = height + minY*reduce
 		}
@@ -88,7 +95,7 @@ func (g *LineChart) rasterize(w, h int) image.Image {
 		Data:        points,
 		Width:       w,
 		Height:      h,
-		StrokeWidth: g.opts.StrokeWidth,
+		StrokeWidth: chart.opts.StrokeWidth,
 		StrokeColor: strokeColor,
 		FillColor:   fillColor,
 	})
@@ -97,5 +104,5 @@ func (g *LineChart) rasterize(w, h int) image.Image {
 		return image.NewRGBA(image.Rect(0, 0, w, h))
 	}
 
-	return g.Render(buff, w, h)
+	return chart.Render(buff, w, h)
 }

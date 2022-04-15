@@ -2,7 +2,6 @@ package charts
 
 import (
 	"image/color"
-	"sync"
 	"text/template"
 
 	"fyne.io/fyne/v2"
@@ -71,7 +70,6 @@ type BasePolygonSVGChart struct {
 	opts    *PolygonCharthOpts
 	canvas  *fyne.Container
 	overlay *fyne.Container
-	locker  *sync.Mutex
 
 	yFix [2]float64
 	data []float64
@@ -79,9 +77,7 @@ type BasePolygonSVGChart struct {
 
 // NewBasePolygonSVGChart creates a new BasePolygonSVGChart.
 func NewBasePolygonSVGChart(options *PolygonCharthOpts) *BasePolygonSVGChart {
-	g := &BasePolygonSVGChart{
-		locker: &sync.Mutex{},
-	}
+	g := &BasePolygonSVGChart{}
 	g.BaseSVGChart = NewSVGGraph()
 	if options != nil {
 		g.opts = options
@@ -109,19 +105,44 @@ func NewBasePolygonSVGChart(options *PolygonCharthOpts) *BasePolygonSVGChart {
 }
 
 // CreateRenderer is a private method to Fyne which links this widget to its renderer.
-func (g *BasePolygonSVGChart) CreateRenderer() fyne.WidgetRenderer {
-	g.overlay = container.NewWithoutLayout()
-	g.canvas = container.NewWithoutLayout(g.Rasterizer(), g.overlay)
-	return widget.NewSimpleRenderer(g.canvas)
+func (chart *BasePolygonSVGChart) CreateRenderer() fyne.WidgetRenderer {
+	chart.overlay = container.NewWithoutLayout()
+	chart.canvas = container.NewWithoutLayout(chart.Rasterizer(), chart.overlay)
+	return widget.NewSimpleRenderer(chart.canvas)
+}
+
+// GetDataPosAt returns the data value and and the exact position on the curve for a given position. This is
+// useful to draw something on the graph at mouse position for example.
+func (g *BasePolygonSVGChart) GetDataPosAt(pos fyne.Position) (float64, fyne.Position) {
+
+	if len(g.data) == 0 {
+		return 0, fyne.NewPos(0, 0)
+	}
+
+	stepX := g.Rasterizer().Size().Width / float32(len(g.data))
+	// get the X value corresponding to the data index
+	x := int(pos.X / g.Rasterizer().Size().Width * float32(len(g.data)))
+	if x < 0 || x >= len(g.data) {
+		return 0, fyne.NewPos(0, 0)
+	}
+	value := g.data[int(x)]
+
+	// now, get the Y value corresponding to the data value
+	y := float64(g.Rasterizer().Size().Height) - value*g.yFix[1] + g.yFix[0]*g.yFix[1]
+
+	// calculate the X value on the graph
+	xp := float32(x) * stepX
+
+	return value, fyne.NewPos(xp, float32(y))
 }
 
 // GetDrawable returns the graph's overlay drawable container.
-func (g *BasePolygonSVGChart) GetDrawable() *fyne.Container {
-	return g.overlay
+func (chart *BasePolygonSVGChart) GetDrawable() *fyne.Container {
+	return chart.overlay
 }
 
-// CalculateGraphScale calculates the scale of the graph. It returns Ymin, YMax, stepX and reduce factor.
-func (g *BasePolygonSVGChart) CalculateGraphScale(w, h int) (float64, float64, float64, float64) {
+// GraphScale calculates the scale of the graph. It returns Ymin, YMax, stepX and reduce factor.
+func (g *BasePolygonSVGChart) GraphScale(w, h int) (float64, float64, float64, float64) {
 
 	var (
 		maxY float64
@@ -152,36 +173,6 @@ func (g *BasePolygonSVGChart) CalculateGraphScale(w, h int) (float64, float64, f
 	return minY, maxY, stepX, reduce
 }
 
-// MinSize returns the smallest size this widget can shrink to.
-func (g *BasePolygonSVGChart) MinSize() fyne.Size {
-	return g.BaseWidget.MinSize()
-}
-
-// GetDataPosAt returns the data value and and the exact position on the curve for a given position. This is
-// useful to draw something on the graph at mouse position for example.
-func (g *BasePolygonSVGChart) GetDataPosAt(pos fyne.Position) (float64, fyne.Position) {
-
-	if len(g.data) == 0 {
-		return 0, fyne.NewPos(0, 0)
-	}
-
-	stepX := g.Rasterizer().Size().Width / float32(len(g.data))
-	// get the X value corresponding to the data index
-	x := int(pos.X / g.Rasterizer().Size().Width * float32(len(g.data)))
-	if x < 0 || x >= len(g.data) {
-		return 0, fyne.NewPos(0, 0)
-	}
-	value := g.data[int(x)]
-
-	// now, get the Y value corresponding to the data value
-	y := float64(g.Rasterizer().Size().Height) - value*g.yFix[1] + g.yFix[0]*g.yFix[1]
-
-	// calculate the X value on the graph
-	xp := float32(x) * stepX
-
-	return value, fyne.NewPos(xp, float32(y))
-}
-
 // Options returns the options of the graph. You can change the options after the graph is created.
 func (g *BasePolygonSVGChart) Options() *PolygonCharthOpts {
 	if g.opts == nil {
@@ -190,11 +181,16 @@ func (g *BasePolygonSVGChart) Options() *PolygonCharthOpts {
 	return g.opts
 }
 
+// MinSize returns the smallest size this widget can shrink to.
+func (g *BasePolygonSVGChart) MinSize() fyne.Size {
+	return g.BaseWidget.MinSize()
+}
+
 // SetData sets the data to be displayed in the graph
-func (g *BasePolygonSVGChart) SetData(data []float64) {
-	g.locker.Lock()
-	defer g.locker.Unlock()
-	g.data = data
+func (chart *BasePolygonSVGChart) SetData(data []float64) {
+	chart.Lock()
+	defer chart.Unlock()
+	chart.data = data
 }
 
 // Size returns the size of the graph widget.
@@ -205,26 +201,26 @@ func (g *BasePolygonSVGChart) Size() fyne.Size {
 	return g.canvas.Size()
 }
 
-// Resize sets a new size for the graph.
-func (g *BasePolygonSVGChart) Resize(size fyne.Size) {
-	g.BaseWidget.Resize(size)
-	if g.canvas != nil {
-		g.canvas.Resize(size)
-		g.Rasterizer().Resize(size)
-		g.overlay.Resize(size)
-	}
-	g.Refresh()
-}
-
 // Refresh refreshes the graph.
-func (g *BasePolygonSVGChart) Refresh() {
+func (chart *BasePolygonSVGChart) Refresh() {
 
-	if g.canvas == nil {
+	if chart.canvas == nil {
 		return
 	}
-	g.BaseWidget.Refresh()
-	for _, child := range g.overlay.Objects {
+	chart.BaseWidget.Refresh()
+	for _, child := range chart.overlay.Objects {
 		child.Refresh()
 	}
-	g.Rasterizer().Refresh()
+	chart.Rasterizer().Refresh()
+}
+
+// Resize sets a new size for the graph.
+func (chart *BasePolygonSVGChart) Resize(size fyne.Size) {
+	chart.BaseWidget.Resize(size)
+	if chart.canvas != nil {
+		chart.canvas.Resize(size)
+		chart.Rasterizer().Resize(size)
+		chart.overlay.Resize(size)
+	}
+	chart.Refresh()
 }

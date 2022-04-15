@@ -29,6 +29,8 @@ func NewBarChart(opts *BarChartOptions) *BarChart {
 
 // rasterize is called by the "image" Raster object.
 func (chart *BarChart) rasterize(w, h int) image.Image {
+	chart.Lock()
+	defer chart.Unlock()
 	if chart.canvas == nil || len(chart.data) == 0 {
 		return image.NewAlpha(image.Rect(0, 0, w, h))
 	}
@@ -44,7 +46,7 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 	height := float64(h)
 
 	var currentX float64
-	minY, _, stepX, reduce := chart.CalculateGraphScale(w, h)
+	minY, _, stepX, reduce := chart.GraphScale(w, h)
 
 	// each "value" has 4 points (bottom left, top left, top right, bottom right)
 	// each point is defined by 2 coordinates (x, y)

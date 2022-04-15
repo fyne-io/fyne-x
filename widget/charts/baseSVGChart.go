@@ -9,15 +9,19 @@ import (
 	"github.com/srwiley/rasterx"
 )
 
-// NewSVGGraph returns a new SVG graph.
-func NewSVGGraph() *BaseSVGChart {
-	g := &BaseSVGChart{}
-	return g
+// BaseSVGChart uses SVG to render the graph.
+type BaseSVGChart struct {
+	*BaseChart
+
+	rasterizer *canvas.Raster
 }
 
-// SetRasterizerFunc sets the rasterizer function for the graph rasterizer.
-func (chart *BaseSVGChart) SetRasterizerFunc(r func(w, h int) image.Image) {
-	chart.Rasterizer().Generator = r
+// NewSVGGraph returns a new SVG graph.
+func NewSVGGraph() *BaseSVGChart {
+	g := &BaseSVGChart{
+		BaseChart: &BaseChart{},
+	}
+	return g
 }
 
 // Rasterizer returns the rasterizer for the graph.
@@ -38,4 +42,9 @@ func (chart *BaseSVGChart) Render(buff io.Reader, width, height int) image.Image
 	scanner := rasterx.NewScannerGV(width, height, rgba, rgba.Bounds())
 	graph.Draw(rasterx.NewDasher(width, height, scanner), 1)
 	return rgba
+}
+
+// SetRasterizerFunc sets the rasterizer function for the graph rasterizer.
+func (chart *BaseSVGChart) SetRasterizerFunc(r func(w, h int) image.Image) {
+	chart.Rasterizer().Generator = r
 }

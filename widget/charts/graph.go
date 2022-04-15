@@ -1,7 +1,7 @@
 package charts
 
 import (
-	"fyne.io/fyne/v2/canvas"
+	"sync"
 )
 
 // GraphRange set the range of the graph.
@@ -25,11 +25,25 @@ func (g *sizeOpts) SetGraphRange(r *GraphRange) {
 }
 
 // BaseChart struct for any Graph object.
-type BaseChart struct{}
+type BaseChart struct {
 
-// BaseSVGChart uses SVG to render the graph.
-type BaseSVGChart struct {
-	*BaseChart
+	// to avoid race condition
+	locker *sync.Mutex
+}
 
-	rasterizer *canvas.Raster
+// Lock is mainly used to prevent race condition when you need to access data.
+func (b *BaseChart) Lock() {
+	b.getLocker().Lock()
+}
+
+// Unlock releases the locker
+func (b *BaseChart) Unlock() {
+	b.getLocker().Unlock()
+}
+
+func (b *BaseChart) getLocker() *sync.Mutex {
+	if b.locker == nil {
+		b.locker = &sync.Mutex{}
+	}
+	return b.locker
 }
