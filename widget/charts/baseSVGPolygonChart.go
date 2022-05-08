@@ -78,22 +78,22 @@ func (chart *BasePolygonSVGChart) CreateRenderer() fyne.WidgetRenderer {
 
 // GetDataPosAt returns the data value and and the exact position on the curve for a given position. This is
 // useful to draw something on the graph at mouse position for example.
-func (g *BasePolygonSVGChart) GetDataPosAt(pos fyne.Position) (float64, fyne.Position) {
+func (chart *BasePolygonSVGChart) GetDataPosAt(pos fyne.Position) (float64, fyne.Position) {
 
-	if len(g.data) == 0 {
+	if len(chart.data) == 0 {
 		return 0, fyne.NewPos(0, 0)
 	}
 
-	stepX := g.Rasterizer().Size().Width / float32(len(g.data))
+	stepX := chart.Rasterizer().Size().Width / float32(len(chart.data))
 	// get the X value corresponding to the data index
-	x := int(pos.X / g.Rasterizer().Size().Width * float32(len(g.data)))
-	if x < 0 || x >= len(g.data) {
+	x := int(pos.X / chart.Rasterizer().Size().Width * float32(len(chart.data)))
+	if x < 0 || x >= len(chart.data) {
 		return 0, fyne.NewPos(0, 0)
 	}
-	value := g.data[int(x)]
+	value := chart.data[int(x)]
 
 	// now, get the Y value corresponding to the data value
-	y := float64(g.Rasterizer().Size().Height) - value*g.yFix[1] + g.yFix[0]*g.yFix[1]
+	y := float64(chart.Rasterizer().Size().Height) - value*chart.yFix[1] + chart.yFix[0]*chart.yFix[1]
 
 	// calculate the X value on the graph
 	xp := float32(x) * stepX
@@ -107,7 +107,7 @@ func (chart *BasePolygonSVGChart) GetDrawable() *fyne.Container {
 }
 
 // GraphScale calculates the scale of the graph. It returns Ymin, YMax, stepX and reduce factor.
-func (g *BasePolygonSVGChart) GraphScale(w, h int) (float64, float64, float64, float64) {
+func (chart *BasePolygonSVGChart) GraphScale(w, h int) (float64, float64, float64, float64) {
 
 	var (
 		maxY float64
@@ -115,9 +115,9 @@ func (g *BasePolygonSVGChart) GraphScale(w, h int) (float64, float64, float64, f
 	)
 	width := float64(w)
 	height := float64(h)
-	stepX := width / float64(len(g.data))
-	if g.Options().GraphRange == nil {
-		for _, v := range g.data {
+	stepX := width / float64(len(chart.data))
+	if chart.Options().GraphRange == nil {
+		for _, v := range chart.data {
 			if v > maxY {
 				maxY = v
 			}
@@ -126,29 +126,29 @@ func (g *BasePolygonSVGChart) GraphScale(w, h int) (float64, float64, float64, f
 			}
 		}
 	} else {
-		maxY = g.Options().GraphRange.YMax
-		minY = g.Options().GraphRange.YMin
+		maxY = chart.Options().GraphRange.YMax
+		minY = chart.Options().GraphRange.YMin
 	}
 
 	// reduction factor
 	reduce := height / (maxY - minY)
 
 	// keep the Y fix value - used by GetDataPosAt()
-	g.yFix = [2]float64{minY, reduce}
+	chart.yFix = [2]float64{minY, reduce}
 	return minY, maxY, stepX, reduce
 }
 
 // MinSize returns the smallest size this widget can shrink to.
-func (g *BasePolygonSVGChart) MinSize() fyne.Size {
-	return g.BaseWidget.MinSize()
+func (chart *BasePolygonSVGChart) MinSize() fyne.Size {
+	return chart.BaseWidget.MinSize()
 }
 
 // Options returns the options of the graph. You can change the options after the graph is created.
-func (g *BasePolygonSVGChart) Options() *PolygonCharthOpts {
-	if g.opts == nil {
-		g.opts = &PolygonCharthOpts{}
+func (chart *BasePolygonSVGChart) Options() *PolygonCharthOpts {
+	if chart.opts == nil {
+		chart.opts = &PolygonCharthOpts{}
 	}
-	return g.opts
+	return chart.opts
 }
 
 // Refresh refreshes the graph.
@@ -183,11 +183,11 @@ func (chart *BasePolygonSVGChart) SetData(data []float64) {
 }
 
 // Size returns the size of the graph widget.
-func (g *BasePolygonSVGChart) Size() fyne.Size {
-	if g.canvas == nil {
+func (chart *BasePolygonSVGChart) Size() fyne.Size {
+	if chart.canvas == nil {
 		return fyne.NewSize(0, 0)
 	}
-	return g.canvas.Size()
+	return chart.canvas.Size()
 }
 
 // PolygonCharthOpts provides options for the polygon chart.
