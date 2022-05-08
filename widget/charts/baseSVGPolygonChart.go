@@ -28,41 +28,6 @@ func GetPolygonSVGTemplate() *template.Template {
 	return svgPolygonTpl
 }
 
-// SVGTplPolygonStruct  handles the graph data, colors... for Line SVG
-type SVGTplPolygonStruct struct {
-	// Width of the chart
-	Width int
-
-	// Height of the chart
-	Height int
-
-	// Data points (X,Y) to draw the SVG polygon
-	Data [][2]float64
-
-	// Fill color in SVG/HTML format (e.g. #ff0000, red, none, ...)
-	FillColor string
-
-	// Stroke color in SVG/HTML format (e.g. #ff0000, red, none, ...)
-	StrokeColor string
-
-	// Stroke width of the line
-	StrokeWidth float32
-}
-
-// PolygonCharthOpts provides options for the polygon chart.
-type PolygonCharthOpts struct {
-	*sizeOpts
-
-	// FillColor is the color of the fill. Alpha is ignored.
-	FillColor color.Color
-
-	// StrokeWidth is the width of the stroke.
-	StrokeWidth float32
-
-	// StrokeColor is the color of the stroke. Alpha is ignored.
-	StrokeColor color.Color
-}
-
 // BasePolygonSVGChart is the base widget to implement new chart widget with SVG using a polygon element. This should be not use directly but used to create a new chart.
 type BasePolygonSVGChart struct {
 	widget.BaseWidget
@@ -173,32 +138,17 @@ func (g *BasePolygonSVGChart) GraphScale(w, h int) (float64, float64, float64, f
 	return minY, maxY, stepX, reduce
 }
 
+// MinSize returns the smallest size this widget can shrink to.
+func (g *BasePolygonSVGChart) MinSize() fyne.Size {
+	return g.BaseWidget.MinSize()
+}
+
 // Options returns the options of the graph. You can change the options after the graph is created.
 func (g *BasePolygonSVGChart) Options() *PolygonCharthOpts {
 	if g.opts == nil {
 		g.opts = &PolygonCharthOpts{}
 	}
 	return g.opts
-}
-
-// MinSize returns the smallest size this widget can shrink to.
-func (g *BasePolygonSVGChart) MinSize() fyne.Size {
-	return g.BaseWidget.MinSize()
-}
-
-// SetData sets the data to be displayed in the graph
-func (chart *BasePolygonSVGChart) SetData(data []float64) {
-	chart.Lock()
-	defer chart.Unlock()
-	chart.data = data
-}
-
-// Size returns the size of the graph widget.
-func (g *BasePolygonSVGChart) Size() fyne.Size {
-	if g.canvas == nil {
-		return fyne.NewSize(0, 0)
-	}
-	return g.canvas.Size()
 }
 
 // Refresh refreshes the graph.
@@ -223,4 +173,54 @@ func (chart *BasePolygonSVGChart) Resize(size fyne.Size) {
 		chart.overlay.Resize(size)
 	}
 	chart.Refresh()
+}
+
+// SetData sets the data to be displayed in the graph
+func (chart *BasePolygonSVGChart) SetData(data []float64) {
+	chart.Lock()
+	defer chart.Unlock()
+	chart.data = data
+}
+
+// Size returns the size of the graph widget.
+func (g *BasePolygonSVGChart) Size() fyne.Size {
+	if g.canvas == nil {
+		return fyne.NewSize(0, 0)
+	}
+	return g.canvas.Size()
+}
+
+// PolygonCharthOpts provides options for the polygon chart.
+type PolygonCharthOpts struct {
+	*sizeOpts
+
+	// FillColor is the color of the fill. Alpha is ignored.
+	FillColor color.Color
+
+	// StrokeWidth is the width of the stroke.
+	StrokeWidth float32
+
+	// StrokeColor is the color of the stroke. Alpha is ignored.
+	StrokeColor color.Color
+}
+
+// SVGTplPolygonStruct  handles the graph data, colors... for Line SVG
+type SVGTplPolygonStruct struct {
+	// Width of the chart
+	Width int
+
+	// Height of the chart
+	Height int
+
+	// Data points (X,Y) to draw the SVG polygon
+	Data [][2]float64
+
+	// Fill color in SVG/HTML format (e.g. #ff0000, red, none, ...)
+	FillColor string
+
+	// Stroke color in SVG/HTML format (e.g. #ff0000, red, none, ...)
+	StrokeColor string
+
+	// Stroke width of the line
+	StrokeWidth float32
 }

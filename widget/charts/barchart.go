@@ -13,9 +13,6 @@ type BarChart struct {
 	*BasePolygonSVGChart
 }
 
-// BarChartOptions aliased to LineCharthOpts
-type BarChartOptions = PolygonCharthOpts
-
 // NewBarChart returns a new BarChart.
 func NewBarChart(opts *BarChartOptions) *BarChart {
 	chart := &BarChart{
@@ -105,3 +102,6 @@ func (chart *BarChart) rasterize(w, h int) image.Image {
 
 	return chart.Render(buff, w, h)
 }
+
+// BarChartOptions aliased to LineCharthOpts
+type BarChartOptions = PolygonCharthOpts

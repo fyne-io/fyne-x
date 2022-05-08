@@ -4,26 +4,6 @@ import (
 	"sync"
 )
 
-// GraphRange set the range of the graph.
-type GraphRange struct {
-	// Set the Y range of the graph.
-	YMin, YMax float64
-}
-
-// global options for the chart
-type sizeOpts struct {
-	GraphRange *GraphRange
-}
-
-func newSizeOpts() *sizeOpts {
-	return &sizeOpts{}
-}
-
-// SetGraphRange set the global range of the graph.
-func (g *sizeOpts) SetGraphRange(r *GraphRange) {
-	g.GraphRange = r
-}
-
 // BaseChart struct for any Graph object.
 type BaseChart struct {
 
@@ -46,4 +26,24 @@ func (b *BaseChart) getLocker() *sync.Mutex {
 		b.locker = &sync.Mutex{}
 	}
 	return b.locker
+}
+
+// GraphRange set the range of the graph.
+type GraphRange struct {
+	// Set the Y range of the graph.
+	YMin, YMax float64
+}
+
+// global options for the chart
+type sizeOpts struct {
+	GraphRange *GraphRange
+}
+
+func newSizeOpts() *sizeOpts {
+	return &sizeOpts{}
+}
+
+// SetGraphRange set the global range of the graph.
+func (g *sizeOpts) SetGraphRange(r *GraphRange) {
+	g.GraphRange = r
 }
