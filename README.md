@@ -211,8 +211,8 @@ Basic example to create a line chart:
 package main
 
 import (
-	"fyne.io/fyne/v2"
-	"fyne.io/x/fyne/widget/charts"
+    "fyne.io/fyne/v2"
+    "fyne.io/x/fyne/widget/charts"
 )
 
 func main() {
