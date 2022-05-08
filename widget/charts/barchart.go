@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-// BarChart or BarChart (alias).
+// BarChart is a Polygon hart to draw histograms.
 type BarChart struct {
 	*BasePolygonSVGChart
 }
