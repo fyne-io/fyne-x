@@ -184,3 +184,49 @@ for validation using an entropy system.
 pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 70.
 ```
 
+### Charts
+
+The `widget/charts` package provides some chart widget to draw:
+
+- `BarChar` which is an histrogram view
+- `LineChart` wich is simple line chart
+
+You can change colors, override behavior, Y range...
+
+![Chart example](img/chart.png)
+
+See the [`cmd/graph_demo`](cmd/graph_demo) or run from this repository:
+
+```bash
+go run cmd/graph_demo/*
+```
+
+The demo provides several examples like an overriden view to make the "mouse over" event displaying values and pointer.
+
+![Chart with mouse event](img/chart-mouse.png)
+
+Basic example to create a line chart:
+
+```go
+package main
+
+import (
+	"fyne.io/fyne/v2"
+	"fyne.io/x/fyne/widget/charts"
+)
+
+func main() {
+    app := app.New()
+    w := app.NewWindow("Graphs")
+
+    // set data
+    data := []float64{1.2, 5.3, 2.2, 3.4}
+    chart := charts.NewLineChart(nil) // nil = default options
+    chart.SetData(data)
+
+    // add chart object to the view
+    w.SetContent(chart) 
+    w.ShowAndRun()
+}
+```
+
