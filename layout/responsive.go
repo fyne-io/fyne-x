@@ -31,29 +31,43 @@ import (
 type ResponsiveBreakpoint uint16
 
 const (
-	SMALL  ResponsiveBreakpoint = 576
+	// SMALL is the smallest breakpoint (mobile vertical).
+	SMALL ResponsiveBreakpoint = 576
+
+	// MEDIUM is the medium breakpoint (mobile horizontal, tablet vertical).
 	MEDIUM ResponsiveBreakpoint = 768
-	LARGE  ResponsiveBreakpoint = 992
+
+	// LARGE is the largest breakpoint (tablet horizontal, small desktop).
+	LARGE ResponsiveBreakpoint = 992
+
+	// XLARGE is the largest breakpoint (large desktop).
 	XLARGE ResponsiveBreakpoint = 1200
-	// Aliases
+
+	// SM is an alias for SMALL
 	SM ResponsiveBreakpoint = SMALL
+
+	// MD is an alias for MEDIUM
 	MD ResponsiveBreakpoint = MEDIUM
+
+	// LG is an alias for LARGE
 	LG ResponsiveBreakpoint = LARGE
+
+	// XL is an alias for XLARGE
 	XL ResponsiveBreakpoint = XLARGE
 )
 
-// responsiveConfiguration is the configuration for a responsive object. It's
+// ResponsiveConfiguration is the configuration for a responsive object. It's
 // a simple map from the breakpoint to the size ratio from it's container.
 // Breakpoint is a uint16 that should be set from const SMALL, MEDIUM, LARGE and XLARGE.
-type responsiveConfiguration map[ResponsiveBreakpoint]float32
+type ResponsiveConfiguration map[ResponsiveBreakpoint]float32
 
 // NewResponsiveConf return a new responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
 //      Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
-func NewResponsiveConf(ratios ...float32) responsiveConfiguration {
-	responsive := responsiveConfiguration{}
+func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
+	responsive := ResponsiveConfiguration{}
 
 	if len(ratios) > 4 {
 		log.Println("Responsive: you declared more than 4 ratios, only the first 4 will be used")
@@ -84,18 +98,18 @@ func NewResponsiveConf(ratios ...float32) responsiveConfiguration {
 // temporary register for the responsiveConfigurations in this variable. This
 // map is filled by Responsive() function. It's not thread safe, but it should not be a problem.
 // SetResponsiveConfig and GetResponsiveConfig() managed the configuration pulling from this variable.
-var responsiveConfigurations = make(map[fyne.CanvasObject]responsiveConfiguration)
+var responsiveConfigurations = make(map[fyne.CanvasObject]ResponsiveConfiguration)
 
 // ResponsiveLayout is the layout that will adapt objects with the responsive rules. See NewResponsiveLayout
 // for details.
 type ResponsiveLayout struct {
-	configuration map[fyne.CanvasObject]responsiveConfiguration
+	configuration map[fyne.CanvasObject]ResponsiveConfiguration
 	mutex         *sync.Mutex
 }
 
 // GetResponsiveConfig returns the configuration for the object.
 // If the object was not registered, the function returns an error.
-func (resp *ResponsiveLayout) GetResponsiveConfig(object fyne.CanvasObject) (responsiveConfiguration, error) {
+func (resp *ResponsiveLayout) GetResponsiveConfig(object fyne.CanvasObject) (ResponsiveConfiguration, error) {
 
 	// case of the user didn't use the NewResponsiveLayout method, we need to
 	// drop global configuration
@@ -214,7 +228,7 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 // SetResponsiveConfig sets the configuration for the object.
 // It creates a new configuration if the object was not registered.
-func (resp *ResponsiveLayout) SetResponsiveConfig(object fyne.CanvasObject, conf responsiveConfiguration) {
+func (resp *ResponsiveLayout) SetResponsiveConfig(object fyne.CanvasObject, conf ResponsiveConfiguration) {
 	resp.mutex.Lock()
 	defer resp.mutex.Unlock()
 
@@ -243,7 +257,7 @@ func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
 func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 
 	r := &ResponsiveLayout{
-		configuration: make(map[fyne.CanvasObject]responsiveConfiguration),
+		configuration: make(map[fyne.CanvasObject]ResponsiveConfiguration),
 		mutex:         &sync.Mutex{},
 	}
 
