@@ -77,7 +77,7 @@ func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
 	for _, i := range ratios {
 		if i <= 0 || i > 1 {
 			message := "Responsive: size must be > 0 and <= 1, got: %d"
-			panic(errors.New(fmt.Sprintf(message, i)))
+			panic(fmt.Errorf(message, i))
 		}
 	}
 
