@@ -230,9 +230,11 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 // SetResponsiveConfig sets the configuration for the object.
 // It creates a new configuration if the object was not registered.
 func (resp *ResponsiveLayout) SetResponsiveConfig(object fyne.CanvasObject, conf ResponsiveConfiguration) {
-	if _, ok := responsiveConfigurations[object]; ok {
-		delete(responsiveConfigurations, object)
-	}
+	resp.mutex.Lock()
+	defer resp.mutex.Unlock()
+
+	// drom from global
+	delete(responsiveConfigurations, object)
 
 	resp.configuration[object] = conf
 }
