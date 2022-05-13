@@ -10,15 +10,11 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"fyne.io/x/fyne/layout"
-	"fyne.io/x/fyne/theme"
 )
 
 func main() {
 	app := app.New()
 
-	t := theme.NewGnomeTheme(-1)
-
-	app.Settings().SetTheme(t)
 	window := app.NewWindow("Responsive")
 	window.Resize(fyne.Size{Width: 320, Height: 480})
 
