@@ -148,7 +148,6 @@ func animateBarChart(chart *charts.BarChart) {
 			chart.SetData(data)
 			chart.Refresh()
 		}
-		// let's play with color
 	}()
 
 }
