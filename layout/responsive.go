@@ -26,6 +26,12 @@ import (
 //    }
 // Note that a responsive layout can handle others layouts, responsive or not.
 
+// temporary register for the responsiveConfigurations in this variable. This
+// map is filled by Responsive() function. It's not thread safe, but it should not be a problem.
+// SetResponsiveConfig and GetResponsiveConfig() managed the configuration pulling from this variable.
+var responsiveConfigurations = make(map[fyne.CanvasObject]ResponsiveConfiguration)
+var responsiveMutex sync.Mutex
+
 // ResponsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
 //
 // See: https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints
@@ -96,12 +102,6 @@ func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
 	return responsive
 }
 
-// temporary register for the responsiveConfigurations in this variable. This
-// map is filled by Responsive() function. It's not thread safe, but it should not be a problem.
-// SetResponsiveConfig and GetResponsiveConfig() managed the configuration pulling from this variable.
-var responsiveConfigurations = make(map[fyne.CanvasObject]ResponsiveConfiguration)
-var responsiveMutex sync.Mutex
-
 // ResponsiveLayout is the layout that will adapt objects with the responsive rules. See NewResponsiveLayout
 // for details.
 type ResponsiveLayout struct {
@@ -113,12 +113,16 @@ type ResponsiveLayout struct {
 // If the object was not registered, the function returns an error.
 func (resp *ResponsiveLayout) GetResponsiveConfig(object fyne.CanvasObject) (ResponsiveConfiguration, error) {
 
+	responsiveMutex.Lock()
+	defer responsiveMutex.Unlock()
+
 	// case of the user didn't use the NewResponsiveLayout method, we need to
 	// drop global configuration
 	if _, ok := responsiveConfigurations[object]; ok {
 		resp.SetResponsiveConfig(object, responsiveConfigurations[object])
 	}
 
+	// shouw now be registered in resp
 	if conf, ok := resp.configuration[object]; ok {
 		return conf, nil
 	}
@@ -287,11 +291,14 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	}
 
 	for _, ob := range o {
-		if conf, ok := responsiveConfigurations[ob]; !ok {
-			r.SetResponsiveConfig(ob, NewResponsiveConf(1, 1, 1, 1))
-		} else {
-			r.SetResponsiveConfig(ob, conf)
+		conf := ResponsiveConfiguration{}
+		var ok bool
+		responsiveMutex.Lock()
+		if conf, ok = responsiveConfigurations[ob]; !ok {
+			conf = NewResponsiveConf(1)
 		}
+		responsiveMutex.Unlock()
+		r.SetResponsiveConfig(ob, conf)
 	}
 
 	return container.New(r, o...)
@@ -306,6 +313,8 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
 
 	// Create configuration for this object
+	responsiveMutex.Lock()
+	defer responsiveMutex.Unlock()
 	responsiveConfigurations[object] = NewResponsiveConf(breakpointRatio...)
 
 	// return the original object
