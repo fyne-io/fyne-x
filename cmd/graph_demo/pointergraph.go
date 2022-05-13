@@ -21,7 +21,6 @@ type LineChartWithMouse struct {
 func NewLineChartWithMouse() *LineChartWithMouse {
 	return &LineChartWithMouse{
 		LineChart: charts.NewLineChart(nil),
-		mouseOver: false,
 	}
 }
 
