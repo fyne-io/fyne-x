@@ -219,12 +219,10 @@ func main() {
     app := app.New()
     w := app.NewWindow("Graphs")
 
-    // set data
     data := []float64{1.2, 5.3, 2.2, 3.4}
     chart := charts.NewLineChart(nil) // nil = default options
     chart.SetData(data)
 
-    // add chart object to the view
     w.SetContent(chart) 
     w.ShowAndRun()
 }
