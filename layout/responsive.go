@@ -76,7 +76,7 @@ func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
 	// basic check
 	for _, i := range ratios {
 		if i <= 0 || i > 1 {
-			message := "Responsive: size must be > 0 and <= 1, got: %d"
+			message := "Responsive: size must be > 0 and <= 1, got: %f"
 			panic(fmt.Errorf(message, i))
 		}
 	}
@@ -229,9 +229,6 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 // SetResponsiveConfig sets the configuration for the object.
 // It creates a new configuration if the object was not registered.
 func (resp *ResponsiveLayout) SetResponsiveConfig(object fyne.CanvasObject, conf ResponsiveConfiguration) {
-	resp.mutex.Lock()
-	defer resp.mutex.Unlock()
-
 	if _, ok := responsiveConfigurations[object]; ok {
 		delete(responsiveConfigurations, object)
 	}
