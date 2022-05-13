@@ -16,7 +16,7 @@ func main() {
 	app := app.New()
 	w := app.NewWindow("Graphs")
 
-	graphWidgets := make([]fyne.CanvasObject, 0)
+	var graphWidgets []fyne.CanvasObject
 
 	// Create a basic LineChart
 	lineChart := charts.NewLineChart(nil)
