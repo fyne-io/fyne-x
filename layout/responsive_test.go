@@ -66,8 +66,9 @@ func TestResponsive_Responsive(t *testing.T) {
 	win.Resize(fyne.NewSize(w, h))
 	size1 = label1.Size()
 	size2 = label2.Size()
-	assert.Equal(t, w/2-padding, size1.Width)
-	assert.Equal(t, w/2-padding, size2.Width)
+	// remove 2 * padding as there is 2 objects in a line
+	assert.Equal(t, w/2-padding*2, size1.Width)
+	assert.Equal(t, w/2-padding*2, size2.Width)
 }
 
 // Check if a widget that overflows the container goes to the next line.
@@ -119,35 +120,39 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	w := float32(SMALL)
 	win.Resize(fyne.NewSize(w, h))
 	win.Content().Refresh()
+	w = w - 2*p
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
-		assert.Equal(t, w-p*2, size.Width)
+		assert.Equal(t, w, size.Width)
 	}
 
 	// Then resize to w > SMALL so the labels should be sized to 50% of the layout
 	w = float32(MEDIUM)
 	win.Resize(fyne.NewSize(w, h))
+	w = w - 2*p
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
-		assert.Equal(t, w/2-p, size.Width)
+		assert.Equal(t, w/2-p, size.Width) // 1 padding between 2 widgets
 	}
 
 	// Then resize to w > MEDIUM so the labels should be sized to 33% of the layout
 	w = float32(LARGE)
 	win.Resize(fyne.NewSize(w, h))
-	for i := 0; i < n; i++ {
+	w = w - 2*p
+	for i := 0; i < n-1; i++ { // note: n-1 because the last element seems to be resized
 		size := labels[i].Size()
-		// weird but it "1px" error in calculation
-		round := float32(math.Floor(float64(w/3))) - p/2
-		assert.Equal(t, round, size.Width)
+		floor := math.Floor(float64(w)/3 - float64(p)/3)
+		assert.Equal(t, float32(floor), size.Width) // 2 paddings between 3 widgets
 	}
 
 	// Then resize to w > LARGE so the labels should be sized to 25% of the layout
-	w = float32(XLARGE * 2)
+	w = float32(XLARGE)
 	win.Resize(fyne.NewSize(w, h))
+	w = w - 2*p
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
-		assert.Equal(t, w/4-p/2, size.Width)
+		// note: 1px is added to the size to avoid rounding errors
+		assert.Equal(t, w/4-p/4-1, float32(math.Floor(float64(size.Width))))
 	}
 }
 

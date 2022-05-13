@@ -24,8 +24,20 @@ func main() {
 	})
 
 	resp := layout.NewResponsiveLayout(
-		presentation(),                         // 100% by default
-		winSizeLabel(window),                   // 100% by default
+		presentation(),       // 100% by default
+		winSizeLabel(window), // 100% by default
+		layout.Responsive(
+			widget.NewButton("One !", func() {}),
+			1, .33,
+		),
+		layout.Responsive(
+			widget.NewButton("Two !", func() {}),
+			1, .33,
+		),
+		layout.Responsive(
+			widget.NewButton("Three !", func() {}),
+			1, .34,
+		),
 		layout.Responsive(fromLayout(), 1, .5), // 100% for small, 50% for others
 		layout.Responsive(fromLayout(), 1, .5), // 100% for small, 50% for others
 		button,                                 // 100% by default
@@ -85,7 +97,7 @@ func presentation() fyne.CanvasObject {
 func fromLayout() fyne.CanvasObject {
 	title := widget.NewLabel(
 		"This container should be 100% width of small device and 50% for larger.\n" +
-			"The label are 100% width for small device, 25% for medium and 33% for larger")
+			"The labels are sized to 100% width for small devices, 25% for medium and 33% for larger")
 	title.Alignment = fyne.TextAlignCenter
 	title.Wrapping = fyne.TextWrapWord
 
