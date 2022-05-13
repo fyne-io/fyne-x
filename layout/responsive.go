@@ -291,7 +291,7 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	}
 
 	for _, ob := range o {
-		conf := ResponsiveConfiguration{}
+		var conf ResponsiveConfiguration
 		var ok bool
 		responsiveMutex.Lock()
 		if conf, ok = responsiveConfigurations[ob]; !ok {
