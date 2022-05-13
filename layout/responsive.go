@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 )
 
@@ -266,7 +267,7 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 		}
 	}
 
-	return fyne.NewContainerWithLayout(r, o...)
+	return container.New(r, o...)
 }
 
 // Responsive register the object with a responsive configuration.
