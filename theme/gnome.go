@@ -2,6 +2,7 @@ package theme
 
 import (
 	"encoding/json"
+	"fmt"
 	"image/color"
 	"io/ioutil"
 	"log"
@@ -17,6 +18,7 @@ import (
 	ft "fyne.io/fyne/v2/theme"
 )
 
+// FONTFORGE_LANGUAGE=ff fontforge -c 'Open("/usr/share/fonts/cantarell/Cantarell-Bold.otf");Generate("example.ttf");'
 const gjsScript = `
 let gtkVersion = Number(ARGV[0] || 4);
 imports.gi.versions.Gtk = gtkVersion + ".0";
@@ -119,15 +121,18 @@ func (gnome *Gnome) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.C
 // Icon returns the icon for the given name.
 //
 // Implements: fyne.Theme
-func (g *Gnome) Icon(i fyne.ThemeIconName) fyne.Resource {
+func (gnome *Gnome) Icon(i fyne.ThemeIconName) fyne.Resource {
 	return ft.DefaultTheme().Icon(i)
 }
 
 // Font returns the font for the given name.
 //
 // Implements: fyne.Theme
-func (g *Gnome) Font(s fyne.TextStyle) fyne.Resource {
-	return ft.DefaultTheme().Font(s)
+func (gnome *Gnome) Font(s fyne.TextStyle) fyne.Resource {
+	if gnome.font == nil {
+		return ft.DefaultTheme().Font(s)
+	}
+	return gnome.font
 }
 
 // Size returns the size for the given name. It will scale the detected Gnome font size
@@ -290,6 +295,9 @@ func (gnome *Gnome) getFont() {
 	size, err := strconv.ParseFloat(fontSize, 32)
 	// apply this to the fontScaleFactor
 	gnome.fontSize = float32(size)
+
+	// try to get the font as a TTF file
+	gnome.setFont(strings.Join(parts[:len(parts)-1], "-"))
 }
 
 func (gnome *Gnome) setVariant() {
@@ -335,16 +343,84 @@ func (gnome *Gnome) getGTKVersion() int {
 	for _, path := range possiblePaths {
 		path = filepath.Join(path, themename)
 		if _, err := os.Stat(path); err == nil {
-			// found the theme directory
-			// now check if it is gtk4
+			// now check if it is gtk4 compatible
 			if _, err := os.Stat(path + "gtk-4.0/gtk.css"); err == nil {
 				// it is gtk4
 				return 4
-			} else {
-				// it is gtk3
+			}
+			if _, err := os.Stat(path + "gtk-3.0/gtk.css"); err == nil {
 				return 3
 			}
 		}
 	}
-	return 3
+	return 3 // default, but that may be a false positive now
+}
+
+func (gnome *Gnome) setFont(fontname string) {
+
+	fontpath, err := gnome.getFontPath(fontname)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	ext := filepath.Ext(fontpath)
+	if ext == ".otf" {
+		font, err := gnome.convertOTF2TTF(fontpath)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		gnome.font = fyne.NewStaticResource(fontpath, font)
+	}
+	if ext == ".ttf" {
+		font, err := ioutil.ReadFile(fontpath)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		gnome.font = fyne.NewStaticResource(fontpath, font)
+	}
+
+}
+
+func (*Gnome) getFontPath(fontname string) (string, error) {
+
+	// get the font path
+	cmd := exec.Command("fc-match", "-f", "%{file}", fontname)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return "", err
+	}
+	log.Println("Detected font path", string(out))
+
+	// get the font path with fc-list command
+	fontpath := strings.TrimSpace(string(out))
+	return fontpath, nil
+}
+
+func (*Gnome) convertOTF2TTF(fontpath string) ([]byte, error) {
+
+	// convert the font to a ttf file
+	basename := filepath.Base(fontpath)
+	tempTTF := filepath.Join(os.TempDir(), "fyne-"+basename+".ttf")
+
+	ffScript := `Open("%s");Generate("%s")`
+	script := fmt.Sprintf(ffScript, fontpath, tempTTF)
+	cmd := exec.Command("fontforge", "-c", script)
+	cmd.Env = append(cmd.Env, "FONTFORGE_LANGUAGE=ff")
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return nil, err
+	}
+	defer os.Remove(tempTTF)
+	log.Println("TTF font generated: ", tempTTF)
+
+	// read the temporary ttf file
+	return ioutil.ReadFile(tempTTF)
 }
