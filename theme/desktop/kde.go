@@ -1,7 +1,6 @@
 package desktop
 
 import (
-	"errors"
 	"image/color"
 	"io/ioutil"
 	"log"
@@ -14,23 +13,25 @@ import (
 	ft "fyne.io/fyne/v2/theme"
 )
 
-// KDE theme is based on the KDE or Plasma theme.
-type KDE struct {
-	variant    fyne.ThemeVariant
-	bgColor    color.Color
-	fgColor    color.Color
-	fontConfig string
-	fontSize   float32
-	font       fyne.Resource
+// KDETheme theme is based on the KDETheme or Plasma theme.
+type KDETheme struct {
+	variant         fyne.ThemeVariant
+	bgColor         color.Color
+	fgColor         color.Color
+	viewColor       color.Color
+	buttonColor     color.Color
+	buttonAlternate color.Color
+	fontConfig      string
+	fontSize        float32
+	font            fyne.Resource
 }
 
 // NewKDETheme returns a new KDE theme.
 func NewKDETheme() fyne.Theme {
-	kde := &KDE{
+	kde := &KDETheme{
 		variant: ft.VariantDark,
 	}
 	kde.decodeTheme()
-	log.Println(kde)
 
 	return kde
 }
@@ -38,12 +39,19 @@ func NewKDETheme() fyne.Theme {
 // Color returns the color for the specified name.
 //
 // Implements: fyne.Theme
-func (k *KDE) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
+func (k *KDETheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
 	switch name {
 	case ft.ColorNameBackground:
 		return k.bgColor
 	case ft.ColorNameForeground:
 		return k.fgColor
+	case ft.ColorNameButton:
+		return k.buttonColor
+	case ft.ColorNameDisabledButton:
+		return k.buttonAlternate
+	case ft.ColorNameInputBackground:
+		return k.viewColor
+
 	}
 	return ft.DefaultTheme().Color(name, k.variant)
 }
@@ -51,14 +59,14 @@ func (k *KDE) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
 // Icon returns the icon for the specified name.
 //
 // Implements: fyne.Theme
-func (k *KDE) Icon(i fyne.ThemeIconName) fyne.Resource {
+func (k *KDETheme) Icon(i fyne.ThemeIconName) fyne.Resource {
 	return ft.DefaultTheme().Icon(i)
 }
 
 // Font returns the font for the specified name.
 //
 // Implements: fyne.Theme
-func (k *KDE) Font(s fyne.TextStyle) fyne.Resource {
+func (k *KDETheme) Font(s fyne.TextStyle) fyne.Resource {
 	if k.font != nil {
 		return k.font
 	}
@@ -68,7 +76,7 @@ func (k *KDE) Font(s fyne.TextStyle) fyne.Resource {
 // Size returns the size of the font for the specified text style.
 //
 // Implements: fyne.Theme
-func (k *KDE) Size(s fyne.ThemeSizeName) float32 {
+func (k *KDETheme) Size(s fyne.ThemeSizeName) float32 {
 	if s == ft.SizeNameText {
 		return k.fontSize
 	}
@@ -76,12 +84,12 @@ func (k *KDE) Size(s fyne.ThemeSizeName) float32 {
 }
 
 // decodeTheme initialize the theme.
-func (k *KDE) decodeTheme() {
+func (k *KDETheme) decodeTheme() {
 	k.loadScheme()
 	k.setFont()
 }
 
-func (k *KDE) loadScheme() error {
+func (k *KDETheme) loadScheme() error {
 	// the theme name is declared in ~/.config/kdedefaults/kdeglobals
 	// in the ini section [General] as "ColorScheme" entry
 	homedir, err := os.UserHomeDir()
@@ -108,6 +116,19 @@ func (k *KDE) loadScheme() error {
 				k.fgColor = k.parseColor(strings.ReplaceAll(line, "ForegroundNormal=", ""))
 			}
 		}
+		if section == "Colors:Button" {
+			if strings.HasPrefix(line, "BackgroundNormal=") {
+				k.buttonColor = k.parseColor(strings.ReplaceAll(line, "BackgroundNormal=", ""))
+			}
+			if strings.HasPrefix(line, "BackgroundAlternate=") {
+				k.buttonAlternate = k.parseColor(strings.ReplaceAll(line, "BackgroundAlternate=", ""))
+			}
+		}
+		if section == "Colors:View" {
+			if strings.HasPrefix(line, "BackgroundNormal=") {
+				k.viewColor = k.parseColor(strings.ReplaceAll(line, "BackgroundNormal=", ""))
+			}
+		}
 		if section == "General" {
 			if strings.HasPrefix(line, "font=") {
 				k.fontConfig = strings.ReplaceAll(line, "font=", "")
@@ -115,10 +136,10 @@ func (k *KDE) loadScheme() error {
 		}
 	}
 
-	return errors.New("Unable to find the KDE color scheme")
+	return nil
 }
 
-func (k *KDE) parseColor(col string) color.Color {
+func (k *KDETheme) parseColor(col string) color.Color {
 	// the color is in the form r,g,b,
 	// we need to convert it to a color.Color
 
@@ -133,16 +154,15 @@ func (k *KDE) parseColor(col string) color.Color {
 	return color.RGBA{uint8(r), uint8(g), uint8(b), 0xff}
 }
 
-func (k *KDE) setFont() {
+func (k *KDETheme) setFont() {
 
 	if k.fontConfig == "" {
-		log.Println("WTF")
 		return
 	}
-	// the font is in the form "fontname,size,...", so we can split it
-	font := strings.Split(k.fontConfig, ",")
-	name := font[0]
-	size, _ := strconv.ParseFloat(font[1], 32)
+	// the fontline is in the form "fontline,size,...", so we can split it
+	fontline := strings.Split(k.fontConfig, ",")
+	name := fontline[0]
+	size, _ := strconv.ParseFloat(fontline[1], 32)
 	k.fontSize = float32(size)
 
 	// we need to load the font, Gnome struct has got some nice methods
@@ -151,20 +171,20 @@ func (k *KDE) setFont() {
 		log.Println(err)
 		return
 	}
-	log.Println(fontpath)
+
+	var font []byte
 	if filepath.Ext(fontpath) == ".ttf" {
-		font, err := ioutil.ReadFile(fontpath)
+		font, err = ioutil.ReadFile(fontpath)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		k.font = fyne.NewStaticResource(fontpath, font)
 	} else {
-		font, err := converToTTF(fontpath)
+		font, err = converToTTF(fontpath)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-		k.font = fyne.NewStaticResource(fontpath, font)
 	}
+	k.font = fyne.NewStaticResource(fontpath, font)
 }

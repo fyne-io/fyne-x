@@ -34,6 +34,11 @@ const colors = {
   background: [],
   foreground: [],
   borders: [],
+  successColor: [],
+  warningColor: [],
+  errorColor: [],
+  accentColor: [],
+  card_bg_color: [],
 };
 
 const win = new Gtk.Window();
@@ -71,28 +76,56 @@ if (!ok) {
 }
 colors.borders = [bg.red, bg.green, bg.blue, bg.alpha];
 
+
+[ok, bg] = ctx.lookup_color("success_color");
+colors.successColor = [bg.red, bg.green, bg.blue, bg.alpha];
+
+[ok ,bg] = ctx.lookup_color("warning_color");
+colors.warningColor = [bg.red, bg.green, bg.blue, bg.alpha];
+
+[ok, bg] = ctx.lookup_color("error_color");
+colors.errorColor = [bg.red, bg.green, bg.blue, bg.alpha];
+
+[ok, bg] = ctx.lookup_color("accent_color");
+colors.accentColor = [bg.red, bg.green, bg.blue, bg.alpha];
+
+[ok, bg] = ctx.lookup_color("card_bg_color");
+if (!ok) {
+   bg = colors.background;
+}
+colors.card_bg_color = [bg.red, bg.blue, bg.green, bg.alpha];
+
 print(JSON.stringify(colors));
 `
 
 // GnomeTheme theme, based on the Gnome desktop manager. This theme uses GJS and gsettings to get
 // the colors and font from the Gnome desktop.
 type GnomeTheme struct {
-	bgColor         color.Color
-	fgColor         color.Color
-	viewBgColor     color.Color
-	viewFgColor     color.Color
-	borderColor     color.Color
+	bgColor      color.Color
+	fgColor      color.Color
+	viewBgColor  color.Color
+	viewFgColor  color.Color
+	cardBgColor  color.Color
+	borderColor  color.Color
+	successColor color.Color
+	warningColor color.Color
+	errorColor   color.Color
+	accentColor  color.Color
+
 	fontScaleFactor float32
 	font            fyne.Resource
 	fontSize        float32
 	variant         fyne.ThemeVariant
 }
 
-// NewGnomeTheme returns a new Gnome theme based on the given gtk version. If gtkVersion is -1,
+// NewGnomeTheme returns a new Gnome theme based on the given gtk version. If gtkVersion is <= 0,
 // the theme will try to determine the higher Gtk version available for the current GtkTheme.
 func NewGnomeTheme(gtkVersion int) fyne.Theme {
-	gnome := &GnomeTheme{}
-	if gtkVersion == -1 {
+	gnome := &GnomeTheme{
+		variant: ft.VariantDark,
+	}
+	if gtkVersion <= 0 {
+		// detect gtkVersion
 		gtkVersion = gnome.getGTKVersion()
 	}
 	gnome.decodeTheme(gtkVersion, ft.VariantDark)
@@ -107,11 +140,17 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) co
 
 	switch name {
 	case ft.ColorNameBackground:
-		return gnome.bgColor
+		return gnome.viewBgColor
 	case ft.ColorNameForeground:
 		return gnome.fgColor
 	case ft.ColorNameButton, ft.ColorNameInputBackground:
-		return gnome.viewBgColor
+		return gnome.bgColor
+	case ft.ColorNamePrimary:
+		return gnome.successColor
+	case ft.ColorNameError:
+		return gnome.errorColor
+	case ft.ColorNameFocus:
+		return gnome.successColor
 	default:
 		return ft.DefaultTheme().Color(name, gnome.variant)
 	}
@@ -155,28 +194,21 @@ func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) 
 
 	// make things faster in concurrent mode
 	wg.Add(3)
-	go func() {
-		gnome.getColors(gtkVersion)
-		gnome.setVariant()
-		wg.Done()
-	}()
-	go func() {
-		gnome.getFont()
-		wg.Done()
-	}()
-	go func() {
-		gnome.fontScale()
-		wg.Done()
-	}()
+	go gnome.getColors(gtkVersion, &wg)
+	go gnome.getFont(&wg)
+	go gnome.fontScale(&wg)
 	wg.Wait()
 }
 
-func (gnome *GnomeTheme) getColors(gtkVersion int) {
+func (gnome *GnomeTheme) getColors(gtkVersion int, wg *sync.WaitGroup) {
 
+	if wg != nil {
+		defer wg.Done()
+	}
 	// we will call gjs to get the colors
 	gjs, err := exec.LookPath("gjs")
 	if err != nil {
-		log.Println(err)
+		log.Println("To activate the theme, please install gjs", err)
 		return
 	}
 
@@ -209,7 +241,12 @@ func (gnome *GnomeTheme) getColors(gtkVersion int) {
 		WindowFGcolor []float32 `json:"foreground,-"`
 		ViewBGcolor   []float32 `json:"viewbg,-"`
 		ViewFGcolor   []float32 `json:"viewfg,-"`
+		CardBGColor   []float32 `json:"card_bg_color,-"`
 		Borders       []float32 `json:"borders,-"`
+		SuccessColor  []float32 `json:"successColor,-"`
+		WarningColor  []float32 `json:"warningColor,-"`
+		ErrorColor    []float32 `json:"errorColor,-"`
+		AccentColor   []float32 `json:"accentColor,-"`
 	}{}
 	err = json.Unmarshal(out, &colors)
 	if err != nil {
@@ -218,40 +255,37 @@ func (gnome *GnomeTheme) getColors(gtkVersion int) {
 	}
 
 	// convert the colors to fyne colors
-	gnome.bgColor = color.RGBA{
-		R: uint8(colors.WindowBGcolor[0] * 255),
-		G: uint8(colors.WindowBGcolor[1] * 255),
-		B: uint8(colors.WindowBGcolor[2] * 255),
-		A: uint8(colors.WindowBGcolor[3] * 255)}
+	gnome.bgColor = gnome.parseColor(colors.WindowBGcolor)
+	gnome.fgColor = gnome.parseColor(colors.WindowFGcolor)
+	gnome.borderColor = gnome.parseColor(colors.Borders)
+	gnome.viewBgColor = gnome.parseColor(colors.ViewBGcolor)
+	gnome.viewFgColor = gnome.parseColor(colors.ViewFGcolor)
+	gnome.cardBgColor = gnome.parseColor(colors.CardBGColor)
+	gnome.successColor = gnome.parseColor(colors.SuccessColor)
+	gnome.warningColor = gnome.parseColor(colors.WarningColor)
+	gnome.errorColor = gnome.parseColor(colors.ErrorColor)
+	gnome.accentColor = gnome.parseColor(colors.AccentColor)
 
-	gnome.fgColor = color.RGBA{
-		R: uint8(colors.WindowFGcolor[0] * 255),
-		G: uint8(colors.WindowFGcolor[1] * 255),
-		B: uint8(colors.WindowFGcolor[2] * 255),
-		A: uint8(colors.WindowFGcolor[3] * 255)}
-
-	gnome.borderColor = color.RGBA{
-		R: uint8(colors.Borders[0] * 255),
-		G: uint8(colors.Borders[1] * 255),
-		B: uint8(colors.Borders[2] * 255),
-		A: uint8(colors.Borders[3] * 255)}
-
-	gnome.viewBgColor = color.RGBA{
-		R: uint8(colors.ViewBGcolor[0] * 255),
-		G: uint8(colors.ViewBGcolor[1] * 255),
-		B: uint8(colors.ViewBGcolor[2] * 255),
-		A: uint8(colors.ViewBGcolor[3] * 255)}
-
-	gnome.viewFgColor = color.RGBA{
-		R: uint8(colors.ViewFGcolor[0] * 255),
-		G: uint8(colors.ViewFGcolor[1] * 255),
-		B: uint8(colors.ViewFGcolor[2] * 255),
-		A: uint8(colors.ViewFGcolor[3] * 255)}
+	gnome.setVariant()
 
 }
 
-func (gnome *GnomeTheme) fontScale() {
+// parseColor converts a float32 array to color.Color.
+func (*GnomeTheme) parseColor(col []float32) color.Color {
+	return color.RGBA{
+		R: uint8(col[0] * 255),
+		G: uint8(col[1] * 255),
+		B: uint8(col[2] * 255),
+		A: uint8(col[3] * 255),
+	}
 
+}
+
+// fontScale find the font scaling factor in settings.
+func (gnome *GnomeTheme) fontScale(wg *sync.WaitGroup) {
+	if wg != nil {
+		defer wg.Done()
+	}
 	// for any error below, we will use the default
 	gnome.fontScaleFactor = 1
 
@@ -273,7 +307,13 @@ func (gnome *GnomeTheme) fontScale() {
 	gnome.fontScaleFactor = float32(textScale)
 }
 
-func (gnome *GnomeTheme) getFont() {
+// getFont gets the font name from gsettings and set the font size. This also calls
+// setFont() to set the font.
+func (gnome *GnomeTheme) getFont(wg *sync.WaitGroup) {
+
+	if wg != nil {
+		defer wg.Done()
+	}
 
 	gnome.font = ft.TextFont()
 	// call gsettings get org.gnome.desktop.interface font-name
@@ -313,6 +353,8 @@ func (gnome *GnomeTheme) setVariant() {
 	}
 }
 
+// getGTKVersion gets the available GTK version for the given theme. If the version cannot be
+// determine, it will return 3 wich is the most common used version.
 func (gnome *GnomeTheme) getGTKVersion() int {
 	// call gsettings get org.gnome.desktop.interface gtk-theme
 	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
@@ -355,6 +397,8 @@ func (gnome *GnomeTheme) getGTKVersion() int {
 	return 3 // default, but that may be a false positive now
 }
 
+// setFont sets the font for the theme - this method calls getFontPath() and converToTTF
+// if needed.
 func (gnome *GnomeTheme) setFont(fontname string) {
 
 	fontpath, err := getFontPath(fontname)
