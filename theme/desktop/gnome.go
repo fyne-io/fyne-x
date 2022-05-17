@@ -29,7 +29,7 @@ const (
 )
 
 // mapping to gnome/gtk icon names.
-var gnomeIconMaps = map[fyne.ThemeIconName]string{
+var gnomeIconMap = map[fyne.ThemeIconName]string{
 	ft.IconNameInfo:     "dialog-information",
 	ft.IconNameError:    "dialog-error",
 	ft.IconNameQuestion: "dialog-question",
@@ -74,8 +74,19 @@ var gnomeIconMaps = map[fyne.ThemeIconName]string{
 	ft.IconNameColorAchromatic: "color-picker-grey",
 }
 
+// Map Fyne colorname to Adwaita/GTK color names
+// See https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html
+var gnomeColorMap = map[fyne.ThemeColorName]string{
+	ft.ColorNameBackground:      "theme_bg_color,window_bg_color",
+	ft.ColorNameForeground:      "theme_text_color,view_fg_color",
+	ft.ColorNameButton:          "theme_base_color,window_bg_color",
+	ft.ColorNameInputBackground: "theme_base_color,window_bg_color",
+	ft.ColorNamePrimary:         "accent_color,success_color",
+	ft.ColorNameError:           "error_color",
+}
+
 // Script to get the colors from the Gnome GTK/Adwaita theme.
-const gjsScript = `
+const gjsColorScript = `
 let gtkVersion = Number(ARGV[0] || 4);
 imports.gi.versions.Gtk = gtkVersion + ".0";
 
@@ -86,83 +97,28 @@ if (gtkVersion === 3) {
   Gtk.init();
 }
 
-const colors = {
-  viewbg: [],
-  viewfg: [],
-  background: [],
-  foreground: [],
-  borders: [],
-  successColor: [],
-  warningColor: [],
-  errorColor: [],
-  accentColor: [],
-  card_bg_color: [],
-};
-
+const colors = {};
 const win = new Gtk.Window();
 const ctx = win.get_style_context();
+const colorMap = %s;
 
-let [ok, bg] = [false, null];
-
-[ok, bg] = ctx.lookup_color("theme_base_color");
-if (!ok) {
-  [ok, bg] = ctx.lookup_color("view_bg_color");
+for (let col in colorMap) {
+  let [ok, bg] = [false, null];
+  let found = false;
+  colorMap[col].split(",").forEach((fetch) => {
+    [ok, bg] = ctx.lookup_color(fetch);
+    if (ok && !found) {
+      found = true;
+      colors[col] = [bg.red, bg.green, bg.blue, bg.alpha];
+    }
+  });
 }
-colors.viewbg = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("theme_text_color");
-if (!ok) {
-  [ok, bg] = ctx.lookup_color("view_fg_color");
-}
-colors.viewfg = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("theme_bg_color");
-if (!ok) {
-  [ok, bg] = ctx.lookup_color("window_bg_color");
-}
-colors.background = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("theme_fg_color");
-if (!ok) {
-  [ok, bg] = ctx.lookup_color("window_fg_color");
-}
-colors.foreground = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("borders");
-if (!ok) {
-  [ok, bg] = ctx.lookup_color("unfocused_borders");
-}
-colors.borders = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("success_bg_color");
-if (!ok) {
-    [ok, bg] = ctx.lookup_color("success_color");
-}
-colors.successColor = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("warning_color");
-colors.warningColor = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("error_color");
-colors.errorColor = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("accent_color");
-if (!ok) {
-    [ok, bg] = ctx.lookup_color("success_color");
-}
-colors.accentColor = [bg.red, bg.green, bg.blue, bg.alpha];
-
-[ok, bg] = ctx.lookup_color("card_bg_color");
-if (!ok) {
-  bg = colors.background;
-}
-colors.card_bg_color = [bg.red, bg.blue, bg.green, bg.alpha];
 
 print(JSON.stringify(colors));
 `
 
-// script to get icons from theme.
-const gjsIcons = `
+// Script to get icons from theme.
+const gjsIconsScript = `
 let gtkVersion = Number(ARGV[0] || 4);
 imports.gi.versions.Gtk = gtkVersion + ".0";
 const iconSize = 32; // can be 8, 16, 24, 32, 48, 64, 96
@@ -204,45 +160,29 @@ print(JSON.stringify(iconset));
 // GnomeTheme theme, based on the Gnome desktop manager. This theme uses GJS and gsettings to get
 // the colors and font from the Gnome desktop.
 type GnomeTheme struct {
-	bgColor      color.Color
-	fgColor      color.Color
-	viewBgColor  color.Color
-	viewFgColor  color.Color
-	cardBgColor  color.Color
-	borderColor  color.Color
-	successColor color.Color
-	warningColor color.Color
-	errorColor   color.Color
-	accentColor  color.Color
-
-	icons map[string]string
+	colors map[fyne.ThemeColorName]color.Color
+	icons  map[string]string
 
 	fontScaleFactor float32
 	font            fyne.Resource
 	fontSize        float32
-	variant         fyne.ThemeVariant
+	variant         *fyne.ThemeVariant
 	iconCache       map[string]fyne.Resource
 }
 
 // Color returns the color for the given color name
 //
 // Implements: fyne.Theme
-func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Color {
-
-	switch name {
-	case ft.ColorNameBackground:
-		return gnome.bgColor
-	case ft.ColorNameForeground:
-		return gnome.fgColor
-	case ft.ColorNameButton, ft.ColorNameInputBackground:
-		return gnome.viewBgColor
-	case ft.ColorNamePrimary:
-		return gnome.accentColor
-	case ft.ColorNameError:
-		return gnome.errorColor
-	default:
-		return ft.DefaultTheme().Color(name, gnome.variant)
+func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+	if col, ok := gnome.colors[name]; ok {
+		return col
 	}
+
+	if gnome.variant == nil {
+		return ft.DefaultTheme().Color(name, *gnome.variant)
+	}
+
+	return ft.DefaultTheme().Color(name, variant)
 }
 
 // Font returns the font for the given name.
@@ -260,7 +200,7 @@ func (gnome *GnomeTheme) Font(s fyne.TextStyle) fyne.Resource {
 // Implements: fyne.Theme
 func (gnome *GnomeTheme) Icon(i fyne.ThemeIconName) fyne.Resource {
 
-	if icon, found := gnomeIconMaps[i]; found {
+	if icon, found := gnomeIconMap[i]; found {
 		if resource := gnome.loadIcon(icon); resource != nil {
 			return resource
 		}
@@ -302,8 +242,16 @@ func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 	}
 	defer os.Remove(f.Name())
 
+	// generate the js object from gnomeColorMap
+	colormap := "{\n"
+	for col, fetch := range gnomeColorMap {
+		colormap += fmt.Sprintf(`    "%s": "%s",`+"\n", col, fetch)
+	}
+	colormap += "}"
+
 	// write the script to the temp file
-	_, err = f.WriteString(gjsScript)
+	script := fmt.Sprintf(gjsColorScript, colormap)
+	_, err = f.WriteString(script)
 	if err != nil {
 		log.Println(err)
 		return
@@ -320,36 +268,17 @@ func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 		return
 	}
 
-	// decode json to apply to the gnome theme
-	colors := struct {
-		WindowBGcolor []float32 `json:"background,-"`
-		WindowFGcolor []float32 `json:"foreground,-"`
-		ViewBGcolor   []float32 `json:"viewbg,-"`
-		ViewFGcolor   []float32 `json:"viewfg,-"`
-		CardBGColor   []float32 `json:"card_bg_color,-"`
-		Borders       []float32 `json:"borders,-"`
-		SuccessColor  []float32 `json:"successColor,-"`
-		WarningColor  []float32 `json:"warningColor,-"`
-		ErrorColor    []float32 `json:"errorColor,-"`
-		AccentColor   []float32 `json:"accentColor,-"`
-	}{}
+	// decode json
+	var colors map[fyne.ThemeColorName][]float32
 	err = json.Unmarshal(out, &colors)
 	if err != nil {
-		log.Println(err)
+		log.Println("gjs error:", err, string(out))
 		return
 	}
-
-	// convert the colors to fyne colors
-	gnome.bgColor = gnome.parseColor(colors.WindowBGcolor)
-	gnome.fgColor = gnome.parseColor(colors.WindowFGcolor)
-	gnome.borderColor = gnome.parseColor(colors.Borders)
-	gnome.viewBgColor = gnome.parseColor(colors.ViewBGcolor)
-	gnome.viewFgColor = gnome.parseColor(colors.ViewFGcolor)
-	gnome.cardBgColor = gnome.parseColor(colors.CardBGColor)
-	gnome.successColor = gnome.parseColor(colors.SuccessColor)
-	gnome.warningColor = gnome.parseColor(colors.WarningColor)
-	gnome.errorColor = gnome.parseColor(colors.ErrorColor)
-	gnome.accentColor = gnome.parseColor(colors.AccentColor)
+	for name, rgba := range colors {
+		// convert string arry to colors
+		gnome.colors[name] = gnome.parseColor(rgba)
+	}
 
 	gnome.calculateVariant()
 
@@ -427,7 +356,7 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 	}
 	// create the list of icon to get
 	var icons []string
-	for _, icon := range gnomeIconMaps {
+	for _, icon := range gnomeIconMap {
 		icons = append(icons, icon)
 	}
 	iconSet := "[\n"
@@ -436,7 +365,7 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 	}
 	iconSet += "]"
 
-	gjsIconList := fmt.Sprintf(gjsIcons, iconSet)
+	gjsIconList := fmt.Sprintf(gjsIconsScript, iconSet)
 
 	// write the script to a temp file
 	f, err := ioutil.TempFile("", "fyne-theme-gnome-*.js")
@@ -486,14 +415,14 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 
 // calculateVariant calculates the variant of the theme using the background color.
 func (gnome *GnomeTheme) calculateVariant() {
-	// using the bgColor, detect if the theme is dark or light
-	r, g, b, _ := gnome.bgColor.RGBA()
+	r, g, b, _ := gnome.Color(ft.ColorNameBackground, 0).RGBA()
 
 	brightness := (r/255*299 + g/255*587 + b/255*114) / 1000
+	gnome.variant = new(fyne.ThemeVariant)
 	if brightness > 125 {
-		gnome.variant = ft.VariantLight
+		*gnome.variant = ft.VariantLight
 	} else {
-		gnome.variant = ft.VariantDark
+		*gnome.variant = ft.VariantDark
 	}
 }
 
@@ -660,12 +589,10 @@ func (gnome *GnomeTheme) setFont(fontname string) {
 // the theme will try to determine the higher Gtk version available for the current GtkTheme.
 func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 	gnome := &GnomeTheme{
-		bgColor:   ft.DefaultTheme().Color(ft.ColorNameBackground, ft.VariantDark),
-		fgColor:   ft.DefaultTheme().Color(ft.ColorNameForeground, ft.VariantDark),
 		fontSize:  ft.DefaultTheme().Size(ft.SizeNameText),
-		variant:   ft.VariantDark,
 		iconCache: map[string]fyne.Resource{},
 		icons:     map[string]string{},
+		colors:    map[fyne.ThemeColorName]color.Color{},
 	}
 
 	if gtkVersion <= 0 {
