@@ -31,7 +31,10 @@ func NewKDETheme() fyne.Theme {
 	kde := &KDETheme{
 		variant: ft.VariantDark,
 	}
-	kde.decodeTheme()
+	if err := kde.decodeTheme(); err != nil {
+		log.Println(err)
+		return ft.DefaultTheme()
+	}
 
 	return kde
 }
@@ -84,9 +87,12 @@ func (k *KDETheme) Size(s fyne.ThemeSizeName) float32 {
 }
 
 // decodeTheme initialize the theme.
-func (k *KDETheme) decodeTheme() {
-	k.loadScheme()
+func (k *KDETheme) decodeTheme() error {
+	if err := k.loadScheme(); err != nil {
+		return err
+	}
 	k.setFont()
+	return nil
 }
 
 func (k *KDETheme) loadScheme() error {
@@ -149,9 +155,13 @@ func (k *KDETheme) parseColor(col string) color.Color {
 	r, _ := strconv.Atoi(cols[0])
 	g, _ := strconv.Atoi(cols[1])
 	b, _ := strconv.Atoi(cols[2])
+	a := 0xff
+	if len(cols) > 3 {
+		a, _ = strconv.Atoi(cols[3])
+	}
 
 	// convert the int to a color.Color
-	return color.RGBA{uint8(r), uint8(g), uint8(b), 0xff}
+	return color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 }
 
 func (k *KDETheme) setFont() {

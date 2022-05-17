@@ -1,7 +1,9 @@
 package desktop
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"image/color"
 	"io/ioutil"
 	"log"
@@ -11,17 +13,71 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"fyne.io/fyne/v2"
 	ft "fyne.io/fyne/v2/theme"
+	"github.com/srwiley/oksvg"
 )
+
+type GnomeFlag uint8
+
+const (
+	GnomeFlagAutoReload GnomeFlag = iota
+)
+
+// mapping to gnome/gtk icon names.
+var gnomeIconMaps = map[fyne.ThemeIconName]string{
+	ft.IconNameInfo:     "dialog-information",
+	ft.IconNameError:    "dialog-error",
+	ft.IconNameQuestion: "dialog-question",
+
+	ft.IconNameFolder:     "folder",
+	ft.IconNameFolderNew:  "folder-new",
+	ft.IconNameFolderOpen: "folder-open",
+	ft.IconNameHome:       "go-home",
+	ft.IconNameDownload:   "download",
+
+	ft.IconNameDocument:        "document",
+	ft.IconNameFileImage:       "image",
+	ft.IconNameFileApplication: "binary",
+	ft.IconNameFileText:        "text",
+	ft.IconNameFileVideo:       "video",
+	ft.IconNameFileAudio:       "audio",
+	ft.IconNameComputer:        "computer",
+	ft.IconNameMediaPhoto:      "photo",
+	ft.IconNameMediaVideo:      "video",
+	ft.IconNameMediaMusic:      "music",
+
+	ft.IconNameConfirm: "dialog-apply",
+	ft.IconNameCancel:  "cancel",
+
+	ft.IconNameCheckButton:        "checkbox-symbolic",
+	ft.IconNameCheckButtonChecked: "checkbox-checked-symbolic",
+	ft.IconNameRadioButton:        "radio-symbolic",
+	ft.IconNameRadioButtonChecked: "radio-checked-symbolic",
+
+	ft.IconNameArrowDropDown:   "arrow-down",
+	ft.IconNameArrowDropUp:     "arrow-up",
+	ft.IconNameNavigateNext:    "go-right",
+	ft.IconNameNavigateBack:    "go-left",
+	ft.IconNameMoveDown:        "go-down",
+	ft.IconNameMoveUp:          "go-up",
+	ft.IconNameSettings:        "document-properties",
+	ft.IconNameHistory:         "history-view",
+	ft.IconNameList:            "view-list",
+	ft.IconNameGrid:            "view-grid",
+	ft.IconNameColorPalette:    "color-select",
+	ft.IconNameColorChromatic:  "color-select",
+	ft.IconNameColorAchromatic: "color-picker-grey",
+}
 
 // Script to get the colors from the Gnome GTK/Adwaita theme.
 const gjsScript = `
 let gtkVersion = Number(ARGV[0] || 4);
 imports.gi.versions.Gtk = gtkVersion + ".0";
 
-const { Gtk } = imports.gi;
+const { Gtk, Gdk } = imports.gi;
 if (gtkVersion === 3) {
   Gtk.init(null);
 } else {
@@ -76,26 +132,71 @@ if (!ok) {
 }
 colors.borders = [bg.red, bg.green, bg.blue, bg.alpha];
 
-
-[ok, bg] = ctx.lookup_color("success_color");
+[ok, bg] = ctx.lookup_color("success_bg_color");
+if (!ok) {
+    [ok, bg] = ctx.lookup_color("success_color");
+}
 colors.successColor = [bg.red, bg.green, bg.blue, bg.alpha];
 
-[ok ,bg] = ctx.lookup_color("warning_color");
+[ok, bg] = ctx.lookup_color("warning_color");
 colors.warningColor = [bg.red, bg.green, bg.blue, bg.alpha];
 
 [ok, bg] = ctx.lookup_color("error_color");
 colors.errorColor = [bg.red, bg.green, bg.blue, bg.alpha];
 
 [ok, bg] = ctx.lookup_color("accent_color");
+if (!ok) {
+    [ok, bg] = ctx.lookup_color("success_color");
+}
 colors.accentColor = [bg.red, bg.green, bg.blue, bg.alpha];
 
 [ok, bg] = ctx.lookup_color("card_bg_color");
 if (!ok) {
-   bg = colors.background;
+  bg = colors.background;
 }
 colors.card_bg_color = [bg.red, bg.blue, bg.green, bg.alpha];
 
 print(JSON.stringify(colors));
+`
+
+// script to get icons from theme.
+const gjsIcons = `
+let gtkVersion = Number(ARGV[0] || 4);
+imports.gi.versions.Gtk = gtkVersion + ".0";
+const iconSize = 32; // can be 8, 16, 24, 32, 48, 64, 96
+
+const { Gtk, Gdk } = imports.gi;
+if (gtkVersion === 3) {
+  Gtk.init(null);
+} else {
+  Gtk.init();
+}
+
+let iconTheme = null;
+const icons = %s; // the icon list to get
+const iconset = {};
+
+if (gtkVersion === 3) {
+  iconTheme = Gtk.IconTheme.get_default();
+} else {
+  iconTheme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
+}
+
+icons.forEach((name) => {
+  if (gtkVersion === 3) {
+    try {
+      const icon = iconTheme.lookup_icon(name, iconSize, 0);
+      iconset[name] = icon.get_filename();
+    } catch (e) {
+      iconset[name] = null;
+    }
+  } else {
+    const icon = iconTheme.lookup_icon(name, null, null, iconSize, null, 0);
+    iconset[name] = icon.file.get_path();
+  }
+});
+
+print(JSON.stringify(iconset));
 `
 
 // GnomeTheme theme, based on the Gnome desktop manager. This theme uses GJS and gsettings to get
@@ -112,24 +213,57 @@ type GnomeTheme struct {
 	errorColor   color.Color
 	accentColor  color.Color
 
+	icons map[string]string
+
 	fontScaleFactor float32
 	font            fyne.Resource
 	fontSize        float32
 	variant         fyne.ThemeVariant
+	iconCache       map[string]fyne.Resource
 }
 
 // NewGnomeTheme returns a new Gnome theme based on the given gtk version. If gtkVersion is <= 0,
 // the theme will try to determine the higher Gtk version available for the current GtkTheme.
-func NewGnomeTheme(gtkVersion int) fyne.Theme {
+func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 	gnome := &GnomeTheme{
-		variant: ft.VariantDark,
+		bgColor:   ft.DefaultTheme().Color(ft.ColorNameBackground, ft.VariantDark),
+		fgColor:   ft.DefaultTheme().Color(ft.ColorNameForeground, ft.VariantDark),
+		fontSize:  ft.DefaultTheme().Size(ft.SizeNameText),
+		variant:   ft.VariantDark,
+		iconCache: map[string]fyne.Resource{},
+		icons:     map[string]string{},
 	}
+
 	if gtkVersion <= 0 {
 		// detect gtkVersion
 		gtkVersion = gnome.getGTKVersion()
 	}
 	gnome.decodeTheme(gtkVersion, ft.VariantDark)
 
+	for _, flag := range flags {
+		switch flag {
+		case GnomeFlagAutoReload:
+			go func() {
+				currentTheme := gnome.getTheme()
+				iconThem := gnome.getIconThemeName()
+				for {
+					current := fyne.CurrentApp().Settings().Theme()
+					if _, ok := current.(*GnomeTheme); !ok {
+						break
+					}
+					time.Sleep(1 * time.Second)
+					newTheme := gnome.getTheme()
+					newIconTheme := gnome.getIconThemeName()
+					if currentTheme != newTheme || iconThem != newIconTheme {
+						// ensure that the current theme is still a GnomeTheme
+						log.Println("Gnome or icon them changed, reloading theme")
+						fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
+						break
+					}
+				}
+			}()
+		}
+	}
 	return gnome
 }
 
@@ -146,11 +280,9 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) co
 	case ft.ColorNameButton, ft.ColorNameInputBackground:
 		return gnome.bgColor
 	case ft.ColorNamePrimary:
-		return gnome.successColor
+		return gnome.accentColor
 	case ft.ColorNameError:
 		return gnome.errorColor
-	case ft.ColorNameFocus:
-		return gnome.successColor
 	default:
 		return ft.DefaultTheme().Color(name, gnome.variant)
 	}
@@ -160,6 +292,13 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) co
 //
 // Implements: fyne.Theme
 func (gnome *GnomeTheme) Icon(i fyne.ThemeIconName) fyne.Resource {
+
+	if icon, found := gnomeIconMaps[i]; found {
+		if resource := gnome.loadIcon(icon); resource != nil {
+			return resource
+		}
+	}
+	//log.Println(i)
 	return ft.DefaultTheme().Icon(i)
 }
 
@@ -186,21 +325,17 @@ func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 }
 
 func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) {
-	// default
-	gnome.bgColor = ft.DefaultTheme().Color(ft.ColorNameBackground, variant)
-	gnome.fgColor = ft.DefaultTheme().Color(ft.ColorNameForeground, variant)
-	gnome.fontSize = ft.DefaultTheme().Size(ft.SizeNameText)
-	wg := sync.WaitGroup{}
-
 	// make things faster in concurrent mode
-	wg.Add(3)
-	go gnome.getColors(gtkVersion, &wg)
-	go gnome.getFont(&wg)
-	go gnome.fontScale(&wg)
+	wg := sync.WaitGroup{}
+	wg.Add(4)
+	go gnome.applyColors(gtkVersion, &wg)
+	go gnome.applyIcons(gtkVersion, &wg)
+	go gnome.applyFont(&wg)
+	go gnome.applyFontScale(&wg)
 	wg.Wait()
 }
 
-func (gnome *GnomeTheme) getColors(gtkVersion int, wg *sync.WaitGroup) {
+func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 
 	if wg != nil {
 		defer wg.Done()
@@ -213,7 +348,7 @@ func (gnome *GnomeTheme) getColors(gtkVersion int, wg *sync.WaitGroup) {
 	}
 
 	// create a temp file to store the colors
-	f, err := ioutil.TempFile("", "fyne-theme-gnome-")
+	f, err := ioutil.TempFile("", "fyne-theme-gnome-*.js")
 	if err != nil {
 		log.Println(err)
 		return
@@ -228,10 +363,13 @@ func (gnome *GnomeTheme) getColors(gtkVersion int, wg *sync.WaitGroup) {
 	}
 
 	// run the script
-	cmd := exec.Command(gjs, f.Name(), strconv.Itoa(gtkVersion))
+	cmd := exec.Command(gjs,
+		f.Name(), strconv.Itoa(gtkVersion),
+		fmt.Sprintf("%0.2f", 1.0),
+	)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(err, string(out))
+		log.Println("gjs error:", err, string(out))
 		return
 	}
 
@@ -266,8 +404,78 @@ func (gnome *GnomeTheme) getColors(gtkVersion int, wg *sync.WaitGroup) {
 	gnome.errorColor = gnome.parseColor(colors.ErrorColor)
 	gnome.accentColor = gnome.parseColor(colors.AccentColor)
 
-	gnome.setVariant()
+	gnome.calculateVariant()
 
+}
+
+func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
+
+	if wg != nil {
+		defer wg.Done()
+	}
+
+	gjs, err := exec.LookPath("gjs")
+	if err != nil {
+		log.Println("To activate the theme, please install gjs", err)
+		return
+	}
+	// create the list of icon to get
+	var icons []string
+	for _, icon := range gnomeIconMaps {
+		icons = append(icons, icon)
+	}
+	iconSet := "[\n"
+	for _, icon := range icons {
+		iconSet += fmt.Sprintf(`    "%s",`+"\n", icon)
+	}
+	iconSet += "]"
+
+	gjsIconList := fmt.Sprintf(gjsIcons, iconSet)
+
+	// write the script to a temp file
+	f, err := ioutil.TempFile("", "fyne-theme-gnome-*.js")
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	defer os.Remove(f.Name())
+
+	// write the script to the temp file
+	_, err = f.WriteString(gjsIconList)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	// Call gjs with 2 version, 3 and 4 to complete the icon, this because
+	// gtk version is sometimes not available or icon is not fully completed...
+	// It's a bit tricky but it works.
+	for _, gtkVersion := range []string{"3", "4"} {
+		// run the script
+		cmd := exec.Command(gjs,
+			f.Name(), gtkVersion,
+		)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Println("gjs error:", err, string(out))
+			return
+		}
+
+		tmpicons := map[string]*string{}
+		// decode json to apply to the gnome theme
+		err = json.Unmarshal(out, &tmpicons)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		for k, v := range tmpicons {
+			if _, ok := gnome.icons[k]; !ok {
+				if v != nil && *v != "" {
+					gnome.icons[k] = *v
+				}
+			}
+		}
+	}
 }
 
 // parseColor converts a float32 array to color.Color.
@@ -278,11 +486,10 @@ func (*GnomeTheme) parseColor(col []float32) color.Color {
 		B: uint8(col[2] * 255),
 		A: uint8(col[3] * 255),
 	}
-
 }
 
-// fontScale find the font scaling factor in settings.
-func (gnome *GnomeTheme) fontScale(wg *sync.WaitGroup) {
+// applyFontScale find the font scaling factor in settings.
+func (gnome *GnomeTheme) applyFontScale(wg *sync.WaitGroup) {
 	if wg != nil {
 		defer wg.Done()
 	}
@@ -307,9 +514,9 @@ func (gnome *GnomeTheme) fontScale(wg *sync.WaitGroup) {
 	gnome.fontScaleFactor = float32(textScale)
 }
 
-// getFont gets the font name from gsettings and set the font size. This also calls
+// applyFont gets the font name from gsettings and set the font size. This also calls
 // setFont() to set the font.
-func (gnome *GnomeTheme) getFont(wg *sync.WaitGroup) {
+func (gnome *GnomeTheme) applyFont(wg *sync.WaitGroup) {
 
 	if wg != nil {
 		defer wg.Done()
@@ -339,10 +546,8 @@ func (gnome *GnomeTheme) getFont(wg *sync.WaitGroup) {
 	gnome.setFont(strings.Join(parts[:len(parts)-1], " "))
 }
 
-func (gnome *GnomeTheme) setVariant() {
+func (gnome *GnomeTheme) calculateVariant() {
 	// using the bgColor, detect if the theme is dark or light
-	// if it is dark, set the variant to dark
-	// if it is light, set the variant to light
 	r, g, b, _ := gnome.bgColor.RGBA()
 
 	brightness := (r/255*299 + g/255*587 + b/255*114) / 1000
@@ -356,16 +561,11 @@ func (gnome *GnomeTheme) setVariant() {
 // getGTKVersion gets the available GTK version for the given theme. If the version cannot be
 // determine, it will return 3 wich is the most common used version.
 func (gnome *GnomeTheme) getGTKVersion() int {
-	// call gsettings get org.gnome.desktop.interface gtk-theme
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
-		log.Println(string(out))
-		return 3 // default to Gtk 3
+
+	themename := gnome.getTheme()
+	if themename == "" {
+		return 3 // default to 3
 	}
-	themename := strings.TrimSpace(string(out))
-	themename = strings.Trim(themename, "'")
 
 	// ok so now, find if the theme is gtk4, either fallback to gtk3
 	home, err := os.UserHomeDir()
@@ -423,5 +623,100 @@ func (gnome *GnomeTheme) setFont(fontname string) {
 		}
 		gnome.font = fyne.NewStaticResource(fontpath, font)
 	}
+}
 
+func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
+	var ok bool
+
+	if resource, ok = gnome.iconCache[name]; ok {
+		return
+	}
+
+	defer func() {
+		// whatever the result is, cache it
+		// even if it is nil
+		gnome.iconCache[name] = resource
+	}()
+
+	if filename, ok := gnome.icons[name]; ok {
+		content, err := ioutil.ReadFile(filename)
+		if err != nil {
+			return
+		}
+		if strings.HasSuffix(filename, ".svg") {
+			// we need to ensure that the svg can be opened by Fyne
+			buff := bytes.NewBuffer(content)
+			_, err := oksvg.ReadIconStream(buff)
+			if err != nil {
+				// try to convert it to png with imageMagik
+				log.Println("Cannot load file", filename, err, "try to convert")
+				resource, err = gnome.convertSVGtoPNG(filename)
+				if err != nil {
+					log.Println("Cannot convert file", filename, err)
+					return
+				}
+				return
+			}
+		}
+		resource = fyne.NewStaticResource(filename, content)
+		return
+	}
+	return
+}
+
+func (gnome *GnomeTheme) convertSVGtoPNG(filename string) (fyne.Resource, error) {
+	// use "convert" from imageMagik to convert svg to png
+
+	convert, err := exec.LookPath("convert")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpfile, err := ioutil.TempFile("", "fyne-theme-gnome-*.png")
+	if err != nil {
+		return nil, err
+	}
+
+	// convert the svg to png, no background
+	cmd := exec.Command(convert, filename, "-background", "none", "-flatten", tmpfile.Name())
+	log.Println("Converting", filename, "to", tmpfile.Name())
+	err = cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(tmpfile.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	return fyne.NewStaticResource(filename, content), nil
+}
+
+func (gnome *GnomeTheme) getTheme() string {
+	// call gsettings get org.gnome.desktop.interface gtk-theme
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return "" // default to Gtk 3
+	}
+	themename := strings.TrimSpace(string(out))
+	themename = strings.Trim(themename, "'")
+	return themename
+}
+
+func (gnome *GnomeTheme) getIconThemeName() string {
+	// call gsettings get org.gnome.desktop.interface icon-theme
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return ""
+	}
+	themename := strings.TrimSpace(string(out))
+	themename = strings.Trim(themename, "'")
+	return themename
 }
