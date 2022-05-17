@@ -9,7 +9,75 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"fyne.io/fyne/v2"
 )
+
+// convertSVGtoPNG will convert a svg file to a png file using convert (imageMagik) if the
+// binary exists.
+func convertSVGtoPNG(filename string) (fyne.Resource, error) {
+	// use "convert" from imageMagik to convert svg to png
+
+	convert, err := exec.LookPath("convert")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpfile, err := ioutil.TempFile("", "fyne-theme-gnome-*.png")
+	if err != nil {
+		return nil, err
+	}
+
+	// convert the svg to png, no background
+	log.Println("Converting", filename, "to", tmpfile.Name())
+	cmd := exec.Command(convert, filename, "-background", "none", "-flatten", tmpfile.Name())
+	defer os.Remove(tmpfile.Name())
+
+	err = cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(tmpfile.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	return fyne.NewStaticResource(filename, content), nil
+}
+
+// converToTTF will convert a font to a ttf file. This requires the fontforge package.
+func converToTTF(fontpath string) ([]byte, error) {
+
+	// check if fontforge is installed
+	fontforge, err := exec.LookPath("fontforge")
+	if err != nil {
+		return nil, err
+	}
+
+	// convert the font to a ttf file
+	basename := filepath.Base(fontpath)
+	tempTTF := filepath.Join(os.TempDir(), "fyne-"+basename+".ttf")
+
+	// Convert to TTF, this is the FF script to call
+	ffScript := `Open("%s");Generate("%s")`
+	script := fmt.Sprintf(ffScript, fontpath, tempTTF)
+
+	// call fontforge
+	cmd := exec.Command(fontforge, "-c", script)
+	cmd.Env = append(cmd.Env, "FONTFORGE_LANGUAGE=ff")
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return nil, err
+	}
+	defer os.Remove(tempTTF)
+
+	// read the temporary ttf file
+	return ioutil.ReadFile(tempTTF)
+}
 
 // getFontPath will detect the font path from the font name taken from gsettings.
 // As the font is not exactly the one that fc-match can find, we need to do some
@@ -60,7 +128,7 @@ func getFontPath(fontname string) (string, error) {
 	}
 
 	// we can now search
-	// fc-math ... "Font Name:Font Style
+	// fc-match ... "Font Name:Font Style
 	var fontpath string
 	cmd = exec.Command(fcMatch, "-f", "%{file}", fontname+":"+strings.Join(fontstyle, " "))
 	out, err = cmd.CombinedOutput()
@@ -74,37 +142,4 @@ func getFontPath(fontname string) (string, error) {
 	fontpath = string(out)
 	fontpath = strings.TrimSpace(fontpath)
 	return fontpath, nil
-}
-
-// converToTTF will convert a font to a ttf file. This requires the fontforge package.
-func converToTTF(fontpath string) ([]byte, error) {
-
-	// check if fontforge is installed
-	fontforge, err := exec.LookPath("fontforge")
-	if err != nil {
-		return nil, err
-	}
-
-	// convert the font to a ttf file
-	basename := filepath.Base(fontpath)
-	tempTTF := filepath.Join(os.TempDir(), "fyne-"+basename+".ttf")
-
-	// Convert to TTF, this is the FF script to call
-	ffScript := `Open("%s");Generate("%s")`
-	script := fmt.Sprintf(ffScript, fontpath, tempTTF)
-
-	// call fontforge
-	cmd := exec.Command(fontforge, "-c", script)
-	cmd.Env = append(cmd.Env, "FONTFORGE_LANGUAGE=ff")
-
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
-		log.Println(string(out))
-		return nil, err
-	}
-	defer os.Remove(tempTTF)
-
-	// read the temporary ttf file
-	return ioutil.ReadFile(tempTTF)
 }

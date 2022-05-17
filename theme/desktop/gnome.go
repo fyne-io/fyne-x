@@ -23,6 +23,8 @@ import (
 type GnomeFlag uint8
 
 const (
+	// GnomeFlagAutoReload is a flag that indicates that the theme should be reloaded when
+	// the gtk theme or icon theme changes.
 	GnomeFlagAutoReload GnomeFlag = iota
 )
 
@@ -279,6 +281,7 @@ func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 	return ft.DefaultTheme().Size(s)
 }
 
+// applyColors sets the colors for the Gnome theme. Colors are defined by a GJS script.
 func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 
 	if wg != nil {
@@ -410,6 +413,7 @@ func (gnome *GnomeTheme) applyFontScale(wg *sync.WaitGroup) {
 	gnome.fontScaleFactor = float32(textScale)
 }
 
+// applyIcons gets the icon theme from gsettings and call GJS script to get the icon set.
 func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 
 	if wg != nil {
@@ -480,6 +484,7 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 	}
 }
 
+// calculateVariant calculates the variant of the theme using the background color.
 func (gnome *GnomeTheme) calculateVariant() {
 	// using the bgColor, detect if the theme is dark or light
 	r, g, b, _ := gnome.bgColor.RGBA()
@@ -492,35 +497,7 @@ func (gnome *GnomeTheme) calculateVariant() {
 	}
 }
 
-func (gnome *GnomeTheme) convertSVGtoPNG(filename string) (fyne.Resource, error) {
-	// use "convert" from imageMagik to convert svg to png
-
-	convert, err := exec.LookPath("convert")
-	if err != nil {
-		return nil, err
-	}
-
-	tmpfile, err := ioutil.TempFile("", "fyne-theme-gnome-*.png")
-	if err != nil {
-		return nil, err
-	}
-
-	// convert the svg to png, no background
-	cmd := exec.Command(convert, filename, "-background", "none", "-flatten", tmpfile.Name())
-	log.Println("Converting", filename, "to", tmpfile.Name())
-	err = cmd.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	content, err := ioutil.ReadFile(tmpfile.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	return fyne.NewStaticResource(filename, content), nil
-}
-
+// decodeTheme decodes the theme from the gsettings and Gtk API.
 func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) {
 	// make things faster in concurrent mode
 	wg := sync.WaitGroup{}
@@ -536,7 +513,7 @@ func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) 
 // determine, it will return 3 wich is the most common used version.
 func (gnome *GnomeTheme) getGTKVersion() int {
 
-	themename := gnome.getTheme()
+	themename := gnome.getThemeName()
 	if themename == "" {
 		return 3 // default to 3
 	}
@@ -571,6 +548,7 @@ func (gnome *GnomeTheme) getGTKVersion() int {
 	return 3 // default, but that may be a false positive now
 }
 
+// getIconThemeName return the current icon theme name.
 func (gnome *GnomeTheme) getIconThemeName() string {
 	// call gsettings get org.gnome.desktop.interface icon-theme
 	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme")
@@ -585,20 +563,22 @@ func (gnome *GnomeTheme) getIconThemeName() string {
 	return themename
 }
 
-func (gnome *GnomeTheme) getTheme() string {
+// getThemeName gets the current theme name.
+func (gnome *GnomeTheme) getThemeName() string {
 	// call gsettings get org.gnome.desktop.interface gtk-theme
 	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(err)
 		log.Println(string(out))
-		return "" // default to Gtk 3
+		return ""
 	}
 	themename := strings.TrimSpace(string(out))
 	themename = strings.Trim(themename, "'")
 	return themename
 }
 
+// loadIcon loads the icon from gnome theme, if the icon was already loaded, so the cached version is returned.
 func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 	var ok bool
 
@@ -624,7 +604,7 @@ func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 			if err != nil {
 				// try to convert it to png with imageMagik
 				log.Println("Cannot load file", filename, err, "try to convert")
-				resource, err = gnome.convertSVGtoPNG(filename)
+				resource, err = convertSVGtoPNG(filename)
 				if err != nil {
 					log.Println("Cannot convert file", filename, err)
 					return
@@ -698,7 +678,7 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 		switch flag {
 		case GnomeFlagAutoReload:
 			go func() {
-				currentTheme := gnome.getTheme()
+				currentTheme := gnome.getThemeName()
 				iconThem := gnome.getIconThemeName()
 				for {
 					current := fyne.CurrentApp().Settings().Theme()
@@ -706,7 +686,7 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 						break
 					}
 					time.Sleep(1 * time.Second)
-					newTheme := gnome.getTheme()
+					newTheme := gnome.getThemeName()
 					newIconTheme := gnome.getIconThemeName()
 					if currentTheme != newTheme || iconThem != newIconTheme {
 						// ensure that the current theme is still a GnomeTheme

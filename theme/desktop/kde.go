@@ -82,6 +82,7 @@ func (k *KDETheme) decodeTheme() error {
 	return nil
 }
 
+// loadScheme loads the KDE theme from kdeglobals if it is found.
 func (k *KDETheme) loadScheme() error {
 	// the theme name is declared in ~/.config/kdedefaults/kdeglobals
 	// in the ini section [General] as "ColorScheme" entry
@@ -132,6 +133,7 @@ func (k *KDETheme) loadScheme() error {
 	return nil
 }
 
+// parseColor parses a color from a string in form r,g,b or r,g,b,a.
 func (k *KDETheme) parseColor(col string) color.Color {
 	// the color is in the form r,g,b,
 	// we need to convert it to a color.Color
@@ -151,6 +153,7 @@ func (k *KDETheme) parseColor(col string) color.Color {
 	return color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
 }
 
+// setFont sets the font for the theme.
 func (k *KDETheme) setFont() {
 
 	if k.fontConfig == "" {
