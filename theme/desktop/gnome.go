@@ -13,10 +13,10 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"time"
 
 	"fyne.io/fyne/v2"
 	ft "fyne.io/fyne/v2/theme"
+	"github.com/godbus/dbus/v5"
 	"github.com/srwiley/oksvg"
 )
 
@@ -497,8 +497,8 @@ func (gnome *GnomeTheme) calculateVariant() {
 	}
 }
 
-// decodeTheme decodes the theme from the gsettings and Gtk API.
-func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) {
+// findThemeInformation decodes the theme from the gsettings and Gtk API.
+func (gnome *GnomeTheme) findThemeInformation(gtkVersion int, variant fyne.ThemeVariant) {
 	// make things faster in concurrent mode
 	wg := sync.WaitGroup{}
 	wg.Add(4)
@@ -672,27 +672,43 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 		// detect gtkVersion
 		gtkVersion = gnome.getGTKVersion()
 	}
-	gnome.decodeTheme(gtkVersion, ft.VariantDark)
+	gnome.findThemeInformation(gtkVersion, ft.VariantDark)
 
 	for _, flag := range flags {
 		switch flag {
 		case GnomeFlagAutoReload:
 			go func() {
-				currentTheme := gnome.getThemeName()
-				iconThem := gnome.getIconThemeName()
-				for {
-					current := fyne.CurrentApp().Settings().Theme()
-					if _, ok := current.(*GnomeTheme); !ok {
-						break
-					}
-					time.Sleep(1 * time.Second)
-					newTheme := gnome.getThemeName()
-					newIconTheme := gnome.getIconThemeName()
-					if currentTheme != newTheme || iconThem != newIconTheme {
-						// ensure that the current theme is still a GnomeTheme
-						log.Println("Gnome or icon them changed, reloading theme")
-						fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
-						break
+				// connect to dbus to detect theme/icon them changes
+				conn, err := dbus.SessionBus()
+				if err != nil {
+					log.Println(err)
+					return
+				}
+				if err := conn.AddMatchSignal(
+					dbus.WithMatchObjectPath("/org/freedesktop/portal/desktop"),
+					dbus.WithMatchInterface("org.freedesktop.portal.Settings"),
+					dbus.WithMatchMember("SettingChanged"),
+				); err != nil {
+					log.Println(err)
+					return
+				}
+				defer conn.Close()
+				c := make(chan *dbus.Signal, 1)
+				conn.Signal(c)
+
+				// wait for theme change event
+				sig := <-c
+
+				// break if the current theme is not typed as GnomeTheme
+				currentTheme := fyne.CurrentApp().Settings().Theme()
+				if _, ok := currentTheme.(*GnomeTheme); !ok {
+					return
+				}
+
+				for _, v := range sig.Body {
+					if v == "gtk-theme" || v == "icon-theme" {
+						go fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
+						return
 					}
 				}
 			}()
