@@ -26,19 +26,6 @@ type KDETheme struct {
 	font            fyne.Resource
 }
 
-// NewKDETheme returns a new KDE theme.
-func NewKDETheme() fyne.Theme {
-	kde := &KDETheme{
-		variant: ft.VariantDark,
-	}
-	if err := kde.decodeTheme(); err != nil {
-		log.Println(err)
-		return ft.DefaultTheme()
-	}
-
-	return kde
-}
-
 // Color returns the color for the specified name.
 //
 // Implements: fyne.Theme
@@ -59,13 +46,6 @@ func (k *KDETheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) color.Co
 	return ft.DefaultTheme().Color(name, k.variant)
 }
 
-// Icon returns the icon for the specified name.
-//
-// Implements: fyne.Theme
-func (k *KDETheme) Icon(i fyne.ThemeIconName) fyne.Resource {
-	return ft.DefaultTheme().Icon(i)
-}
-
 // Font returns the font for the specified name.
 //
 // Implements: fyne.Theme
@@ -74,6 +54,13 @@ func (k *KDETheme) Font(s fyne.TextStyle) fyne.Resource {
 		return k.font
 	}
 	return ft.DefaultTheme().Font(s)
+}
+
+// Icon returns the icon for the specified name.
+//
+// Implements: fyne.Theme
+func (k *KDETheme) Icon(i fyne.ThemeIconName) fyne.Resource {
+	return ft.DefaultTheme().Icon(i)
 }
 
 // Size returns the size of the font for the specified text style.
@@ -197,4 +184,17 @@ func (k *KDETheme) setFont() {
 		}
 	}
 	k.font = fyne.NewStaticResource(fontpath, font)
+}
+
+// NewKDETheme returns a new KDE theme.
+func NewKDETheme() fyne.Theme {
+	kde := &KDETheme{
+		variant: ft.VariantDark,
+	}
+	if err := kde.decodeTheme(); err != nil {
+		log.Println(err)
+		return ft.DefaultTheme()
+	}
+
+	return kde
 }

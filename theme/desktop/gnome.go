@@ -222,51 +222,6 @@ type GnomeTheme struct {
 	iconCache       map[string]fyne.Resource
 }
 
-// NewGnomeTheme returns a new Gnome theme based on the given gtk version. If gtkVersion is <= 0,
-// the theme will try to determine the higher Gtk version available for the current GtkTheme.
-func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
-	gnome := &GnomeTheme{
-		bgColor:   ft.DefaultTheme().Color(ft.ColorNameBackground, ft.VariantDark),
-		fgColor:   ft.DefaultTheme().Color(ft.ColorNameForeground, ft.VariantDark),
-		fontSize:  ft.DefaultTheme().Size(ft.SizeNameText),
-		variant:   ft.VariantDark,
-		iconCache: map[string]fyne.Resource{},
-		icons:     map[string]string{},
-	}
-
-	if gtkVersion <= 0 {
-		// detect gtkVersion
-		gtkVersion = gnome.getGTKVersion()
-	}
-	gnome.decodeTheme(gtkVersion, ft.VariantDark)
-
-	for _, flag := range flags {
-		switch flag {
-		case GnomeFlagAutoReload:
-			go func() {
-				currentTheme := gnome.getTheme()
-				iconThem := gnome.getIconThemeName()
-				for {
-					current := fyne.CurrentApp().Settings().Theme()
-					if _, ok := current.(*GnomeTheme); !ok {
-						break
-					}
-					time.Sleep(1 * time.Second)
-					newTheme := gnome.getTheme()
-					newIconTheme := gnome.getIconThemeName()
-					if currentTheme != newTheme || iconThem != newIconTheme {
-						// ensure that the current theme is still a GnomeTheme
-						log.Println("Gnome or icon them changed, reloading theme")
-						fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
-						break
-					}
-				}
-			}()
-		}
-	}
-	return gnome
-}
-
 // Color returns the color for the given color name
 //
 // Implements: fyne.Theme
@@ -288,6 +243,16 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) co
 	}
 }
 
+// Font returns the font for the given name.
+//
+// Implements: fyne.Theme
+func (gnome *GnomeTheme) Font(s fyne.TextStyle) fyne.Resource {
+	if gnome.font == nil {
+		return ft.DefaultTheme().Font(s)
+	}
+	return gnome.font
+}
+
 // Icon returns the icon for the given name.
 //
 // Implements: fyne.Theme
@@ -302,16 +267,6 @@ func (gnome *GnomeTheme) Icon(i fyne.ThemeIconName) fyne.Resource {
 	return ft.DefaultTheme().Icon(i)
 }
 
-// Font returns the font for the given name.
-//
-// Implements: fyne.Theme
-func (gnome *GnomeTheme) Font(s fyne.TextStyle) fyne.Resource {
-	if gnome.font == nil {
-		return ft.DefaultTheme().Font(s)
-	}
-	return gnome.font
-}
-
 // Size returns the size for the given name. It will scale the detected Gnome font size
 // by the Gnome font factor.
 //
@@ -322,17 +277,6 @@ func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 		return g.fontScaleFactor * g.fontSize
 	}
 	return ft.DefaultTheme().Size(s)
-}
-
-func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) {
-	// make things faster in concurrent mode
-	wg := sync.WaitGroup{}
-	wg.Add(4)
-	go gnome.applyColors(gtkVersion, &wg)
-	go gnome.applyIcons(gtkVersion, &wg)
-	go gnome.applyFont(&wg)
-	go gnome.applyFontScale(&wg)
-	wg.Wait()
 }
 
 func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
@@ -408,6 +352,64 @@ func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 
 }
 
+// applyFont gets the font name from gsettings and set the font size. This also calls
+// setFont() to set the font.
+func (gnome *GnomeTheme) applyFont(wg *sync.WaitGroup) {
+
+	if wg != nil {
+		defer wg.Done()
+	}
+
+	gnome.font = ft.TextFont()
+	// call gsettings get org.gnome.desktop.interface font-name
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "font-name")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return
+	}
+	// try to get the font as a TTF file
+	fontFile := strings.TrimSpace(string(out))
+	fontFile = strings.Trim(fontFile, "'")
+	// the fontFile string is in the format: Name size, eg: "Sans Bold 12", so get the size
+	parts := strings.Split(fontFile, " ")
+	fontSize := parts[len(parts)-1]
+	// convert the size to a float
+	size, err := strconv.ParseFloat(fontSize, 32)
+	// apply this to the fontScaleFactor
+	gnome.fontSize = float32(size)
+
+	// try to get the font as a TTF file
+	gnome.setFont(strings.Join(parts[:len(parts)-1], " "))
+}
+
+// applyFontScale find the font scaling factor in settings.
+func (gnome *GnomeTheme) applyFontScale(wg *sync.WaitGroup) {
+	if wg != nil {
+		defer wg.Done()
+	}
+	// for any error below, we will use the default
+	gnome.fontScaleFactor = 1
+
+	// call gsettings get org.gnome.desktop.interface text-scaling-factor
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "text-scaling-factor")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return
+	}
+
+	// get the text scaling factor
+	ts := strings.TrimSpace(string(out))
+	textScale, err := strconv.ParseFloat(ts, 32)
+	if err != nil {
+		return
+	}
+
+	// return the text scaling factor
+	gnome.fontScaleFactor = float32(textScale)
+}
+
 func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 
 	if wg != nil {
@@ -478,74 +480,6 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 	}
 }
 
-// parseColor converts a float32 array to color.Color.
-func (*GnomeTheme) parseColor(col []float32) color.Color {
-	return color.RGBA{
-		R: uint8(col[0] * 255),
-		G: uint8(col[1] * 255),
-		B: uint8(col[2] * 255),
-		A: uint8(col[3] * 255),
-	}
-}
-
-// applyFontScale find the font scaling factor in settings.
-func (gnome *GnomeTheme) applyFontScale(wg *sync.WaitGroup) {
-	if wg != nil {
-		defer wg.Done()
-	}
-	// for any error below, we will use the default
-	gnome.fontScaleFactor = 1
-
-	// call gsettings get org.gnome.desktop.interface text-scaling-factor
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "text-scaling-factor")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return
-	}
-
-	// get the text scaling factor
-	ts := strings.TrimSpace(string(out))
-	textScale, err := strconv.ParseFloat(ts, 32)
-	if err != nil {
-		return
-	}
-
-	// return the text scaling factor
-	gnome.fontScaleFactor = float32(textScale)
-}
-
-// applyFont gets the font name from gsettings and set the font size. This also calls
-// setFont() to set the font.
-func (gnome *GnomeTheme) applyFont(wg *sync.WaitGroup) {
-
-	if wg != nil {
-		defer wg.Done()
-	}
-
-	gnome.font = ft.TextFont()
-	// call gsettings get org.gnome.desktop.interface font-name
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "font-name")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
-		log.Println(string(out))
-		return
-	}
-	// try to get the font as a TTF file
-	fontFile := strings.TrimSpace(string(out))
-	fontFile = strings.Trim(fontFile, "'")
-	// the fontFile string is in the format: Name size, eg: "Sans Bold 12", so get the size
-	parts := strings.Split(fontFile, " ")
-	fontSize := parts[len(parts)-1]
-	// convert the size to a float
-	size, err := strconv.ParseFloat(fontSize, 32)
-	// apply this to the fontScaleFactor
-	gnome.fontSize = float32(size)
-
-	// try to get the font as a TTF file
-	gnome.setFont(strings.Join(parts[:len(parts)-1], " "))
-}
-
 func (gnome *GnomeTheme) calculateVariant() {
 	// using the bgColor, detect if the theme is dark or light
 	r, g, b, _ := gnome.bgColor.RGBA()
@@ -556,6 +490,46 @@ func (gnome *GnomeTheme) calculateVariant() {
 	} else {
 		gnome.variant = ft.VariantDark
 	}
+}
+
+func (gnome *GnomeTheme) convertSVGtoPNG(filename string) (fyne.Resource, error) {
+	// use "convert" from imageMagik to convert svg to png
+
+	convert, err := exec.LookPath("convert")
+	if err != nil {
+		return nil, err
+	}
+
+	tmpfile, err := ioutil.TempFile("", "fyne-theme-gnome-*.png")
+	if err != nil {
+		return nil, err
+	}
+
+	// convert the svg to png, no background
+	cmd := exec.Command(convert, filename, "-background", "none", "-flatten", tmpfile.Name())
+	log.Println("Converting", filename, "to", tmpfile.Name())
+	err = cmd.Run()
+	if err != nil {
+		return nil, err
+	}
+
+	content, err := ioutil.ReadFile(tmpfile.Name())
+	if err != nil {
+		return nil, err
+	}
+
+	return fyne.NewStaticResource(filename, content), nil
+}
+
+func (gnome *GnomeTheme) decodeTheme(gtkVersion int, variant fyne.ThemeVariant) {
+	// make things faster in concurrent mode
+	wg := sync.WaitGroup{}
+	wg.Add(4)
+	go gnome.applyColors(gtkVersion, &wg)
+	go gnome.applyIcons(gtkVersion, &wg)
+	go gnome.applyFont(&wg)
+	go gnome.applyFontScale(&wg)
+	wg.Wait()
 }
 
 // getGTKVersion gets the available GTK version for the given theme. If the version cannot be
@@ -597,32 +571,32 @@ func (gnome *GnomeTheme) getGTKVersion() int {
 	return 3 // default, but that may be a false positive now
 }
 
-// setFont sets the font for the theme - this method calls getFontPath() and converToTTF
-// if needed.
-func (gnome *GnomeTheme) setFont(fontname string) {
-
-	fontpath, err := getFontPath(fontname)
+func (gnome *GnomeTheme) getIconThemeName() string {
+	// call gsettings get org.gnome.desktop.interface icon-theme
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme")
+	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(err)
-		return
+		log.Println(string(out))
+		return ""
 	}
+	themename := strings.TrimSpace(string(out))
+	themename = strings.Trim(themename, "'")
+	return themename
+}
 
-	ext := filepath.Ext(fontpath)
-	if ext != ".ttf" {
-		font, err := converToTTF(fontpath)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		gnome.font = fyne.NewStaticResource(fontpath, font)
-	} else {
-		font, err := ioutil.ReadFile(fontpath)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-		gnome.font = fyne.NewStaticResource(fontpath, font)
+func (gnome *GnomeTheme) getTheme() string {
+	// call gsettings get org.gnome.desktop.interface gtk-theme
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return "" // default to Gtk 3
 	}
+	themename := strings.TrimSpace(string(out))
+	themename = strings.Trim(themename, "'")
+	return themename
 }
 
 func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
@@ -664,59 +638,85 @@ func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 	return
 }
 
-func (gnome *GnomeTheme) convertSVGtoPNG(filename string) (fyne.Resource, error) {
-	// use "convert" from imageMagik to convert svg to png
-
-	convert, err := exec.LookPath("convert")
-	if err != nil {
-		return nil, err
+// parseColor converts a float32 array to color.Color.
+func (*GnomeTheme) parseColor(col []float32) color.Color {
+	return color.RGBA{
+		R: uint8(col[0] * 255),
+		G: uint8(col[1] * 255),
+		B: uint8(col[2] * 255),
+		A: uint8(col[3] * 255),
 	}
-
-	tmpfile, err := ioutil.TempFile("", "fyne-theme-gnome-*.png")
-	if err != nil {
-		return nil, err
-	}
-
-	// convert the svg to png, no background
-	cmd := exec.Command(convert, filename, "-background", "none", "-flatten", tmpfile.Name())
-	log.Println("Converting", filename, "to", tmpfile.Name())
-	err = cmd.Run()
-	if err != nil {
-		return nil, err
-	}
-
-	content, err := ioutil.ReadFile(tmpfile.Name())
-	if err != nil {
-		return nil, err
-	}
-
-	return fyne.NewStaticResource(filename, content), nil
 }
 
-func (gnome *GnomeTheme) getTheme() string {
-	// call gsettings get org.gnome.desktop.interface gtk-theme
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "gtk-theme")
-	out, err := cmd.CombinedOutput()
+// setFont sets the font for the theme - this method calls getFontPath() and converToTTF
+// if needed.
+func (gnome *GnomeTheme) setFont(fontname string) {
+
+	fontpath, err := getFontPath(fontname)
 	if err != nil {
 		log.Println(err)
-		log.Println(string(out))
-		return "" // default to Gtk 3
+		return
 	}
-	themename := strings.TrimSpace(string(out))
-	themename = strings.Trim(themename, "'")
-	return themename
+
+	ext := filepath.Ext(fontpath)
+	if ext != ".ttf" {
+		font, err := converToTTF(fontpath)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		gnome.font = fyne.NewStaticResource(fontpath, font)
+	} else {
+		font, err := ioutil.ReadFile(fontpath)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		gnome.font = fyne.NewStaticResource(fontpath, font)
+	}
 }
 
-func (gnome *GnomeTheme) getIconThemeName() string {
-	// call gsettings get org.gnome.desktop.interface icon-theme
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
-		log.Println(string(out))
-		return ""
+// NewGnomeTheme returns a new Gnome theme based on the given gtk version. If gtkVersion is <= 0,
+// the theme will try to determine the higher Gtk version available for the current GtkTheme.
+func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
+	gnome := &GnomeTheme{
+		bgColor:   ft.DefaultTheme().Color(ft.ColorNameBackground, ft.VariantDark),
+		fgColor:   ft.DefaultTheme().Color(ft.ColorNameForeground, ft.VariantDark),
+		fontSize:  ft.DefaultTheme().Size(ft.SizeNameText),
+		variant:   ft.VariantDark,
+		iconCache: map[string]fyne.Resource{},
+		icons:     map[string]string{},
 	}
-	themename := strings.TrimSpace(string(out))
-	themename = strings.Trim(themename, "'")
-	return themename
+
+	if gtkVersion <= 0 {
+		// detect gtkVersion
+		gtkVersion = gnome.getGTKVersion()
+	}
+	gnome.decodeTheme(gtkVersion, ft.VariantDark)
+
+	for _, flag := range flags {
+		switch flag {
+		case GnomeFlagAutoReload:
+			go func() {
+				currentTheme := gnome.getTheme()
+				iconThem := gnome.getIconThemeName()
+				for {
+					current := fyne.CurrentApp().Settings().Theme()
+					if _, ok := current.(*GnomeTheme); !ok {
+						break
+					}
+					time.Sleep(1 * time.Second)
+					newTheme := gnome.getTheme()
+					newIconTheme := gnome.getIconThemeName()
+					if currentTheme != newTheme || iconThem != newIconTheme {
+						// ensure that the current theme is still a GnomeTheme
+						log.Println("Gnome or icon them changed, reloading theme")
+						fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
+						break
+					}
+				}
+			}()
+		}
+	}
+	return gnome
 }
