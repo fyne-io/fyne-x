@@ -183,16 +183,16 @@ if (gtkVersion === 3) {
 }
 
 icons.forEach((name) => {
-  if (gtkVersion === 3) {
-    try {
+  try {
+    if (gtkVersion === 3) {
       const icon = iconTheme.lookup_icon(name, iconSize, 0);
       iconset[name] = icon.get_filename();
-    } catch (e) {
-      iconset[name] = null;
+    } else {
+      const icon = iconTheme.lookup_icon(name, null, null, iconSize, null, 0);
+      iconset[name] = icon.file.get_path();
     }
-  } else {
-    const icon = iconTheme.lookup_icon(name, null, null, iconSize, null, 0);
-    iconset[name] = icon.file.get_path();
+  } catch (e) {
+    iconset[name] = null;
   }
 });
 
