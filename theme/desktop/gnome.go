@@ -231,11 +231,11 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, _ fyne.ThemeVariant) co
 
 	switch name {
 	case ft.ColorNameBackground:
-		return gnome.viewBgColor
+		return gnome.bgColor
 	case ft.ColorNameForeground:
 		return gnome.fgColor
 	case ft.ColorNameButton, ft.ColorNameInputBackground:
-		return gnome.bgColor
+		return gnome.viewBgColor
 	case ft.ColorNamePrimary:
 		return gnome.accentColor
 	case ft.ColorNameError:
@@ -693,10 +693,11 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 					return
 				}
 				defer conn.Close()
-				c := make(chan *dbus.Signal, 1)
+				c := make(chan *dbus.Signal, 5)
 				conn.Signal(c)
 
-				// wait for theme change event
+				// wait for theme change event, only once because we will create
+				// a new theme instance anyway.
 				sig := <-c
 
 				// break if the current theme is not typed as GnomeTheme
