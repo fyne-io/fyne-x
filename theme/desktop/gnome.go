@@ -605,6 +605,11 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 		switch flag {
 		case GnomeFlagAutoReload:
 			go func() {
+				// connect to setting changes to not reload the theme if the new selected is
+				// not a gnome theme
+				settingChan := make(chan fyne.Settings)
+				fyne.CurrentApp().Settings().AddChangeListener(settingChan)
+
 				// connect to dbus to detect theme/icon them changes
 				conn, err := dbus.SessionBus()
 				if err != nil {
@@ -620,23 +625,30 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 					return
 				}
 				defer conn.Close()
-				c := make(chan *dbus.Signal, 5)
-				conn.Signal(c)
+				dbusChan := make(chan *dbus.Signal, 5)
+				conn.Signal(dbusChan)
 
-				// wait for theme change event, only once because we will create
-				// a new theme instance anyway.
-				sig := <-c
-
-				// break if the current theme is not typed as GnomeTheme
-				currentTheme := fyne.CurrentApp().Settings().Theme()
-				if _, ok := currentTheme.(*GnomeTheme); !ok {
-					return
-				}
-
-				for _, v := range sig.Body {
-					if v == "gtk-theme" || v == "icon-theme" {
-						go fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
-						return
+				for {
+					select {
+					case sig := <-dbusChan:
+						// break if the current theme is not typed as GnomeTheme
+						currentTheme := fyne.CurrentApp().Settings().Theme()
+						if _, ok := currentTheme.(*GnomeTheme); !ok {
+							return
+						}
+						// reload the theme if the changed setting is the Gtk theme
+						for _, v := range sig.Body {
+							switch v {
+							case "gtk-theme", "icon-theme", "text-scaling-factor", "font-name":
+								go fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
+								return
+							}
+						}
+					case s := <-settingChan:
+						// leave the loop if the new theme is not a Gnome theme
+						if _, isGnome := s.Theme().(*GnomeTheme); !isGnome {
+							return
+						}
 					}
 				}
 			}()
