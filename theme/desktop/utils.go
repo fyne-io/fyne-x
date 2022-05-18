@@ -20,6 +20,7 @@ func convertSVGtoPNG(filename string) (fyne.Resource, error) {
 	if err != nil {
 		return nil, err
 	}
+	defer os.Remove(tmpfile.Name())
 
 	pngConverterOptions := map[string][]string{
 		"inkscape": {"--without-gui", "--export-to-png", tmpfile.Name(), "--export-background-opacity=0", filename},
@@ -39,7 +40,6 @@ func convertSVGtoPNG(filename string) (fyne.Resource, error) {
 	// convert the svg to png, no background
 	log.Println("Converting", filename, "to", tmpfile.Name())
 	cmd := exec.Command(commandName, opts...)
-	defer os.Remove(tmpfile.Name())
 
 	err = cmd.Run()
 	if err != nil {
