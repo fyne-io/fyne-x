@@ -199,13 +199,11 @@ func (gnome *GnomeTheme) Font(s fyne.TextStyle) fyne.Resource {
 //
 // Implements: fyne.Theme
 func (gnome *GnomeTheme) Icon(i fyne.ThemeIconName) fyne.Resource {
-
 	if icon, found := gnomeIconMap[i]; found {
 		if resource := gnome.loadIcon(icon); resource != nil {
 			return resource
 		}
 	}
-	//log.Println(i)
 	return ft.DefaultTheme().Icon(i)
 }
 
@@ -536,7 +534,6 @@ func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 				resource, err = convertSVGtoPNG(filename)
 				if err != nil {
 					log.Println("Cannot convert file", filename, ":", err)
-					return
 				}
 				return
 			}
