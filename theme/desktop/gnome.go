@@ -532,10 +532,10 @@ func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 			_, err := oksvg.ReadIconStream(buff)
 			if err != nil {
 				// try to convert it to png with imageMagik
-				log.Println("Cannot load file", filename, err, "try to convert")
+				log.Println("Cannot load file", filename, err, ", try to convert with tools")
 				resource, err = convertSVGtoPNG(filename)
 				if err != nil {
-					log.Println("Cannot convert file", filename, err)
+					log.Println("Cannot convert file", filename, ":", err)
 					return
 				}
 				return

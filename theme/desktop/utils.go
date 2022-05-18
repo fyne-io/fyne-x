@@ -13,24 +13,32 @@ import (
 	"fyne.io/fyne/v2"
 )
 
-// convertSVGtoPNG will convert a svg file to a png file using convert (imageMagik) if the
-// binary exists.
+// convertSVGtoPNG will convert a SVG file to a PNG file. It will try to detect if some common tools to convert SVG exists,
+// like inkscape or ImageMagik "convert". If not, the resource is not converted.
 func convertSVGtoPNG(filename string) (fyne.Resource, error) {
-	// use "convert" from imageMagik to convert svg to png
-
-	convert, err := exec.LookPath("convert")
-	if err != nil {
-		return nil, err
-	}
-
 	tmpfile, err := ioutil.TempFile("", "fyne-theme-gnome-*.png")
 	if err != nil {
 		return nil, err
 	}
 
+	pngConverterOptions := map[string][]string{
+		"inkscape": {"--without-gui", "--export-to-png", tmpfile.Name(), "--export-background-opacity=0", filename},
+		"convert":  {"-background", "transparent", "-flatten", filename, tmpfile.Name()},
+	}
+
+	var commandName string
+	var opts []string
+	for binary, options := range pngConverterOptions {
+		if path, err := exec.LookPath(binary); err == nil {
+			commandName = path
+			opts = options
+			break
+		}
+	}
+
 	// convert the svg to png, no background
 	log.Println("Converting", filename, "to", tmpfile.Name())
-	cmd := exec.Command(convert, filename, "-background", "none", "-flatten", tmpfile.Name())
+	cmd := exec.Command(commandName, opts...)
 	defer os.Remove(tmpfile.Name())
 
 	err = cmd.Run()
@@ -43,7 +51,7 @@ func convertSVGtoPNG(filename string) (fyne.Resource, error) {
 		return nil, err
 	}
 
-	return fyne.NewStaticResource(filename, content), nil
+	return fyne.NewStaticResource(tmpfile.Name(), content), nil
 }
 
 // converToTTF will convert a font to a ttf file. This requires the fontforge package.
