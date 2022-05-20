@@ -1,15 +1,14 @@
 package layout
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"math"
-	"sync"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 // responsive layout provides a fyne.Layout that is responsive to the window size.
@@ -26,55 +25,49 @@ import (
 //    }
 // Note that a responsive layout can handle others layouts, responsive or not.
 
-// temporary register for the responsiveConfigurations in this variable. This
-// map is filled by Responsive() function. It's not thread safe, but it should not be a problem.
-// SetResponsiveConfig and GetResponsiveConfig() managed the configuration pulling from this variable.
-var responsiveConfigurations = make(map[fyne.CanvasObject]ResponsiveConfiguration)
-var responsiveMutex sync.Mutex
-
-// ResponsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
+// responsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
 //
 // See: https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints
-type ResponsiveBreakpoint uint16
+type responsiveBreakpoint uint16
 
 const (
 	// SMALL is the smallest breakpoint (mobile vertical).
-	SMALL ResponsiveBreakpoint = 576
+	SMALL responsiveBreakpoint = 576
 
 	// MEDIUM is the medium breakpoint (mobile horizontal, tablet vertical).
-	MEDIUM ResponsiveBreakpoint = 768
+	MEDIUM responsiveBreakpoint = 768
 
 	// LARGE is the largest breakpoint (tablet horizontal, small desktop).
-	LARGE ResponsiveBreakpoint = 992
+	LARGE responsiveBreakpoint = 992
 
 	// XLARGE is the largest breakpoint (large desktop).
-	XLARGE ResponsiveBreakpoint = 1200
+	XLARGE responsiveBreakpoint = 1200
 
 	// SM is an alias for SMALL
-	SM ResponsiveBreakpoint = SMALL
+	SM responsiveBreakpoint = SMALL
 
 	// MD is an alias for MEDIUM
-	MD ResponsiveBreakpoint = MEDIUM
+	MD responsiveBreakpoint = MEDIUM
 
 	// LG is an alias for LARGE
-	LG ResponsiveBreakpoint = LARGE
+	LG responsiveBreakpoint = LARGE
 
 	// XL is an alias for XLARGE
-	XL ResponsiveBreakpoint = XLARGE
+	XL responsiveBreakpoint = XLARGE
 )
 
 // ResponsiveConfiguration is the configuration for a responsive object. It's
 // a simple map from the breakpoint to the size ratio from it's container.
 // Breakpoint is a uint16 that should be set from const SMALL, MEDIUM, LARGE and XLARGE.
-type ResponsiveConfiguration map[ResponsiveBreakpoint]float32
+type responsiveConfig map[responsiveBreakpoint]float32
 
-// NewResponsiveConf return a new responsive configuration.
+// newResponsiveConf return a new responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
 //      Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
-func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
-	responsive := ResponsiveConfiguration{}
+func newResponsiveConf(ratios ...float32) responsiveConfig {
+	responsive := responsiveConfig{}
 
 	if len(ratios) > 4 {
 		log.Println("Responsive: you declared more than 4 ratios, only the first 4 will be used")
@@ -89,7 +82,7 @@ func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
 	}
 
 	// Set default values
-	for index, bp := range []ResponsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
+	for index, bp := range []responsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
 		if len(ratios) <= index {
 			if index == 0 {
 				ratios = append(ratios, 1)
@@ -104,30 +97,7 @@ func NewResponsiveConf(ratios ...float32) ResponsiveConfiguration {
 
 // ResponsiveLayout is the layout that will adapt objects with the responsive rules. See NewResponsiveLayout
 // for details.
-type ResponsiveLayout struct {
-	configuration map[fyne.CanvasObject]ResponsiveConfiguration
-	mutex         *sync.Mutex
-}
-
-// GetResponsiveConfig returns the configuration for the object.
-// If the object was not registered, the function returns an error.
-func (resp *ResponsiveLayout) GetResponsiveConfig(object fyne.CanvasObject) (ResponsiveConfiguration, error) {
-
-	responsiveMutex.Lock()
-	defer responsiveMutex.Unlock()
-
-	// case of the user didn't use the NewResponsiveLayout method, we need to
-	// drop global configuration
-	if _, ok := responsiveConfigurations[object]; ok {
-		resp.SetResponsiveConfig(object, responsiveConfigurations[object])
-	}
-
-	// shouw now be registered in resp
-	if conf, ok := resp.configuration[object]; ok {
-		return conf, nil
-	}
-	return nil, errors.New("object not registered")
-}
+type ResponsiveLayout struct{}
 
 // Layout will place the size and place the objects following the configured reponsive rules.
 //
@@ -154,21 +124,21 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 	// objects in a line
 	line := []fyne.CanvasObject{}
 
-	// cast windowSize.Width to ResponsiveBreakpoint (uint16)
-	ww := ResponsiveBreakpoint(window.Size().Width)
+	// cast windowSize.Width to responsiveBreakpoint (uint16)
+	ww := responsiveBreakpoint(window.Size().Width)
 
 	// For each object, place it at the right position (pos) and resize it.
 	for _, o := range objects {
-
 		if o == nil || !o.Visible() {
 			continue
 		}
 
 		// get tht configuration
-		conf, err := resp.GetResponsiveConfig(o)
-		if err != nil {
-			log.Fatal(err) // should never happen
+		ro, ok := o.(*responsiveWidget)
+		if !ok {
+			log.Fatal("A non responsive object has been packed inside a ResponsibleLayout. This is impossible.")
 		}
+		conf := ro.responsiveConfig
 
 		line = append(line, o) // add the container to the line
 		size := o.MinSize()    // get some informations
@@ -233,22 +203,7 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		maxHeight = resp.maxFloat32(maxHeight, o.MinSize().Height)
 	}
 	h += maxHeight + theme.Padding()
-
 	return fyne.NewSize(w, h)
-}
-
-// SetResponsiveConfig sets the configuration for the object.
-// It creates a new configuration if the object was not registered.
-func (resp *ResponsiveLayout) SetResponsiveConfig(object fyne.CanvasObject, conf ResponsiveConfiguration) {
-	resp.mutex.Lock()
-	responsiveMutex.Lock()
-	defer resp.mutex.Unlock()
-	defer responsiveMutex.Unlock()
-
-	// drom from global
-	delete(responsiveConfigurations, object)
-
-	resp.configuration[object] = conf
 }
 
 // fixPaddingOnLine fix the space between the objects in a line.
@@ -284,25 +239,27 @@ func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
 //                                          // => 1, 1, 1
 //      )
 func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
+	r := &ResponsiveLayout{}
 
-	r := &ResponsiveLayout{
-		configuration: make(map[fyne.CanvasObject]ResponsiveConfiguration),
-		mutex:         &sync.Mutex{},
-	}
-
-	for _, ob := range o {
-		var conf ResponsiveConfiguration
-		var ok bool
-		responsiveMutex.Lock()
-		if conf, ok = responsiveConfigurations[ob]; !ok {
-			conf = NewResponsiveConf(1)
+	objects := []fyne.CanvasObject{}
+	for _, unknowObject := range o {
+		if _, ok := unknowObject.(*responsiveWidget); !ok {
+			unknowObject = Responsive(unknowObject)
 		}
-		responsiveMutex.Unlock()
-		r.SetResponsiveConfig(ob, conf)
+		objects = append(objects, unknowObject)
 	}
 
-	return container.New(r, o...)
+	return container.New(r, objects...)
 }
+
+type responsiveWidget struct {
+	widget.BaseWidget
+
+	render           fyne.CanvasObject
+	responsiveConfig responsiveConfig
+}
+
+var _ fyne.Widget = (*responsiveWidget)(nil)
 
 // Responsive register the object with a responsive configuration.
 // The optional ratios must
@@ -311,12 +268,30 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
 func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
+	ro := &responsiveWidget{render: object, responsiveConfig: newResponsiveConf(breakpointRatio...)}
+	ro.ExtendBaseWidget(ro)
+	return ro
+}
 
-	// Create configuration for this object
-	responsiveMutex.Lock()
-	defer responsiveMutex.Unlock()
-	responsiveConfigurations[object] = NewResponsiveConf(breakpointRatio...)
+func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
+	return &responsiveWidgetRenderer{responsiveWidget: ro}
+}
 
-	// return the original object
-	return object
+type responsiveWidgetRenderer struct {
+	responsiveWidget *responsiveWidget
+}
+
+func (renderer *responsiveWidgetRenderer) Layout(size fyne.Size) {
+	renderer.responsiveWidget.render.Resize(size)
+}
+func (renderer *responsiveWidgetRenderer) MinSize() fyne.Size {
+	return renderer.responsiveWidget.render.MinSize()
+}
+func (renderer *responsiveWidgetRenderer) Refresh() {
+	renderer.responsiveWidget.render.Refresh()
+}
+func (renderer *responsiveWidgetRenderer) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{renderer.responsiveWidget.render}
+}
+func (renderer *responsiveWidgetRenderer) Destroy() {
 }
