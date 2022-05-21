@@ -63,11 +63,13 @@ func winSizeLabel(window fyne.Window) fyne.CanvasObject {
 		for {
 			time.Sleep(time.Millisecond * 100)
 			if canvas.Size().Width <= float32(layout.SMALL) {
-				label.SetText(fmt.Sprintf("Small devicce %v <= %v", canvas.Size().Width, layout.SMALL))
+				label.SetText(fmt.Sprintf("Extra Small devicce %v <= %v", canvas.Size().Width, layout.SMALL))
 			} else if canvas.Size().Width <= float32(layout.MEDIUM) {
-				label.SetText(fmt.Sprintf("Medium device %v <= %v", canvas.Size().Width, layout.MEDIUM))
+				label.SetText(fmt.Sprintf("Sall device %v <= %v", canvas.Size().Width, layout.MEDIUM))
 			} else if canvas.Size().Width <= float32(layout.LARGE) {
-				label.SetText(fmt.Sprintf("Large device %v <= %v", canvas.Size().Width, layout.LARGE))
+				label.SetText(fmt.Sprintf("Medium device %v <= %v", canvas.Size().Width, layout.LARGE))
+			} else if canvas.Size().Width <= float32(layout.XLARGE) {
+				label.SetText(fmt.Sprintf("Large device %v <= %v", canvas.Size().Width, layout.XLARGE))
 			} else {
 				label.SetText(fmt.Sprintf("Extra large device %v > %v", canvas.Size().Width, layout.LARGE))
 			}
