@@ -15,11 +15,9 @@ type tappableObject struct {
 	onTapped func(*fyne.PointEvent)
 }
 
-// SetTappable set the object to be tappable.
-func SetTappable(object fyne.CanvasObject, ontapped func(*fyne.PointEvent)) fyne.CanvasObject {
-	tappable := &tappableObject{object: object, onTapped: ontapped}
-	tappable.ExtendBaseWidget(tappable)
-	return tappable
+// Content returns the encapsulated widget.
+func (t *tappableObject) Content() fyne.CanvasObject {
+	return t.object
 }
 
 // CreateRenderer is a private method to Fyne which links this widget to its renderer.
@@ -35,11 +33,6 @@ func (t *tappableObject) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(t.object)
 }
 
-// Content returns the encapsulated widget.
-func (t *tappableObject) Content() fyne.CanvasObject {
-	return t.object
-}
-
 // Tapped reacts on tap (or click) events.
 //
 // Implements: fyne.Tappable
@@ -52,4 +45,11 @@ func (t *tappableObject) Tapped(e *fyne.PointEvent) {
 		o.Tapped(e)
 	}
 	t.onTapped(e)
+}
+
+// SetTappable set the object to be tappable.
+func SetTappable(object fyne.CanvasObject, ontapped func(*fyne.PointEvent)) fyne.CanvasObject {
+	tappable := &tappableObject{object: object, onTapped: ontapped}
+	tappable.ExtendBaseWidget(tappable)
+	return tappable
 }

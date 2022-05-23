@@ -18,16 +18,9 @@ type mouseableObject struct {
 	mouseOut   func()
 }
 
-// SetHoverable sets the object to be hoverable.
-func SetHoverable(object fyne.CanvasObject, mouseIn, mouseMoved func(*desktop.MouseEvent), mouseout func()) fyne.CanvasObject {
-	m := &mouseableObject{
-		object:     object,
-		mouseIn:    mouseIn,
-		mouseMoved: mouseMoved,
-		mouseOut:   mouseout,
-	}
-	m.ExtendBaseWidget(m)
-	return m
+// Content returns the originl object that was set to be hoverable.
+func (m *mouseableObject) Content() fyne.CanvasObject {
+	return m.object
 }
 
 // CreateRenderer is a private method to Fyne which links this widget to its renderer.
@@ -41,11 +34,6 @@ func (m *mouseableObject) CreateRenderer() fyne.WidgetRenderer {
 		return o.CreateRenderer()
 	}
 	return widget.NewSimpleRenderer(m.object)
-}
-
-// Content returns the originl object that was set to be hoverable.
-func (m *mouseableObject) Content() fyne.CanvasObject {
-	return m.object
 }
 
 // MouseIn is called when the mouse enters the widget.
@@ -91,4 +79,16 @@ func (m *mouseableObject) MouseOut() {
 	}
 
 	m.mouseOut()
+}
+
+// SetHoverable sets the object to be hoverable.
+func SetHoverable(object fyne.CanvasObject, mouseIn, mouseMoved func(*desktop.MouseEvent), mouseout func()) fyne.CanvasObject {
+	m := &mouseableObject{
+		object:     object,
+		mouseIn:    mouseIn,
+		mouseMoved: mouseMoved,
+		mouseOut:   mouseout,
+	}
+	m.ExtendBaseWidget(m)
+	return m
 }
