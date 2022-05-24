@@ -79,8 +79,8 @@ var gnomeIconMap = map[fyne.ThemeIconName]string{
 var gnomeColorMap = map[fyne.ThemeColorName]string{
 	ft.ColorNameBackground:      "theme_bg_color,window_bg_color",
 	ft.ColorNameForeground:      "theme_text_color,view_fg_color",
-	ft.ColorNameButton:          "theme_base_color,window_bg_color",
-	ft.ColorNameInputBackground: "theme_base_color,window_bg_color",
+	ft.ColorNameButton:          "theme_base_color,view_bg_color",
+	ft.ColorNameInputBackground: "theme_base_color,view_bg_color",
 	ft.ColorNamePrimary:         "accent_color,success_color",
 	ft.ColorNameError:           "error_color",
 }
@@ -205,6 +205,18 @@ func (gnome *GnomeTheme) Icon(i fyne.ThemeIconName) fyne.Resource {
 		}
 	}
 	return ft.DefaultTheme().Icon(i)
+}
+
+// Invert is a specific Gnome/GTK option to invert the theme color for background of window and some input
+// widget. This to help to imitate some GTK application with "views" inside the window.
+func (gnome *GnomeTheme) Invert() {
+
+	gnome.colors[ft.ColorNameBackground],
+		gnome.colors[ft.ColorNameInputBackground],
+		gnome.colors[ft.ColorNameButton] =
+		gnome.colors[ft.ColorNameButton],
+		gnome.colors[ft.ColorNameBackground],
+		gnome.colors[ft.ColorNameBackground]
 }
 
 // Size returns the size for the given name. It will scale the detected Gnome font size
