@@ -18,8 +18,31 @@ func main() {
 	win.Resize(fyne.NewSize(550, 390))
 	win.CenterOnScreen()
 
+	invertButton := widget.NewButton("Invert Gnome theme", func() {
+		if t, ok := app.Settings().Theme().(*desktop.GnomeTheme); ok {
+			t.Invert()
+			win.Content().Refresh()
+		}
+	})
+	if _, ok := app.Settings().Theme().(*desktop.GnomeTheme); !ok {
+		invertButton.Disable()
+		invertButton.SetText("Invert only works on Gnome/GTK")
+	}
+
+	var switched bool
+	switchThemeButton := widget.NewButton("Switch theme", func() {
+
+		if switched {
+			app.Settings().SetTheme(xtheme.FromDesktopEnvironment())
+		} else {
+			app.Settings().SetTheme(theme.DefaultTheme())
+		}
+		switched = !switched
+		win.Content().Refresh()
+	})
+
 	entry := widget.NewEntry()
-	entry.SetPlaceHolder("Type something here")
+	entry.SetPlaceHolder("Example of text entry...")
 	win.SetContent(container.NewBorder(
 		nil,
 		container.NewHBox(
@@ -28,12 +51,15 @@ func main() {
 			widget.NewButtonWithIcon("Example file dialog", theme.FolderIcon(), func() {
 				dialog.ShowFileSave(func(fyne.URIWriteCloser, error) {}, win)
 			}),
+			invertButton,
 		),
 		nil,
 		nil,
 		container.NewVBox(
 			createExplanationLabel(app),
 			entry,
+			widget.NewLabel("Try to switch theme"),
+			switchThemeButton,
 		),
 	))
 
@@ -53,7 +79,7 @@ func createExplanationLabel(app fyne.App) fyne.CanvasObject {
 		current = "This window manager is not supported for now"
 	}
 
-	text := "Current theme: " + current + "\n"
+	text := "Current Desktop: " + current + "\n"
 	text += `
 
 This window should be styled to look like a desktop application. It works with GTK/Gnome based desktops and KDE/Plasma at this time
