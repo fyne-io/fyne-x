@@ -8,7 +8,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 	xtheme "fyne.io/x/fyne/theme"
-	"fyne.io/x/fyne/theme/desktop"
+	xdesktop "fyne.io/x/fyne/theme/desktop"
 )
 
 func main() {
@@ -20,14 +20,14 @@ func main() {
 
 	// Gnome/GTK theme invertion
 	invertButton := widget.NewButton("Invert Gnome theme", func() {
-		if t, ok := app.Settings().Theme().(*desktop.GnomeTheme); ok {
+		if t, ok := app.Settings().Theme().(*xdesktop.GnomeTheme); ok {
 			t.Invert()
 			win.Content().Refresh()
 		}
 	})
 
 	// the invertButton can only work on Gnome / GTK theme.
-	if _, ok := app.Settings().Theme().(*desktop.GnomeTheme); !ok {
+	if _, ok := app.Settings().Theme().(*xdesktop.GnomeTheme); !ok {
 		invertButton.Disable()
 		invertButton.SetText("Invert only works on Gnome/GTK")
 	}
@@ -73,9 +73,9 @@ func createExplanationLabel(app fyne.App) fyne.CanvasObject {
 	var current string
 
 	switch app.Settings().Theme().(type) {
-	case *desktop.GnomeTheme:
+	case *xdesktop.GnomeTheme:
 		current = "Gnome / GTK"
-	case *desktop.KDETheme:
+	case *xdesktop.KDETheme:
 		current = "KDE / Plasma"
 	default:
 		current = "This window manager is not supported for now"
