@@ -18,12 +18,15 @@ func main() {
 	win.Resize(fyne.NewSize(550, 390))
 	win.CenterOnScreen()
 
+	// Gnome/GTK theme invertion
 	invertButton := widget.NewButton("Invert Gnome theme", func() {
 		if t, ok := app.Settings().Theme().(*desktop.GnomeTheme); ok {
 			t.Invert()
 			win.Content().Refresh()
 		}
 	})
+
+	// the invertButton can only work on Gnome / GTK theme.
 	if _, ok := app.Settings().Theme().(*desktop.GnomeTheme); !ok {
 		invertButton.Disable()
 		invertButton.SetText("Invert only works on Gnome/GTK")
@@ -31,7 +34,6 @@ func main() {
 
 	var switched bool
 	switchThemeButton := widget.NewButton("Switch theme", func() {
-
 		if switched {
 			app.Settings().SetTheme(xtheme.FromDesktopEnvironment())
 		} else {
