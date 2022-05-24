@@ -35,9 +35,9 @@ func NewAnimatedGif(u fyne.URI) (*AnimatedGif, error) {
 	return ret, ret.Load(u)
 }
 
-// NewAnimatedGifWithResource creates a new widget loaded to show the specified image resource.
+// NewAnimatedGifFromResource creates a new widget loaded to show the specified image resource.
 // If there is an error loading the image it will be returned in the error value.
-func NewAnimatedGifWithResource(r fyne.Resource) (*AnimatedGif, error) {
+func NewAnimatedGifFromResource(r fyne.Resource) (*AnimatedGif, error) {
 	ret := newGif()
 
 	return ret, ret.LoadResource(r)

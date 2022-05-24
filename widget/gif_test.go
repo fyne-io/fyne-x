@@ -37,7 +37,7 @@ func TestAnimatedGif_MinSize(t *testing.T) {
 	assert.Nil(t, err)
 
 	res := fyne.NewStaticResource("earth.gif", r)
-	gif, _ := NewAnimatedGifWithResource(res)
+	gif, _ := NewAnimatedGifFromResource(res)
 	assert.True(t, gif.min.IsZero())
 
 	gif.SetMinSize(fyne.NewSize(10.0, 10.0))
