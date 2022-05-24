@@ -1,9 +1,11 @@
 package widget
 
 import (
+	"bytes"
 	"image"
 	"image/draw"
 	"image/gif"
+	"io"
 	"sync"
 	"time"
 
@@ -28,16 +30,17 @@ type AnimatedGif struct {
 // NewAnimatedGif creates a new widget loaded to show the specified image.
 // If there is an error loading the image it will be returned in the error value.
 func NewAnimatedGif(u fyne.URI) (*AnimatedGif, error) {
-	ret := &AnimatedGif{}
-	ret.ExtendBaseWidget(ret)
-	ret.dst = &canvas.Image{}
-	ret.dst.FillMode = canvas.ImageFillContain
-
-	if u == nil {
-		return ret, nil
-	}
+	ret := newGif()
 
 	return ret, ret.Load(u)
+}
+
+// NewAnimatedGifWithResource creates a new widget loaded to show the specified image resource.
+// If there is an error loading the image it will be returned in the error value.
+func NewAnimatedGifWithResource(r fyne.Resource) (*AnimatedGif, error) {
+	ret := newGif()
+
+	return ret, ret.LoadResource(r)
 }
 
 // CreateRenderer loads the widget renderer for this widget. This is an internal requirement for Fyne.
@@ -51,10 +54,31 @@ func (g *AnimatedGif) Load(u fyne.URI) error {
 	g.dst.Image = nil
 	g.dst.Refresh()
 
+	if u == nil {
+		return nil
+	}
+
 	read, err := storage.Reader(u)
 	if err != nil {
 		return err
 	}
+
+	return g.load(read)
+}
+
+// LoadResource is used to change the gif resource shown.
+// It will change the loaded content and prepare the new frames for animation.
+func (g *AnimatedGif) LoadResource(r fyne.Resource) error {
+	g.dst.Image = nil
+	g.dst.Refresh()
+
+	if r == nil || len(r.Content()) == 0 {
+		return nil
+	}
+	return g.load(bytes.NewReader(r.Content()))
+}
+
+func (g *AnimatedGif) load(read io.Reader) error {
 	pix, err := gif.DecodeAll(read)
 	if err != nil {
 		return err
@@ -139,6 +163,14 @@ func (g *AnimatedGif) isRunning() bool {
 	g.runLock.RLock()
 	defer g.runLock.RUnlock()
 	return g.running
+}
+
+func newGif() *AnimatedGif {
+	ret := &AnimatedGif{}
+	ret.ExtendBaseWidget(ret)
+	ret.dst = &canvas.Image{}
+	ret.dst.FillMode = canvas.ImageFillContain
+	return ret
 }
 
 type gifRenderer struct {
