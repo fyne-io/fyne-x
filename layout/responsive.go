@@ -274,24 +274,11 @@ func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.Canva
 }
 
 func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
-	return &responsiveWidgetRenderer{responsiveWidget: ro}
-}
-
-type responsiveWidgetRenderer struct {
-	responsiveWidget *responsiveWidget
-}
-
-func (renderer *responsiveWidgetRenderer) Layout(size fyne.Size) {
-	renderer.responsiveWidget.render.Resize(size)
-}
-func (renderer *responsiveWidgetRenderer) MinSize() fyne.Size {
-	return renderer.responsiveWidget.render.MinSize()
-}
-func (renderer *responsiveWidgetRenderer) Refresh() {
-	renderer.responsiveWidget.render.Refresh()
-}
-func (renderer *responsiveWidgetRenderer) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{renderer.responsiveWidget.render}
-}
-func (renderer *responsiveWidgetRenderer) Destroy() {
+	if ro.render == nil {
+		return nil
+	}
+	if o, ok := ro.render.(fyne.Widget); ok {
+		return o.CreateRenderer()
+	}
+	return widget.NewSimpleRenderer(ro.render)
 }
