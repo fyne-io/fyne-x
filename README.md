@@ -19,6 +19,38 @@ Community contributed layouts.
 
 `import "fyne.io/x/fyne/layout"`
 
+### Responsive Layout
+
+The responsive layout provides a "bootstrap like" configuration to automatically make containers and canvas reponsive to the window width. It reacts to  the window size to resize and move the elements. The sizes are configured with a ratio of the **container** width (`0.5` is 50% of the container size).
+
+The responsive layout follow the [bootstrap size breakpoints](https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints):
+
+- extra small for window width <= 576px
+- small for window width <= 768
+- medium for window width <= 992
+- large for window width <= 1200
+- extra large for windo width > 1200
+
+<p align="center" class="align:center;margin:auto">
+    <img src="img/responsive-layout.png" style="max-width: 100%" alt="Responsive Layout"/>
+</p>
+
+To use a responsive layout:
+
+```go
+layout := NewResponsiveLayout(fyne.CanvasObject...)
+```
+
+Optionally, Each canvas object can be encapsulated with `Responsive()` function to give the sizes:
+
+```go
+layout := NewResponsiveLayout(
+    Responsive(object1),            // all sizes to 100%
+    Responsive(object2, 0.5, 0.75), // small to 50%, medium to 75%, all others to 100% 
+)
+```
+
+
 ## Widgets
 
 Community contributed widgets.
