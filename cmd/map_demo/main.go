@@ -12,6 +12,9 @@ func main() {
 	w := a.NewWindow("Map Widget")
 
 	m := xwidget.NewMap()
+	m.EnableOsmDisclaimer = true
+	m.EnableMoveButtons = false
+	m.EnableZoomButtons = false
 	w.SetContent(m)
 
 	w.SetPadded(false)

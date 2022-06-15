@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/png"
@@ -9,8 +10,12 @@ import (
 
 var tileMap = make(map[string]image.Image)
 
-func getTile(x, y, zoom int, cl *http.Client) (image.Image, error) {
-	u := fmt.Sprintf("https://tile.openstreetmap.org/%d/%d/%d.png", zoom, x, y)
+func getTile(tileSource string, x, y, zoom int, cl *http.Client) (image.Image, error) {
+	if tileSource == "" {
+		return nil, errors.New("No tileSource provided")
+	}
+
+	u := fmt.Sprintf(tileSource, zoom, x, y)
 	if tile, ok := tileMap[u]; ok {
 		return tile, nil
 	}

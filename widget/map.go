@@ -29,11 +29,22 @@ type Map struct {
 	zoom, x, y int
 
 	cl *http.Client
+
+	TileSource          string // url to download xyz tiles (example: https://tile.openstreetmap.org/%d/%d/%d.png)
+	EnableOsmDisclaimer bool   // enable osm copyright disclaimer
+	EnableZoomButtons   bool   // enable zoom buttons
+	EnableMoveButtons   bool   // enable move map buttons
 }
 
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
-	m := &Map{cl: &http.Client{}}
+	m := &Map{
+		cl:                  &http.Client{},
+		TileSource:          "https://tile.openstreetmap.org/%d/%d/%d.png",
+		EnableOsmDisclaimer: true,
+		EnableZoomButtons:   true,
+		EnableMoveButtons:   true,
+	}
 	m.ExtendBaseWidget(m)
 	return m
 }
@@ -48,48 +59,60 @@ func (m *Map) MinSize() fyne.Size {
 // CreateRenderer returns the renderer for this widget.
 // A map renderer is simply the map Raster with user interface elements overlaid.
 func (m *Map) CreateRenderer() fyne.WidgetRenderer {
-	license, _ := url.Parse("https://openstreetmap.org")
-	copyright := widget.NewHyperlink("OpenStreetMap", license)
-	copyright.Alignment = fyne.TextAlignTrailing
-	zoom := container.NewVBox(
-		newMapButton(theme.ZoomInIcon(), func() {
-			if m.zoom >= 19 {
-				return
-			}
-			m.zoom++
-			m.x *= 2
-			m.y *= 2
-			m.Refresh()
-		}),
-		newMapButton(theme.ZoomOutIcon(), func() {
-			if m.zoom <= 0 {
-				return
-			}
-			m.zoom--
-			m.x /= 2
-			m.y /= 2
-			m.Refresh()
-		}))
+	var zoom fyne.CanvasObject
+	if m.EnableZoomButtons {
+		zoom = container.NewVBox(
+			newMapButton(theme.ZoomInIcon(), func() {
+				if m.zoom >= 19 {
+					return
+				}
+				m.zoom++
+				m.x *= 2
+				m.y *= 2
+				m.Refresh()
+			}),
+			newMapButton(theme.ZoomOutIcon(), func() {
+				if m.zoom <= 0 {
+					return
+				}
+				m.zoom--
+				m.x /= 2
+				m.y /= 2
+				m.Refresh()
+			}))
+	}
 
-	move := container.NewGridWithColumns(3, layout.NewSpacer(),
-		newMapButton(theme.MoveUpIcon(), func() {
-			m.y--
-			m.Refresh()
-		}), layout.NewSpacer(),
-		newMapButton(theme.NavigateBackIcon(), func() {
-			m.x--
-			m.Refresh()
-		}), layout.NewSpacer(),
-		newMapButton(theme.NavigateNextIcon(), func() {
-			m.x++
-			m.Refresh()
-		}), layout.NewSpacer(),
-		newMapButton(theme.MoveDownIcon(), func() {
-			m.y++
-			m.Refresh()
-		}), layout.NewSpacer())
+	var move fyne.CanvasObject
+	if m.EnableMoveButtons {
+		buttonLayout := container.NewGridWithColumns(3, layout.NewSpacer(),
+			newMapButton(theme.MoveUpIcon(), func() {
+				m.y--
+				m.Refresh()
+			}), layout.NewSpacer(),
+			newMapButton(theme.NavigateBackIcon(), func() {
+				m.x--
+				m.Refresh()
+			}), layout.NewSpacer(),
+			newMapButton(theme.NavigateNextIcon(), func() {
+				m.x++
+				m.Refresh()
+			}), layout.NewSpacer(),
+			newMapButton(theme.MoveDownIcon(), func() {
+				m.y++
+				m.Refresh()
+			}), layout.NewSpacer())
+		move = container.NewVBox(buttonLayout)
+	}
 
-	overlay := container.NewBorder(nil, copyright, container.NewVBox(move), zoom)
+	var copyright fyne.CanvasObject
+	if m.EnableOsmDisclaimer {
+		license, _ := url.Parse("https://openstreetmap.org")
+		view := widget.NewHyperlink("OpenStreetMap", license)
+		view.Alignment = fyne.TextAlignTrailing
+		copyright = view
+	}
+
+	overlay := container.NewBorder(nil, copyright, move, zoom)
 
 	c := container.NewMax(canvas.NewRaster(m.draw), overlay)
 	return widget.NewSimpleRenderer(c)
@@ -130,7 +153,7 @@ func (m *Map) draw(w, h int) image.Image {
 				continue
 			}
 
-			src, err := getTile(x, y, m.zoom, m.cl)
+			src, err := getTile(m.TileSource, x, y, m.zoom, m.cl)
 			if err != nil {
 				fyne.LogError("tile fetch error", err)
 				continue
