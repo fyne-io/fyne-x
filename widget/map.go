@@ -75,6 +75,12 @@ func WithScrollButtons(enable bool) MapOption {
 	}
 }
 
+func WithHttpClient(client *http.Client) MapOption {
+	return func(m *Map) {
+		m.cl = client
+	}
+}
+
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
 	m := &Map{cl: &http.Client{}}
