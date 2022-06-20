@@ -31,7 +31,7 @@ type Map struct {
 	cl *http.Client
 
 	tileSource      string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
-	hideDisclaimer  bool   // enable copyright disclaimer
+	hideAttribution bool   // enable copyright disclaimer
 	disclaimerLabel string // label for disclaimer (example: "OpenStreetMap")
 	disclaimerUrl   string // url for disclaimer (example: "https://openstreetmap.org")
 	hideZoomButtons bool   // enable zoom buttons
@@ -45,7 +45,7 @@ func WithOsmTiles() MapOption {
 		m.tileSource = "https://tile.openstreetmap.org/%d/%d/%d.png"
 		m.disclaimerLabel = "OpenStreetMap"
 		m.disclaimerUrl = "https://openstreetmap.org"
-		m.hideDisclaimer = false
+		m.hideAttribution = false
 	}
 }
 
@@ -55,9 +55,9 @@ func WithTileSource(tileSource string) MapOption {
 	}
 }
 
-func WithDisclaimer(enable bool, label, url string) MapOption {
+func WithAttribution(enable bool, label, url string) MapOption {
 	return func(m *Map) {
-		m.hideDisclaimer = !enable
+		m.hideAttribution = !enable
 		m.disclaimerLabel = label
 		m.disclaimerUrl = url
 	}
@@ -82,7 +82,7 @@ func NewMap() *Map {
 		tileSource:      "https://tile.openstreetmap.org/%d/%d/%d.png",
 		disclaimerLabel: "OpenStreetMap",
 		disclaimerUrl:   "https://openstreetmap.org",
-		hideDisclaimer:  false,
+		hideAttribution: false,
 		hideZoomButtons: false,
 		hideMoveButtons: false,
 	}
@@ -155,7 +155,7 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	var copyright fyne.CanvasObject
-	if !m.hideDisclaimer {
+	if !m.hideAttribution {
 		license, _ := url.Parse(m.disclaimerUrl)
 		view := widget.NewHyperlink(m.disclaimerLabel, license)
 		view.Alignment = fyne.TextAlignTrailing
