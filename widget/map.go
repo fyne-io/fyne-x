@@ -77,15 +77,8 @@ func WithScrollButtons(enable bool) MapOption {
 
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
-	m := &Map{
-		cl:              &http.Client{},
-		tileSource:      "https://tile.openstreetmap.org/%d/%d/%d.png",
-		disclaimerLabel: "OpenStreetMap",
-		disclaimerUrl:   "https://openstreetmap.org",
-		hideAttribution: false,
-		hideZoomButtons: false,
-		hideMoveButtons: false,
-	}
+	m := &Map{cl: &http.Client{}}
+	WithOsmTiles()(m)
 	m.ExtendBaseWidget(m)
 	return m
 }
