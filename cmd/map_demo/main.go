@@ -8,13 +8,13 @@ import (
 )
 
 func main() {
-	a := app.New()
-	w := a.NewWindow("Map Widget")
+	w := app.New().NewWindow("Map Widget")
 
-	m := xwidget.NewMap()
-	m.EnableOsmDisclaimer = true
-	m.EnableMoveButtons = false
-	m.EnableZoomButtons = false
+	m := xwidget.NewMapWithOptions(
+		xwidget.WithOsmTiles(),
+		xwidget.WithZoomButtons(false),
+		xwidget.WithScrollButtons(true),
+	)
 	w.SetContent(m)
 
 	w.SetPadded(false)

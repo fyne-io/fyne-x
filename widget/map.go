@@ -30,22 +30,72 @@ type Map struct {
 
 	cl *http.Client
 
-	TileSource          string // url to download xyz tiles (example: https://tile.openstreetmap.org/%d/%d/%d.png)
-	EnableOsmDisclaimer bool   // enable osm copyright disclaimer
-	EnableZoomButtons   bool   // enable zoom buttons
-	EnableMoveButtons   bool   // enable move map buttons
+	tileSource      string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
+	hideDisclaimer  bool   // enable copyright disclaimer
+	disclaimerLabel string // label for disclaimer (example: "OpenStreetMap")
+	disclaimerUrl   string // url for disclaimer (example: "https://openstreetmap.org")
+	hideZoomButtons bool   // enable zoom buttons
+	hideMoveButtons bool   // enable move map buttons
+}
+
+type MapOption func(*Map)
+
+func WithOsmTiles() MapOption {
+	return func(m *Map) {
+		m.tileSource = "https://tile.openstreetmap.org/%d/%d/%d.png"
+		m.disclaimerLabel = "OpenStreetMap"
+		m.disclaimerUrl = "https://openstreetmap.org"
+		m.hideDisclaimer = false
+	}
+}
+
+func WithTileSource(tileSource string) MapOption {
+	return func(m *Map) {
+		m.tileSource = tileSource
+	}
+}
+
+func WithDisclaimer(enable bool, label, url string) MapOption {
+	return func(m *Map) {
+		m.hideDisclaimer = !enable
+		m.disclaimerLabel = label
+		m.disclaimerUrl = url
+	}
+}
+
+func WithZoomButtons(enable bool) MapOption {
+	return func(m *Map) {
+		m.hideZoomButtons = !enable
+	}
+}
+
+func WithScrollButtons(enable bool) MapOption {
+	return func(m *Map) {
+		m.hideMoveButtons = !enable
+	}
 }
 
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
 	m := &Map{
-		cl:                  &http.Client{},
-		TileSource:          "https://tile.openstreetmap.org/%d/%d/%d.png",
-		EnableOsmDisclaimer: true,
-		EnableZoomButtons:   true,
-		EnableMoveButtons:   true,
+		cl:              &http.Client{},
+		tileSource:      "https://tile.openstreetmap.org/%d/%d/%d.png",
+		disclaimerLabel: "OpenStreetMap",
+		disclaimerUrl:   "https://openstreetmap.org",
+		hideDisclaimer:  false,
+		hideZoomButtons: false,
+		hideMoveButtons: false,
 	}
 	m.ExtendBaseWidget(m)
+	return m
+}
+
+// NewMap creates a new instance of the map widget with provided map options.
+func NewMapWithOptions(opts ...MapOption) *Map {
+	m := NewMap()
+	for _, opt := range opts {
+		opt(m)
+	}
 	return m
 }
 
@@ -60,7 +110,7 @@ func (m *Map) MinSize() fyne.Size {
 // A map renderer is simply the map Raster with user interface elements overlaid.
 func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	var zoom fyne.CanvasObject
-	if m.EnableZoomButtons {
+	if !m.hideZoomButtons {
 		zoom = container.NewVBox(
 			newMapButton(theme.ZoomInIcon(), func() {
 				if m.zoom >= 19 {
@@ -83,7 +133,7 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	var move fyne.CanvasObject
-	if m.EnableMoveButtons {
+	if !m.hideMoveButtons {
 		buttonLayout := container.NewGridWithColumns(3, layout.NewSpacer(),
 			newMapButton(theme.MoveUpIcon(), func() {
 				m.y--
@@ -105,9 +155,9 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	var copyright fyne.CanvasObject
-	if m.EnableOsmDisclaimer {
-		license, _ := url.Parse("https://openstreetmap.org")
-		view := widget.NewHyperlink("OpenStreetMap", license)
+	if !m.hideDisclaimer {
+		license, _ := url.Parse(m.disclaimerUrl)
+		view := widget.NewHyperlink(m.disclaimerLabel, license)
 		view.Alignment = fyne.TextAlignTrailing
 		copyright = view
 	}
@@ -153,7 +203,7 @@ func (m *Map) draw(w, h int) image.Image {
 				continue
 			}
 
-			src, err := getTile(m.TileSource, x, y, m.zoom, m.cl)
+			src, err := getTile(m.tileSource, x, y, m.zoom, m.cl)
 			if err != nil {
 				fyne.LogError("tile fetch error", err)
 				continue
