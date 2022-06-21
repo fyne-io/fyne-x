@@ -29,12 +29,79 @@ type Map struct {
 	zoom, x, y int
 
 	cl *http.Client
+
+	tileSource       string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
+	hideAttribution  bool   // enable copyright attribution
+	attributionLabel string // label for attribution (example: "OpenStreetMap")
+	attributionURL   string // url for attribution (example: "https://openstreetmap.org")
+	hideZoomButtons  bool   // enable zoom buttons
+	hideMoveButtons  bool   // enable move map buttons
+}
+
+// MapOption configures the provided map with different features.
+type MapOption func(*Map)
+
+// WithOsmTiles configures the map to use osm tile source.
+func WithOsmTiles() MapOption {
+	return func(m *Map) {
+		m.tileSource = "https://tile.openstreetmap.org/%d/%d/%d.png"
+		m.attributionLabel = "OpenStreetMap"
+		m.attributionURL = "https://openstreetmap.org"
+		m.hideAttribution = false
+	}
+}
+
+// WithTileSource configures the map to use a custom tile source.
+func WithTileSource(tileSource string) MapOption {
+	return func(m *Map) {
+		m.tileSource = tileSource
+	}
+}
+
+// WithAttribution configures the map widget to display an attribution.
+func WithAttribution(enable bool, label, url string) MapOption {
+	return func(m *Map) {
+		m.hideAttribution = !enable
+		m.attributionLabel = label
+		m.attributionURL = url
+	}
+}
+
+// WithZoomButtons enables or disables zoom controls.
+func WithZoomButtons(enable bool) MapOption {
+	return func(m *Map) {
+		m.hideZoomButtons = !enable
+	}
+}
+
+// WithScrollButtons enables or disables map scroll controls.
+func WithScrollButtons(enable bool) MapOption {
+	return func(m *Map) {
+		m.hideMoveButtons = !enable
+	}
+}
+
+// WithHTTPClient configures the map to use a custom http client.
+func WithHTTPClient(client *http.Client) MapOption {
+	return func(m *Map) {
+		m.cl = client
+	}
 }
 
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
 	m := &Map{cl: &http.Client{}}
+	WithOsmTiles()(m)
 	m.ExtendBaseWidget(m)
+	return m
+}
+
+// NewMapWithOptions creates a new instance of the map widget with provided map options.
+func NewMapWithOptions(opts ...MapOption) *Map {
+	m := NewMap()
+	for _, opt := range opts {
+		opt(m)
+	}
 	return m
 }
 
@@ -48,48 +115,60 @@ func (m *Map) MinSize() fyne.Size {
 // CreateRenderer returns the renderer for this widget.
 // A map renderer is simply the map Raster with user interface elements overlaid.
 func (m *Map) CreateRenderer() fyne.WidgetRenderer {
-	license, _ := url.Parse("https://openstreetmap.org")
-	copyright := widget.NewHyperlink("OpenStreetMap", license)
-	copyright.Alignment = fyne.TextAlignTrailing
-	zoom := container.NewVBox(
-		newMapButton(theme.ZoomInIcon(), func() {
-			if m.zoom >= 19 {
-				return
-			}
-			m.zoom++
-			m.x *= 2
-			m.y *= 2
-			m.Refresh()
-		}),
-		newMapButton(theme.ZoomOutIcon(), func() {
-			if m.zoom <= 0 {
-				return
-			}
-			m.zoom--
-			m.x /= 2
-			m.y /= 2
-			m.Refresh()
-		}))
+	var zoom fyne.CanvasObject
+	if !m.hideZoomButtons {
+		zoom = container.NewVBox(
+			newMapButton(theme.ZoomInIcon(), func() {
+				if m.zoom >= 19 {
+					return
+				}
+				m.zoom++
+				m.x *= 2
+				m.y *= 2
+				m.Refresh()
+			}),
+			newMapButton(theme.ZoomOutIcon(), func() {
+				if m.zoom <= 0 {
+					return
+				}
+				m.zoom--
+				m.x /= 2
+				m.y /= 2
+				m.Refresh()
+			}))
+	}
 
-	move := container.NewGridWithColumns(3, layout.NewSpacer(),
-		newMapButton(theme.MoveUpIcon(), func() {
-			m.y--
-			m.Refresh()
-		}), layout.NewSpacer(),
-		newMapButton(theme.NavigateBackIcon(), func() {
-			m.x--
-			m.Refresh()
-		}), layout.NewSpacer(),
-		newMapButton(theme.NavigateNextIcon(), func() {
-			m.x++
-			m.Refresh()
-		}), layout.NewSpacer(),
-		newMapButton(theme.MoveDownIcon(), func() {
-			m.y++
-			m.Refresh()
-		}), layout.NewSpacer())
+	var move fyne.CanvasObject
+	if !m.hideMoveButtons {
+		buttonLayout := container.NewGridWithColumns(3, layout.NewSpacer(),
+			newMapButton(theme.MoveUpIcon(), func() {
+				m.y--
+				m.Refresh()
+			}), layout.NewSpacer(),
+			newMapButton(theme.NavigateBackIcon(), func() {
+				m.x--
+				m.Refresh()
+			}), layout.NewSpacer(),
+			newMapButton(theme.NavigateNextIcon(), func() {
+				m.x++
+				m.Refresh()
+			}), layout.NewSpacer(),
+			newMapButton(theme.MoveDownIcon(), func() {
+				m.y++
+				m.Refresh()
+			}), layout.NewSpacer())
+		move = container.NewVBox(buttonLayout)
+	}
 
-	overlay := container.NewBorder(nil, copyright, container.NewVBox(move), zoom)
+	var copyright fyne.CanvasObject
+	if !m.hideAttribution {
+		license, _ := url.Parse(m.attributionURL)
+		view := widget.NewHyperlink(m.attributionLabel, license)
+		view.Alignment = fyne.TextAlignTrailing
+		copyright = view
+	}
+
+	overlay := container.NewBorder(nil, copyright, move, zoom)
 
 	c := container.NewMax(canvas.NewRaster(m.draw), overlay)
 	return widget.NewSimpleRenderer(c)
@@ -130,7 +209,7 @@ func (m *Map) draw(w, h int) image.Image {
 				continue
 			}
 
-			src, err := getTile(x, y, m.zoom, m.cl)
+			src, err := getTile(m.tileSource, x, y, m.zoom, m.cl)
 			if err != nil {
 				fyne.LogError("tile fetch error", err)
 				continue
