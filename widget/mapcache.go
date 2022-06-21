@@ -12,7 +12,7 @@ var tileMap = make(map[string]image.Image)
 
 func getTile(tileSource string, x, y, zoom int, cl *http.Client) (image.Image, error) {
 	if tileSource == "" {
-		return nil, errors.New("No tileSource provided")
+		return nil, errors.New("no tileSource provided")
 	}
 
 	u := fmt.Sprintf(tileSource, zoom, x, y)
