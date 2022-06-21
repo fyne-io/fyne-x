@@ -30,52 +30,59 @@ type Map struct {
 
 	cl *http.Client
 
-	tileSource      string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
-	hideAttribution bool   // enable copyright disclaimer
-	disclaimerLabel string // label for disclaimer (example: "OpenStreetMap")
-	disclaimerUrl   string // url for disclaimer (example: "https://openstreetmap.org")
-	hideZoomButtons bool   // enable zoom buttons
-	hideMoveButtons bool   // enable move map buttons
+	tileSource       string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
+	hideAttribution  bool   // enable copyright attribution
+	attributionLabel string // label for attribution (example: "OpenStreetMap")
+	attributionURL   string // url for attribution (example: "https://openstreetmap.org")
+	hideZoomButtons  bool   // enable zoom buttons
+	hideMoveButtons  bool   // enable move map buttons
 }
 
+// MapOption configures the provided map with different features.
 type MapOption func(*Map)
 
+// WithOsmTiles configures the map to use osm tile source.
 func WithOsmTiles() MapOption {
 	return func(m *Map) {
 		m.tileSource = "https://tile.openstreetmap.org/%d/%d/%d.png"
-		m.disclaimerLabel = "OpenStreetMap"
-		m.disclaimerUrl = "https://openstreetmap.org"
+		m.attributionLabel = "OpenStreetMap"
+		m.attributionURL = "https://openstreetmap.org"
 		m.hideAttribution = false
 	}
 }
 
+// WithTileSource configures the map to use a custom tile source.
 func WithTileSource(tileSource string) MapOption {
 	return func(m *Map) {
 		m.tileSource = tileSource
 	}
 }
 
+// WithAttribution configures the map widget to display an attribution.
 func WithAttribution(enable bool, label, url string) MapOption {
 	return func(m *Map) {
 		m.hideAttribution = !enable
-		m.disclaimerLabel = label
-		m.disclaimerUrl = url
+		m.attributionLabel = label
+		m.attributionURL = url
 	}
 }
 
+// WithZoomButtons enables or disables zoom controls.
 func WithZoomButtons(enable bool) MapOption {
 	return func(m *Map) {
 		m.hideZoomButtons = !enable
 	}
 }
 
+// WithScrollButtons enables or disables map scroll controls.
 func WithScrollButtons(enable bool) MapOption {
 	return func(m *Map) {
 		m.hideMoveButtons = !enable
 	}
 }
 
-func WithHttpClient(client *http.Client) MapOption {
+// WithHTTPClient configures the map to use a custom http client.
+func WithHTTPClient(client *http.Client) MapOption {
 	return func(m *Map) {
 		m.cl = client
 	}
@@ -89,7 +96,7 @@ func NewMap() *Map {
 	return m
 }
 
-// NewMap creates a new instance of the map widget with provided map options.
+// NewMapWithOptions creates a new instance of the map widget with provided map options.
 func NewMapWithOptions(opts ...MapOption) *Map {
 	m := NewMap()
 	for _, opt := range opts {
@@ -155,8 +162,8 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 
 	var copyright fyne.CanvasObject
 	if !m.hideAttribution {
-		license, _ := url.Parse(m.disclaimerUrl)
-		view := widget.NewHyperlink(m.disclaimerLabel, license)
+		license, _ := url.Parse(m.attributionURL)
+		view := widget.NewHyperlink(m.attributionLabel, license)
 		view.Alignment = fyne.TextAlignTrailing
 		copyright = view
 	}

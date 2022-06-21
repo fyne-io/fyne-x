@@ -18,8 +18,8 @@ func TestNewMap_WithDefaults(t *testing.T) {
 	w.SetContent(m)
 	// verify
 	equals(t, "https://tile.openstreetmap.org/%d/%d/%d.png", m.tileSource)
-	equals(t, "OpenStreetMap", m.disclaimerLabel)
-	equals(t, "https://openstreetmap.org", m.disclaimerUrl)
+	equals(t, "OpenStreetMap", m.attributionLabel)
+	equals(t, "https://openstreetmap.org", m.attributionURL)
 	equals(t, false, m.hideAttribution)
 	equals(t, false, m.hideMoveButtons)
 	equals(t, false, m.hideZoomButtons)
@@ -36,8 +36,8 @@ func TestNewMap_WithOptions(t *testing.T) {
 	// action
 	w.SetContent(m)
 	// verify
-	equals(t, "test", m.disclaimerLabel)
-	equals(t, "http://test.org", m.disclaimerUrl)
+	equals(t, "test", m.attributionLabel)
+	equals(t, "http://test.org", m.attributionURL)
 	equals(t, false, m.hideAttribution)
 	equals(t, true, m.hideMoveButtons)
 	equals(t, true, m.hideZoomButtons)
