@@ -3,10 +3,44 @@ package widget
 import (
 	"testing"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
 
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMap_Pan(t *testing.T) {
+	m := NewMap()
+	m.Resize(fyne.NewSize(200, 200))
+	m.Zoom(3)
+	assert.Equal(t, 0, m.x)
+	assert.Equal(t, 0, m.y)
+
+	m.PanSouth()
+	m.PanEast()
+	assert.Equal(t, 1, m.x)
+	assert.Equal(t, 1, m.y)
+
+	m.PanNorth()
+	m.PanWest()
+	assert.Equal(t, 0, m.x)
+	assert.Equal(t, 0, m.y)
+}
+
+func TestMap_Zoom(t *testing.T) {
+	m := NewMap()
+	m.Resize(fyne.NewSize(200, 200))
+	assert.Equal(t, 0, m.zoom)
+	m.ZoomIn()
+	assert.Equal(t, 1, m.zoom)
+	m.ZoomOut()
+	assert.Equal(t, 0, m.zoom)
+
+	m.Zoom(5)
+	assert.Equal(t, 5, m.zoom)
+	m.Zoom(55) // invalid
+	assert.Equal(t, 5, m.zoom)
+}
 
 func TestNewMap_WithDefaults(t *testing.T) {
 	// arrange
