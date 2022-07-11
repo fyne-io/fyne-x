@@ -1,13 +1,11 @@
 package widget
 
 import (
-	"fmt"
-	"path/filepath"
-	"reflect"
-	"runtime"
 	"testing"
 
 	"fyne.io/fyne/v2/test"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMap_WithDefaults(t *testing.T) {
@@ -17,12 +15,12 @@ func TestNewMap_WithDefaults(t *testing.T) {
 	// action
 	w.SetContent(m)
 	// verify
-	equals(t, "https://tile.openstreetmap.org/%d/%d/%d.png", m.tileSource)
-	equals(t, "OpenStreetMap", m.attributionLabel)
-	equals(t, "https://openstreetmap.org", m.attributionURL)
-	equals(t, false, m.hideAttribution)
-	equals(t, false, m.hideMoveButtons)
-	equals(t, false, m.hideZoomButtons)
+	assert.Equal(t, "https://tile.openstreetmap.org/%d/%d/%d.png", m.tileSource)
+	assert.Equal(t, "OpenStreetMap", m.attributionLabel)
+	assert.Equal(t, "https://openstreetmap.org", m.attributionURL)
+	assert.False(t, m.hideAttribution)
+	assert.False(t, m.hideMoveButtons)
+	assert.False(t, m.hideZoomButtons)
 }
 
 func TestNewMap_WithOptions(t *testing.T) {
@@ -36,17 +34,9 @@ func TestNewMap_WithOptions(t *testing.T) {
 	// action
 	w.SetContent(m)
 	// verify
-	equals(t, "test", m.attributionLabel)
-	equals(t, "http://test.org", m.attributionURL)
-	equals(t, false, m.hideAttribution)
-	equals(t, true, m.hideMoveButtons)
-	equals(t, true, m.hideZoomButtons)
-}
-
-func equals(t *testing.T, exp, act interface{}) {
-	if !reflect.DeepEqual(exp, act) {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\n\n", filepath.Base(file), line, exp, act)
-		t.FailNow()
-	}
+	assert.Equal(t, "test", m.attributionLabel)
+	assert.Equal(t, "http://test.org", m.attributionURL)
+	assert.False(t, m.hideAttribution)
+	assert.True(t, m.hideMoveButtons)
+	assert.True(t, m.hideZoomButtons)
 }
