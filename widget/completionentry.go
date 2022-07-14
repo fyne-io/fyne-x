@@ -14,6 +14,9 @@ type CompletionEntry struct {
 	Options       []string
 	pause         bool
 	itemHeight    float32
+
+	CustomCreate func() fyne.CanvasObject
+	CustomUpdate func(id widget.ListItemID, object fyne.CanvasObject)
 }
 
 // NewCompletionEntry creates a new CompletionEntry which creates a popup menu that responds to keystrokes to navigate through the items without losing the editing ability of the text input.
@@ -66,7 +69,8 @@ func (c *CompletionEntry) ShowCompletion() {
 	}
 
 	if c.navigableList == nil {
-		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion)
+		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion,
+			c.CustomCreate, c.CustomUpdate)
 	} else {
 		c.navigableList.UnselectAll()
 		c.navigableList.selected = -1
@@ -126,15 +130,21 @@ type navigableList struct {
 	hide            func()
 	navigating      bool
 	items           []string
+
+	customCreate func() fyne.CanvasObject
+	customUpdate func(id widget.ListItemID, object fyne.CanvasObject)
 }
 
-func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func()) *navigableList {
+func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func(),
+	create func() fyne.CanvasObject, update func(id widget.ListItemID, object fyne.CanvasObject)) *navigableList {
 	n := &navigableList{
 		entry:           entry,
 		selected:        -1,
 		setTextFromMenu: setTextFromMenu,
 		hide:            hide,
 		items:           items,
+		customCreate:    create,
+		customUpdate:    update,
 	}
 
 	n.List = widget.List{
@@ -142,9 +152,16 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 			return len(n.items)
 		},
 		CreateItem: func() fyne.CanvasObject {
+			if fn := n.customCreate; fn != nil {
+				return fn()
+			}
 			return widget.NewLabel("")
 		},
 		UpdateItem: func(i widget.ListItemID, o fyne.CanvasObject) {
+			if fn := n.customUpdate; fn != nil {
+				fn(i, o)
+				return
+			}
 			o.(*widget.Label).SetText(n.items[i])
 		},
 		OnSelected: func(id widget.ListItemID) {
