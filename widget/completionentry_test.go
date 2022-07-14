@@ -5,15 +5,17 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
 	"github.com/stretchr/testify/assert"
 )
+
+var entryData = []string{"foo", "bar", "baz"}
 
 // Create the test entry with 3 completion items.
 func createEntry() *CompletionEntry {
 	entry := NewCompletionEntry([]string{"zoo", "boo"})
 	entry.OnChanged = func(s string) {
-		data := []string{"foo", "bar", "baz"}
-		entry.SetOptions(data)
+		entry.SetOptions(entryData)
 		entry.ShowCompletion()
 	}
 	return entry
@@ -30,6 +32,27 @@ func TestCompletionEntry(t *testing.T) {
 	assert.Equal(t, 3, len(entry.Options))
 }
 
+// Check if custom create/update is called
+func TestCompletionEntry_Custom(t *testing.T) {
+	entry := createEntry()
+	entry.CustomCreate = func() fyne.CanvasObject {
+		return widget.NewCheck("thing", func(bool) {})
+	}
+	entry.CustomUpdate = func(id widget.ListItemID, o fyne.CanvasObject) {
+		o.(*widget.Check).Text = entryData[id]
+		o.Refresh()
+	}
+	win := test.NewWindow(entry)
+	win.Resize(fyne.NewSize(500, 300))
+	defer win.Close()
+
+	entry.SetText("init")
+	scroll := test.WidgetRenderer(entry.navigableList).Objects()[0].(fyne.Widget)
+	list := test.WidgetRenderer(scroll).Objects()[0].(*fyne.Container).Objects[1].(fyne.Widget)
+	item1 := test.WidgetRenderer(list).Objects()[1]
+	assert.Equal(t, "bar", item1.(*widget.Check).Text) // ensure the item is a Check not Label
+}
+
 // Show the completion menu
 func TestCompletionEntry_ShowMenu(t *testing.T) {
 	entry := createEntry()
@@ -39,7 +62,6 @@ func TestCompletionEntry_ShowMenu(t *testing.T) {
 
 	entry.SetText("init")
 	assert.True(t, entry.popupMenu.Visible())
-
 }
 
 // Navigate in menu and select an entry.
