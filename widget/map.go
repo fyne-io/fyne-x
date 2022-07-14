@@ -112,51 +112,83 @@ func (m *Map) MinSize() fyne.Size {
 	return fyne.NewSize(64, 64)
 }
 
+// PanEast will move the map to the East by 1 tile.
+func (m *Map) PanEast() {
+	m.x++
+	m.Refresh()
+}
+
+// PanNorth will move the map to the North by 1 tile.
+func (m *Map) PanNorth() {
+	m.y--
+	m.Refresh()
+}
+
+// PanSouth will move the map to the South by 1 tile.
+func (m *Map) PanSouth() {
+	m.y++
+	m.Refresh()
+}
+
+// PanWest will move the map to the west by 1 tile.
+func (m *Map) PanWest() {
+	m.x--
+	m.Refresh()
+}
+
+// Zoom sets the zoom level to a specific value, between 0 and 19.
+func (m *Map) Zoom(zoom int) {
+	if zoom < 0 || zoom > 19 {
+		return
+	}
+	delta := zoom - m.zoom
+	if delta > 0 {
+		for i := 0; i < delta; i++ {
+			m.zoomInStep()
+		}
+	} else if delta < 0 {
+		for i := 0; i > delta; i-- {
+			m.zoomOutStep()
+		}
+	}
+	m.Refresh()
+}
+
+// ZoomIn steps the scale of this map to be one step zoomed in.
+func (m *Map) ZoomIn() {
+	if m.zoom >= 19 {
+		return
+	}
+	m.zoomInStep()
+	m.Refresh()
+}
+
+// ZoomOut steps the scale of this map to be one step zoomed out.
+func (m *Map) ZoomOut() {
+	if m.zoom <= 0 {
+		return
+	}
+	m.zoomOutStep()
+	m.Refresh()
+}
+
 // CreateRenderer returns the renderer for this widget.
 // A map renderer is simply the map Raster with user interface elements overlaid.
 func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	var zoom fyne.CanvasObject
 	if !m.hideZoomButtons {
 		zoom = container.NewVBox(
-			newMapButton(theme.ZoomInIcon(), func() {
-				if m.zoom >= 19 {
-					return
-				}
-				m.zoom++
-				m.x *= 2
-				m.y *= 2
-				m.Refresh()
-			}),
-			newMapButton(theme.ZoomOutIcon(), func() {
-				if m.zoom <= 0 {
-					return
-				}
-				m.zoom--
-				m.x /= 2
-				m.y /= 2
-				m.Refresh()
-			}))
+			newMapButton(theme.ZoomInIcon(), m.ZoomIn),
+			newMapButton(theme.ZoomOutIcon(), m.ZoomOut))
 	}
 
 	var move fyne.CanvasObject
 	if !m.hideMoveButtons {
 		buttonLayout := container.NewGridWithColumns(3, layout.NewSpacer(),
-			newMapButton(theme.MoveUpIcon(), func() {
-				m.y--
-				m.Refresh()
-			}), layout.NewSpacer(),
-			newMapButton(theme.NavigateBackIcon(), func() {
-				m.x--
-				m.Refresh()
-			}), layout.NewSpacer(),
-			newMapButton(theme.NavigateNextIcon(), func() {
-				m.x++
-				m.Refresh()
-			}), layout.NewSpacer(),
-			newMapButton(theme.MoveDownIcon(), func() {
-				m.y++
-				m.Refresh()
-			}), layout.NewSpacer())
+			newMapButton(theme.MoveUpIcon(), m.PanNorth), layout.NewSpacer(),
+			newMapButton(theme.NavigateBackIcon(), m.PanWest), layout.NewSpacer(),
+			newMapButton(theme.NavigateNextIcon(), m.PanEast), layout.NewSpacer(),
+			newMapButton(theme.MoveDownIcon(), m.PanSouth), layout.NewSpacer())
 		move = container.NewVBox(buttonLayout)
 	}
 
@@ -226,4 +258,16 @@ func (m *Map) draw(w, h int) image.Image {
 	}
 
 	return m.pixels
+}
+
+func (m *Map) zoomInStep() {
+	m.zoom++
+	m.x *= 2
+	m.y *= 2
+}
+
+func (m *Map) zoomOutStep() {
+	m.zoom--
+	m.x /= 2
+	m.y /= 2
 }

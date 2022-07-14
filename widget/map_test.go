@@ -1,14 +1,46 @@
 package widget
 
 import (
-	"fmt"
-	"path/filepath"
-	"reflect"
-	"runtime"
 	"testing"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
+
+	"github.com/stretchr/testify/assert"
 )
+
+func TestMap_Pan(t *testing.T) {
+	m := NewMap()
+	m.Resize(fyne.NewSize(200, 200))
+	m.Zoom(3)
+	assert.Equal(t, 0, m.x)
+	assert.Equal(t, 0, m.y)
+
+	m.PanSouth()
+	m.PanEast()
+	assert.Equal(t, 1, m.x)
+	assert.Equal(t, 1, m.y)
+
+	m.PanNorth()
+	m.PanWest()
+	assert.Equal(t, 0, m.x)
+	assert.Equal(t, 0, m.y)
+}
+
+func TestMap_Zoom(t *testing.T) {
+	m := NewMap()
+	m.Resize(fyne.NewSize(200, 200))
+	assert.Equal(t, 0, m.zoom)
+	m.ZoomIn()
+	assert.Equal(t, 1, m.zoom)
+	m.ZoomOut()
+	assert.Equal(t, 0, m.zoom)
+
+	m.Zoom(5)
+	assert.Equal(t, 5, m.zoom)
+	m.Zoom(55) // invalid
+	assert.Equal(t, 5, m.zoom)
+}
 
 func TestNewMap_WithDefaults(t *testing.T) {
 	// arrange
@@ -17,12 +49,12 @@ func TestNewMap_WithDefaults(t *testing.T) {
 	// action
 	w.SetContent(m)
 	// verify
-	equals(t, "https://tile.openstreetmap.org/%d/%d/%d.png", m.tileSource)
-	equals(t, "OpenStreetMap", m.attributionLabel)
-	equals(t, "https://openstreetmap.org", m.attributionURL)
-	equals(t, false, m.hideAttribution)
-	equals(t, false, m.hideMoveButtons)
-	equals(t, false, m.hideZoomButtons)
+	assert.Equal(t, "https://tile.openstreetmap.org/%d/%d/%d.png", m.tileSource)
+	assert.Equal(t, "OpenStreetMap", m.attributionLabel)
+	assert.Equal(t, "https://openstreetmap.org", m.attributionURL)
+	assert.False(t, m.hideAttribution)
+	assert.False(t, m.hideMoveButtons)
+	assert.False(t, m.hideZoomButtons)
 }
 
 func TestNewMap_WithOptions(t *testing.T) {
@@ -36,17 +68,9 @@ func TestNewMap_WithOptions(t *testing.T) {
 	// action
 	w.SetContent(m)
 	// verify
-	equals(t, "test", m.attributionLabel)
-	equals(t, "http://test.org", m.attributionURL)
-	equals(t, false, m.hideAttribution)
-	equals(t, true, m.hideMoveButtons)
-	equals(t, true, m.hideZoomButtons)
-}
-
-func equals(t *testing.T, exp, act interface{}) {
-	if !reflect.DeepEqual(exp, act) {
-		_, file, line, _ := runtime.Caller(1)
-		fmt.Printf("%s:%d:\n\n\texp: %#v\n\n\tgot: %#v\n\n", filepath.Base(file), line, exp, act)
-		t.FailNow()
-	}
+	assert.Equal(t, "test", m.attributionLabel)
+	assert.Equal(t, "http://test.org", m.attributionURL)
+	assert.False(t, m.hideAttribution)
+	assert.True(t, m.hideMoveButtons)
+	assert.True(t, m.hideZoomButtons)
 }
