@@ -67,6 +67,9 @@ func (c *CompletionEntry) ShowCompletion() {
 
 	if c.navigableList == nil {
 		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion)
+	} else {
+		c.navigableList.UnselectAll()
+		c.navigableList.selected = -1
 	}
 	holder := fyne.CurrentApp().Driver().CanvasForObject(c)
 
