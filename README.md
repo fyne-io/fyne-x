@@ -19,6 +19,24 @@ Community contributed layouts.
 
 `import "fyne.io/x/fyne/layout"`
 
+### Calendar
+
+A date picker pop up which returns a [time](https://pkg.go.dev/time) object with the selected date.
+To use create a new calendar with a given time and a callback function:
+```go
+calendar := widget.NewCalendar(time.Now(),callbackFunction)
+```
+And use `ShowAtPos()` to display
+```go
+c.ShowAtPos(windowInstance.Canvas(), fyne.NewPos(50, 50))
+```
+Once the date is selected you can use the callbackFunction to use the time however you wish:
+```go
+func callbackFunction(t time.Time) {
+	fmt.Println(t.Format("Mon 02 Jan 2006"))
+}
+```
+
 ### Responsive Layout
 
 The responsive layout provides a "bootstrap like" configuration to automatically make containers and canvas reponsive to the window width. It reacts to  the window size to resize and move the elements. The sizes are configured with a ratio of the **container** width (`0.5` is 50% of the container size).
