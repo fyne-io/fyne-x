@@ -92,7 +92,7 @@ func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(float32(cellSize+float64(padding))*7, float32(cellSize+float64(padding))*float32(rows))
 }
 
-type calendar struct {
+type Calendar struct {
 	widget.BaseWidget
 	canvas       fyne.Canvas
 	calendarTime time.Time
@@ -110,7 +110,7 @@ type calendar struct {
 	callback func(time.Time)
 }
 
-func (c *calendar) daysOfMonth() []fyne.CanvasObject {
+func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 	start, _ := time.Parse("2006-1-2", strconv.Itoa(c.year)+"-"+strconv.Itoa(c.month)+"-"+strconv.Itoa(1))
 
 	buttons := []fyne.CanvasObject{}
@@ -145,21 +145,21 @@ func (c *calendar) daysOfMonth() []fyne.CanvasObject {
 	return buttons
 }
 
-func (c *calendar) dateForButton(dayNum int) time.Time {
+func (c *Calendar) dateForButton(dayNum int) time.Time {
 	oldName, off := c.calendarTime.Zone()
 	return time.Date(c.year, time.Month(c.month), dayNum, c.calendarTime.Hour(), c.calendarTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.calendarTime.Location())
 }
 
-func (c *calendar) hideOverlay() {
+func (c *Calendar) hideOverlay() {
 	overlayList := c.canvas.Overlays().List()
 	overlayList[0].Hide()
 }
 
-func (c *calendar) monthYear() string {
+func (c *Calendar) monthYear() string {
 	return time.Month(c.month).String() + " " + strconv.Itoa(c.year)
 }
 
-func (c *calendar) calendarObjects() []fyne.CanvasObject {
+func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 	textSize := float32(8)
 	columnHeadings := []fyne.CanvasObject{}
 	for i := 0; i < 7; i++ {
@@ -180,7 +180,7 @@ func (c *calendar) calendarObjects() []fyne.CanvasObject {
 
 // CreateRenderer returns a new WidgetRenderer for this widget.
 // This should not be called by regular code, it is used internally to render a widget.
-func (c *calendar) CreateRenderer() fyne.WidgetRenderer {
+func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 	c.monthPrevious = widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
 		c.month--
 		if c.month < 1 {
@@ -215,8 +215,8 @@ func (c *calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, callback func(time.Time)) *calendar {
-	c := &calendar{day: cT.Day(), month: int(cT.Month()), year: cT.Year(), calendarTime: cT, callback: callback}
+func NewCalendar(cT time.Time, callback func(time.Time)) *Calendar {
+	c := &Calendar{day: cT.Day(), month: int(cT.Month()), year: cT.Year(), calendarTime: cT, callback: callback}
 	c.ExtendBaseWidget(c)
 
 	return c
