@@ -16,19 +16,15 @@ import (
 )
 
 // Declare conformity with Layout interface
-var (
-	_        fyne.Layout = (*calendarLayout)(nil)
-	padding  float32     = 0
-	cellSize float64     = 32
-)
+var _ fyne.Layout = (*calendarLayout)(nil)
 
 type calendarLayout struct {
-	cols int
+	cellSize float32
+	padding  float32
 }
 
-func newCalendarLayout(s float64) fyne.Layout {
-	cellSize = s
-	return &calendarLayout{cols: 7}
+func newCalendarLayout(c float32, p float32) fyne.Layout {
+	return &calendarLayout{cellSize: c, padding: p}
 }
 
 func (g *calendarLayout) countRows(objects []fyne.CanvasObject) int {
@@ -39,21 +35,21 @@ func (g *calendarLayout) countRows(objects []fyne.CanvasObject) int {
 		}
 	}
 
-	return int(math.Ceil(float64(count) / float64(g.cols)))
+	return int(math.Ceil(float64(count) / float64(7)))
 }
 
 // Get the leading (top or left) edge of a grid cell.
 // size is the ideal cell size and the offset is which col or row its on.
-func getLeading(size float64, offset int) float32 {
-	ret := (size + float64(padding)) * float64(offset)
+func (g *calendarLayout) getLeading(offset int) float32 {
+	ret := (g.cellSize + g.padding) * float32(offset)
 
-	return float32(math.Round(ret))
+	return float32(math.Round(float64(ret)))
 }
 
 // Get the trailing (bottom or right) edge of a grid cell.
 // size is the ideal cell size and the offset is which col or row its on.
-func getTrailing(size float64, offset int) float32 {
-	return getLeading(size, offset+1) - padding
+func (g *calendarLayout) getTrailing(offset int) float32 {
+	return g.getLeading(offset+1) - g.padding
 }
 
 // Layout is called to pack all child objects into a specified size.
@@ -67,15 +63,15 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 			continue
 		}
 
-		x1 := getLeading(cellSize, col)
-		y1 := getLeading(cellSize, row)
-		x2 := getTrailing(cellSize, col)
-		y2 := getTrailing(cellSize, row)
+		x1 := g.getLeading(col)
+		y1 := g.getLeading(row)
+		x2 := g.getTrailing(col)
+		y2 := g.getTrailing(row)
 
 		child.Move(fyne.NewPos(x1, y1))
 		child.Resize(fyne.NewSize(x2-x1, y2-y1))
 
-		if (i+1)%g.cols == 0 {
+		if (i+1)%7 == 0 {
 			row++
 			col = 0
 		} else {
@@ -88,7 +84,7 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 //MinSize sets the minimum size for the calendar
 func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	rows := g.countRows(objects)
-	return fyne.NewSize(float32(cellSize+float64(padding))*7, float32(cellSize+float64(padding))*float32(rows))
+	return fyne.NewSize((float32(g.cellSize)+g.padding)*7, (float32(g.cellSize)+g.padding)*float32(rows))
 }
 
 type Calendar struct {
@@ -107,6 +103,9 @@ type Calendar struct {
 	dates *fyne.Container
 
 	onSelected func(time.Time)
+
+	cellSize float32
+	padding  float32
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
@@ -206,7 +205,7 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 	nav := container.New(layout.NewBorderLayout(nil, nil, c.monthPrevious, c.monthNext),
 		c.monthPrevious, c.monthNext, container.NewCenter(c.monthLabel))
 
-	c.dates = container.New(newCalendarLayout(32), c.calendarObjects()...)
+	c.dates = container.New(newCalendarLayout(c.cellSize, c.padding), c.calendarObjects()...)
 
 	dateContainer := container.NewVBox(nav, c.dates)
 
@@ -214,8 +213,15 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
-	c := &Calendar{day: cT.Day(), month: int(cT.Month()), year: cT.Year(), calendarTime: cT, onSelected: onSelected}
+func NewCalendar(cT time.Time, onSelected func(time.Time), cellSize float32, padding float32) *Calendar {
+	c := &Calendar{day: cT.Day(),
+		month:        int(cT.Month()),
+		year:         cT.Year(),
+		calendarTime: cT,
+		onSelected:   onSelected,
+		cellSize:     cellSize,
+		padding:      padding}
+
 	c.ExtendBaseWidget(c)
 
 	return c
