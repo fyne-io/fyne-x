@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"fmt"
 	"image/color"
 	"math"
 	"strconv"
@@ -129,7 +128,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 	for d := start; d.Month() == start.Month(); d = d.AddDate(0, 0, 1) {
 
 		dayNum := d.Day()
-		s := fmt.Sprint(dayNum)
+		s := strconv.Itoa(dayNum)
 		var b fyne.CanvasObject = widget.NewButton(s, func() {
 
 			selectedDate := c.dateForButton(dayNum)
