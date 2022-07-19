@@ -107,7 +107,7 @@ type Calendar struct {
 
 	dates *fyne.Container
 
-	callback func(time.Time)
+	onSelected func(time.Time)
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
@@ -134,7 +134,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 
 			selectedDate := c.dateForButton(dayNum)
 
-			c.callback(selectedDate)
+			c.onSelected(selectedDate)
 
 			c.hideOverlay()
 		})
@@ -215,8 +215,8 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, callback func(time.Time)) *Calendar {
-	c := &Calendar{day: cT.Day(), month: int(cT.Month()), year: cT.Year(), calendarTime: cT, callback: callback}
+func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
+	c := &Calendar{day: cT.Day(), month: int(cT.Month()), year: cT.Year(), calendarTime: cT, onSelected: onSelected}
 	c.ExtendBaseWidget(c)
 
 	return c
