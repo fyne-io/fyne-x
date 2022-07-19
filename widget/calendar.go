@@ -221,27 +221,3 @@ func NewCalendar(cT time.Time, callback func(time.Time)) *calendar {
 
 	return c
 }
-
-// NewCalendarAtPos creates a calendar instance and shows at given position
-func NewCalendarAtPos(canvas fyne.Canvas, position fyne.Position, calendarTime time.Time, callback func(time.Time)) *calendar {
-	c := &calendar{
-		canvas:       canvas,
-		calendarTime: calendarTime,
-
-		day:   calendarTime.Day(),
-		month: int(calendarTime.Month()),
-		year:  calendarTime.Year(),
-
-		callback: callback}
-
-	c.ExtendBaseWidget(c)
-	widget.ShowPopUpAtPosition(c, canvas, position)
-
-	return c
-}
-
-// ShowAtPos creates a pop up with instantiated calendar
-func (c *calendar) ShowAtPos(canvas fyne.Canvas, pos fyne.Position) {
-	c.canvas = canvas
-	widget.ShowPopUpAtPosition(c, canvas, pos)
-}
