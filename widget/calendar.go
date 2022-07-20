@@ -134,8 +134,6 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 			selectedDate := c.dateForButton(dayNum)
 
 			c.onSelected(selectedDate)
-
-			c.hideOverlay()
 		})
 
 		buttons = append(buttons, b)
