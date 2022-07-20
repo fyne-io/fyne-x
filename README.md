@@ -59,21 +59,26 @@ Community contributed widgets.
 
 ### Calendar
 
+  
+
 A date picker pop up which returns a [time](https://pkg.go.dev/time) object with the selected date.
-<p align="center" class="align:center;margin:auto">
-    <img src="https://user-images.githubusercontent.com/45520351/179398051-a1f961fd-64be-4214-a565-0da85ce4a543.png" style="max-width: 100%" alt="Calendar widget"/>
+
+<p  align="center"  class="align:center;margin:auto">
+
+<img  src="https://user-images.githubusercontent.com/45520351/179398051-a1f961fd-64be-4214-a565-0da85ce4a543.png"  style="max-width: 100%"  alt="Calendar widget"/>
+
 </p>
 
+  
+
 To use create a new calendar with a given time and a callback function:
+
 ```go
+
 calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
+
 ```
-Once the date is selected you can use the callbackFunction to use the time however you wish:
-```go
-func onSelected(t time.Time) {
-	fmt.Println(t.Format("Mon 02 Jan 2006"))
-}
-```
+[Demo](./cmd/hexwidget_demo/main.go) available for example usage
 
 ### Animated Gif
 
