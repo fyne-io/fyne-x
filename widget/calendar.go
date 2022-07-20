@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"image/color"
 	"math"
 	"strconv"
 	"strings"
@@ -16,15 +15,17 @@ import (
 )
 
 // Declare conformity with Layout interface
-var _ fyne.Layout = (*calendarLayout)(nil)
+var (
+	_           fyne.Layout = (*calendarLayout)(nil)
+	daysPerWeek int
+)
 
 type calendarLayout struct {
 	cellSize float32
-	padding  float32
 }
 
-func newCalendarLayout(c float32, p float32) fyne.Layout {
-	return &calendarLayout{cellSize: c, padding: p}
+func newCalendarLayout(c float32) fyne.Layout {
+	return &calendarLayout{cellSize: c}
 }
 
 func (g *calendarLayout) countRows(objects []fyne.CanvasObject) int {
@@ -35,13 +36,13 @@ func (g *calendarLayout) countRows(objects []fyne.CanvasObject) int {
 		}
 	}
 
-	return int(math.Ceil(float64(count) / float64(7)))
+	return int(math.Ceil(float64(count) / float64(daysPerWeek)))
 }
 
 // Get the leading (top or left) edge of a grid cell.
 // size is the ideal cell size and the offset is which col or row its on.
 func (g *calendarLayout) getLeading(offset int) float32 {
-	ret := (g.cellSize + g.padding) * float32(offset)
+	ret := (g.cellSize) * float32(offset)
 
 	return float32(math.Round(float64(ret)))
 }
@@ -49,7 +50,7 @@ func (g *calendarLayout) getLeading(offset int) float32 {
 // Get the trailing (bottom or right) edge of a grid cell.
 // size is the ideal cell size and the offset is which col or row its on.
 func (g *calendarLayout) getTrailing(offset int) float32 {
-	return g.getLeading(offset+1) - g.padding
+	return g.getLeading(offset + 1)
 }
 
 // Layout is called to pack all child objects into a specified size.
@@ -71,7 +72,7 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 		child.Move(fyne.NewPos(x1, y1))
 		child.Resize(fyne.NewSize(x2-x1, y2-y1))
 
-		if (i+1)%7 == 0 {
+		if (i+1)%daysPerWeek == 0 {
 			row++
 			col = 0
 		} else {
@@ -84,7 +85,7 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 //MinSize sets the minimum size for the calendar
 func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	rows := g.countRows(objects)
-	return fyne.NewSize((float32(g.cellSize)+g.padding)*7, (float32(g.cellSize)+g.padding)*float32(rows))
+	return fyne.NewSize((g.cellSize)*float32(daysPerWeek), (float32(g.cellSize))*float32(rows))
 }
 
 // Calendar creates a new date time picker which returns a time object
@@ -95,7 +96,7 @@ type Calendar struct {
 
 	monthPrevious *widget.Button
 	monthNext     *widget.Button
-	monthLabel    *widget.RichText
+	monthLabel    *widget.Label
 
 	day   int
 	month int
@@ -106,7 +107,6 @@ type Calendar struct {
 	onSelected func(time.Time)
 
 	cellSize float32
-	padding  float32
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
@@ -117,7 +117,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 	//account for Go time pkg starting on sunday at index 0
 	dayIndex := int(start.Weekday())
 	if dayIndex == 0 {
-		dayIndex += 7
+		dayIndex += daysPerWeek
 	}
 
 	//add spacers if week doesn't start on Monday
@@ -161,15 +161,15 @@ func (c *Calendar) monthYear() string {
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 	textSize := float32(8)
 	columnHeadings := []fyne.CanvasObject{}
-	for i := 0; i < 7; i++ {
+	for i := 0; i < daysPerWeek; i++ {
 		j := i + 1
-		if j == 7 {
+		if j == daysPerWeek {
 			j = 0
 		}
 
-		var canvasObject fyne.CanvasObject = canvas.NewText(strings.ToUpper(time.Weekday(j).String()[:3]), color.NRGBA{0xFF, 0xFF, 0xFF, 0xBF})
-		canvasObject.(*canvas.Text).TextSize = textSize
-		canvasObject.(*canvas.Text).Alignment = fyne.TextAlignCenter
+		canvasObject := canvas.NewText(strings.ToUpper(time.Weekday(j).String()[:3]), theme.ForegroundColor())
+		canvasObject.TextSize = textSize
+		canvasObject.Alignment = fyne.TextAlignCenter
 		columnHeadings = append(columnHeadings, canvasObject)
 	}
 	columnHeadings = append(columnHeadings, c.daysOfMonth()...)
@@ -186,7 +186,7 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 			c.month = 12
 			c.year--
 		}
-		c.monthLabel.ParseMarkdown(c.monthYear())
+		c.monthLabel.SetText(c.monthYear())
 
 		c.dates.Objects = c.calendarObjects()
 	})
@@ -196,17 +196,17 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 			c.month = 1
 			c.year++
 		}
-		c.monthLabel.ParseMarkdown(c.monthYear())
+		c.monthLabel.SetText(c.monthYear())
 
 		c.dates.Objects = c.calendarObjects()
 	})
 
-	c.monthLabel = widget.NewRichTextFromMarkdown(c.monthYear())
+	c.monthLabel = widget.NewLabel(c.monthYear())
 
 	nav := container.New(layout.NewBorderLayout(nil, nil, c.monthPrevious, c.monthNext),
 		c.monthPrevious, c.monthNext, container.NewCenter(c.monthLabel))
 
-	c.dates = container.New(newCalendarLayout(c.cellSize, c.padding), c.calendarObjects()...)
+	c.dates = container.New(newCalendarLayout(c.cellSize), c.calendarObjects()...)
 
 	dateContainer := container.NewVBox(nav, c.dates)
 
@@ -214,14 +214,13 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, onSelected func(time.Time), cellSize float32, padding float32) *Calendar {
+func NewCalendar(cT time.Time, onSelected func(time.Time), cellSize float32) *Calendar {
 	c := &Calendar{day: cT.Day(),
 		month:        int(cT.Month()),
 		year:         cT.Year(),
 		calendarTime: cT,
 		onSelected:   onSelected,
-		cellSize:     cellSize,
-		padding:      padding}
+		cellSize:     cellSize}
 
 	c.ExtendBaseWidget(c)
 
