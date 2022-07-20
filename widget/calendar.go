@@ -157,7 +157,7 @@ func (c *Calendar) monthYear() string {
 }
 
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {
-	textSize := float32(8)
+	textSize := float32(c.cellSize / 6)
 	columnHeadings := []fyne.CanvasObject{}
 	for i := 0; i < daysPerWeek; i++ {
 		j := i + 1
@@ -165,10 +165,10 @@ func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 			j = 0
 		}
 
-		canvasObject := canvas.NewText(strings.ToUpper(time.Weekday(j).String()[:3]), theme.ForegroundColor())
-		canvasObject.TextSize = textSize
-		canvasObject.Alignment = fyne.TextAlignCenter
-		columnHeadings = append(columnHeadings, canvasObject)
+		t := canvas.NewText(strings.ToUpper(time.Weekday(j).String()[:3]), theme.ForegroundColor())
+		t.TextSize = textSize
+		t.Alignment = fyne.TextAlignCenter
+		columnHeadings = append(columnHeadings, t)
 	}
 	columnHeadings = append(columnHeadings, c.daysOfMonth()...)
 
