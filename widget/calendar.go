@@ -17,7 +17,7 @@ import (
 // Declare conformity with Layout interface
 var (
 	_           fyne.Layout = (*calendarLayout)(nil)
-	daysPerWeek int
+	daysPerWeek int         = 7
 )
 
 type calendarLayout struct {
