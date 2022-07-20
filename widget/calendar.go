@@ -147,11 +147,6 @@ func (c *Calendar) dateForButton(dayNum int) time.Time {
 	return time.Date(c.year, time.Month(c.month), dayNum, c.calendarTime.Hour(), c.calendarTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.calendarTime.Location())
 }
 
-func (c *Calendar) hideOverlay() {
-	overlayList := c.canvas.Overlays().List()
-	overlayList[0].Hide()
-}
-
 func (c *Calendar) monthYear() string {
 	return time.Month(c.month).String() + " " + strconv.Itoa(c.year)
 }
