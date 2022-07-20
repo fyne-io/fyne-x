@@ -13,18 +13,18 @@ import (
 
 func TestNewCalendar(t *testing.T) {
 	now := time.Now()
-	c := NewCalendar(now, func(time.Time) {}, 32, 0)
+	c := NewCalendar(now, func(time.Time) {}, 32)
 	assert.Equal(t, now.Day(), c.day)
 	assert.Equal(t, int(now.Month()), c.month)
 	assert.Equal(t, now.Year(), c.year)
 
 	_ = test.WidgetRenderer(c) // and render
-	assert.Equal(t, now.Format("January 2006"), c.monthLabel.Segments[0].(*widget.TextSegment).Text)
+	assert.Equal(t, now.Format("January 2006"), c.monthLabel.Text)
 }
 
 func TestNewCalendar_ButtonDate(t *testing.T) {
 	date := time.Now()
-	c := NewCalendar(date, func(time.Time) {}, 32, 0)
+	c := NewCalendar(date, func(time.Time) {}, 32)
 	_ = test.WidgetRenderer(c) // and render
 
 	endNextMonth := date.AddDate(0, 1, 0).AddDate(0, 0, -(date.Day() - 1))
@@ -38,26 +38,26 @@ func TestNewCalendar_ButtonDate(t *testing.T) {
 
 func TestNewCalendar_Next(t *testing.T) {
 	date := time.Now()
-	c := NewCalendar(date, func(time.Time) {}, 32, 0)
+	c := NewCalendar(date, func(time.Time) {}, 32)
 	_ = test.WidgetRenderer(c) // and render
 
-	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Segments[0].(*widget.TextSegment).Text)
+	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
 
 	test.Tap(c.monthNext)
 	date = date.AddDate(0, 1, 0)
-	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Segments[0].(*widget.TextSegment).Text)
+	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
 }
 
 func TestNewCalendar_Previous(t *testing.T) {
 	date := time.Now()
-	c := NewCalendar(date, func(time.Time) {}, 32, 0)
+	c := NewCalendar(date, func(time.Time) {}, 32)
 	_ = test.WidgetRenderer(c) // and render
 
-	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Segments[0].(*widget.TextSegment).Text)
+	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
 
 	test.Tap(c.monthPrevious)
 	date = date.AddDate(0, -1, 0)
-	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Segments[0].(*widget.TextSegment).Text)
+	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
 }
 
 func firstDateButton(c *fyne.Container) *widget.Button {
