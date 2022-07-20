@@ -20,7 +20,7 @@ func main() {
 	l.Alignment = fyne.TextAlignCenter
 	d := &date{instruction: i, dateChosen: l}
 
-	calendar := xWidget.NewCalendar(time.Now(), d.onSelected, 100)
+	calendar := xWidget.NewCalendar(time.Now(), d.onSelected, 32)
 
 	c := container.NewVBox(i, l, calendar)
 	w.SetContent(c)
