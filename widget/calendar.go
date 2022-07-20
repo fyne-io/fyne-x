@@ -152,7 +152,7 @@ func (c *Calendar) monthYear() string {
 }
 
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {
-	textSize := float32(c.cellSize / 6)
+	textSize := float32(c.cellSize / 5)
 	columnHeadings := []fyne.CanvasObject{}
 	for i := 0; i < daysPerWeek; i++ {
 		j := i + 1
