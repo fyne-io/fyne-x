@@ -90,7 +90,6 @@ func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 // Calendar creates a new date time picker which returns a time object
 type Calendar struct {
 	widget.BaseWidget
-	canvas       fyne.Canvas
 	calendarTime time.Time
 
 	monthPrevious *widget.Button
