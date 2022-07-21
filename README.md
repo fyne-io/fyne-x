@@ -61,7 +61,7 @@ Community contributed widgets.
 
   
 
-A date picker pop up which returns a [time](https://pkg.go.dev/time) object with the selected date.
+A date picker which returns a [time](https://pkg.go.dev/time) object with the selected date.
 
 <p  align="center"  class="align:center;margin:auto">
 
