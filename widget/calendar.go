@@ -79,7 +79,7 @@ func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 // Calendar creates a new date time picker which returns a time object
 type Calendar struct {
 	widget.BaseWidget
-	startTime time.Time
+	currentTime time.Time
 
 	monthPrevious *widget.Button
 	monthNext     *widget.Button
@@ -91,7 +91,7 @@ type Calendar struct {
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
-	start := time.Date(c.startTime.Year(), c.startTime.Month(), 1, 0, 0, 0, 0, c.startTime.Location())
+	start := time.Date(c.currentTime.Year(), c.currentTime.Month(), 1, 0, 0, 0, 0, c.currentTime.Location())
 	fmt.Println(start)
 	buttons := []fyne.CanvasObject{}
 
@@ -125,12 +125,12 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 }
 
 func (c *Calendar) dateForButton(dayNum int) time.Time {
-	oldName, off := c.startTime.Zone()
-	return time.Date(c.startTime.Year(), c.startTime.Month(), dayNum, c.startTime.Hour(), c.startTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.startTime.Location())
+	oldName, off := c.currentTime.Zone()
+	return time.Date(c.currentTime.Year(), c.currentTime.Month(), dayNum, c.currentTime.Hour(), c.currentTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.currentTime.Location())
 }
 
 func (c *Calendar) monthYear() string {
-	return c.startTime.Month().String() + " " + strconv.Itoa(c.startTime.Year())
+	return c.currentTime.Month().String() + " " + strconv.Itoa(c.currentTime.Year())
 }
 
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {
@@ -154,16 +154,16 @@ func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 // This should not be called by regular code, it is used internally to render a widget.
 func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 	c.monthPrevious = widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
-		c.startTime = c.startTime.AddDate(0, -1, 0)
+		c.currentTime = c.currentTime.AddDate(0, -1, 0)
 		// Dates are 'normalised', forcing date to start from the start of the month ensures move from March to February
-		c.startTime = time.Date(c.startTime.Year(), c.startTime.Month(), 1, 0, 0, 0, 0, c.startTime.Location())
+		c.currentTime = time.Date(c.currentTime.Year(), c.currentTime.Month(), 1, 0, 0, 0, 0, c.currentTime.Location())
 		c.monthLabel.SetText(c.monthYear())
 		c.dates.Objects = c.calendarObjects()
 	})
 	c.monthPrevious.Importance = widget.LowImportance
 
 	c.monthNext = widget.NewButtonWithIcon("", theme.NavigateNextIcon(), func() {
-		c.startTime = c.startTime.AddDate(0, 1, 0)
+		c.currentTime = c.currentTime.AddDate(0, 1, 0)
 		c.monthLabel.SetText(c.monthYear())
 		c.dates.Objects = c.calendarObjects()
 	})
@@ -184,8 +184,8 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 // NewCalendar creates a calendar instance
 func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
 	c := &Calendar{
-		startTime:  cT,
-		onSelected: onSelected,
+		currentTime: cT,
+		onSelected:  onSelected,
 	}
 
 	c.ExtendBaseWidget(c)
