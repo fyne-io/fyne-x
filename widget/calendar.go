@@ -23,19 +23,8 @@ type calendarLayout struct {
 	cellSize float32
 }
 
-func newCalendarLayout(c float32) fyne.Layout {
-	return &calendarLayout{cellSize: c}
-}
-
-func (g *calendarLayout) countRows(objects []fyne.CanvasObject) int {
-	count := 0
-	for _, child := range objects {
-		if child.Visible() {
-			count++
-		}
-	}
-
-	return int(math.Ceil(float64(count) / float64(daysPerWeek)))
+func newCalendarLayout() fyne.Layout {
+	return &calendarLayout{}
 }
 
 // Get the leading (top or left) edge of a grid cell.
@@ -56,6 +45,7 @@ func (g *calendarLayout) getTrailing(offset int) float32 {
 // For a GridLayout this will pack objects into a table format with the number
 // of columns specified in our constructor.
 func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
+	g.cellSize = size.Width / 7
 	row, col := 0, 0
 	i := 0
 	for _, child := range objects {
@@ -83,14 +73,13 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 
 //MinSize sets the minimum size for the calendar
 func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	rows := g.countRows(objects)
-	return fyne.NewSize((g.cellSize)*float32(daysPerWeek), (float32(g.cellSize))*float32(rows))
+	return fyne.NewSize(200, 200)
 }
 
 // Calendar creates a new date time picker which returns a time object
 type Calendar struct {
 	widget.BaseWidget
-	calendarTime time.Time
+	startTime time.Time
 
 	monthPrevious *widget.Button
 	monthNext     *widget.Button
@@ -141,8 +130,8 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 }
 
 func (c *Calendar) dateForButton(dayNum int) time.Time {
-	oldName, off := c.calendarTime.Zone()
-	return time.Date(c.year, time.Month(c.month), dayNum, c.calendarTime.Hour(), c.calendarTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.calendarTime.Location())
+	oldName, off := c.startTime.Zone()
+	return time.Date(c.year, time.Month(c.month), dayNum, c.startTime.Hour(), c.startTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.startTime.Location())
 }
 
 func (c *Calendar) monthYear() string {
@@ -197,7 +186,7 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 	nav := container.New(layout.NewBorderLayout(nil, nil, c.monthPrevious, c.monthNext),
 		c.monthPrevious, c.monthNext, container.NewCenter(c.monthLabel))
 
-	c.dates = container.New(newCalendarLayout(c.cellSize), c.calendarObjects()...)
+	c.dates = container.New(newCalendarLayout(), c.calendarObjects()...)
 
 	dateContainer := container.NewVBox(nav, c.dates)
 
@@ -205,13 +194,13 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, onSelected func(time.Time), cellSize float32) *Calendar {
+func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
 	c := &Calendar{day: cT.Day(),
-		month:        int(cT.Month()),
-		year:         cT.Year(),
-		calendarTime: cT,
-		onSelected:   onSelected,
-		cellSize:     cellSize}
+		month:      int(cT.Month()),
+		year:       cT.Year(),
+		startTime:  cT,
+		onSelected: onSelected,
+	}
 
 	c.ExtendBaseWidget(c)
 
