@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -92,7 +91,6 @@ type Calendar struct {
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 	start := time.Date(c.currentTime.Year(), c.currentTime.Month(), 1, 0, 0, 0, 0, c.currentTime.Location())
-	fmt.Println(start)
 	buttons := []fyne.CanvasObject{}
 
 	//account for Go time pkg starting on sunday at index 0
