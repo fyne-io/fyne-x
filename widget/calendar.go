@@ -1,13 +1,13 @@
 package widget
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
@@ -45,7 +45,7 @@ func (g *calendarLayout) getTrailing(offset int) float32 {
 // For a GridLayout this will pack objects into a table format with the number
 // of columns specified in our constructor.
 func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
-	g.cellSize = size.Width / 7
+	g.cellSize = size.Width / float32(daysPerWeek)
 	row, col := 0, 0
 	i := 0
 	for _, child := range objects {
@@ -85,20 +85,14 @@ type Calendar struct {
 	monthNext     *widget.Button
 	monthLabel    *widget.Label
 
-	day   int
-	month int
-	year  int
-
 	dates *fyne.Container
 
 	onSelected func(time.Time)
-
-	cellSize float32
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
-	start, _ := time.Parse("2006-1-2", strconv.Itoa(c.year)+"-"+strconv.Itoa(c.month)+"-"+strconv.Itoa(1))
-
+	start := time.Date(c.startTime.Year(), c.startTime.Month(), 1, 0, 0, 0, 0, c.startTime.Location())
+	fmt.Println(start)
 	buttons := []fyne.CanvasObject{}
 
 	//account for Go time pkg starting on sunday at index 0
@@ -116,12 +110,13 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 
 		dayNum := d.Day()
 		s := strconv.Itoa(dayNum)
-		var b fyne.CanvasObject = widget.NewButton(s, func() {
+		b := widget.NewButton(s, func() {
 
 			selectedDate := c.dateForButton(dayNum)
 
 			c.onSelected(selectedDate)
 		})
+		b.Importance = widget.LowImportance
 
 		buttons = append(buttons, b)
 	}
@@ -131,15 +126,14 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 
 func (c *Calendar) dateForButton(dayNum int) time.Time {
 	oldName, off := c.startTime.Zone()
-	return time.Date(c.year, time.Month(c.month), dayNum, c.startTime.Hour(), c.startTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.startTime.Location())
+	return time.Date(c.startTime.Year(), c.startTime.Month(), dayNum, c.startTime.Hour(), c.startTime.Minute(), 0, 0, time.FixedZone(oldName, off)).In(c.startTime.Location())
 }
 
 func (c *Calendar) monthYear() string {
-	return time.Month(c.month).String() + " " + strconv.Itoa(c.year)
+	return c.startTime.Month().String() + " " + strconv.Itoa(c.startTime.Year())
 }
 
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {
-	textSize := float32(c.cellSize / 5)
 	columnHeadings := []fyne.CanvasObject{}
 	for i := 0; i < daysPerWeek; i++ {
 		j := i + 1
@@ -147,8 +141,7 @@ func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 			j = 0
 		}
 
-		t := canvas.NewText(strings.ToUpper(time.Weekday(j).String()[:3]), theme.ForegroundColor())
-		t.TextSize = textSize
+		t := widget.NewLabel(strings.ToUpper(time.Weekday(j).String()[:3]))
 		t.Alignment = fyne.TextAlignCenter
 		columnHeadings = append(columnHeadings, t)
 	}
@@ -161,25 +154,20 @@ func (c *Calendar) calendarObjects() []fyne.CanvasObject {
 // This should not be called by regular code, it is used internally to render a widget.
 func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 	c.monthPrevious = widget.NewButtonWithIcon("", theme.NavigateBackIcon(), func() {
-		c.month--
-		if c.month < 1 {
-			c.month = 12
-			c.year--
-		}
+		c.startTime = c.startTime.AddDate(0, -1, 0)
+		// Dates are 'normalised', forcing date to start from the start of the month ensures move from March to February
+		c.startTime = time.Date(c.startTime.Year(), c.startTime.Month(), 1, 0, 0, 0, 0, c.startTime.Location())
 		c.monthLabel.SetText(c.monthYear())
-
 		c.dates.Objects = c.calendarObjects()
 	})
+	c.monthPrevious.Importance = widget.LowImportance
+
 	c.monthNext = widget.NewButtonWithIcon("", theme.NavigateNextIcon(), func() {
-		c.month++
-		if c.month > 12 {
-			c.month = 1
-			c.year++
-		}
+		c.startTime = c.startTime.AddDate(0, 1, 0)
 		c.monthLabel.SetText(c.monthYear())
-
 		c.dates.Objects = c.calendarObjects()
 	})
+	c.monthNext.Importance = widget.LowImportance
 
 	c.monthLabel = widget.NewLabel(c.monthYear())
 
@@ -195,9 +183,7 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 
 // NewCalendar creates a calendar instance
 func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
-	c := &Calendar{day: cT.Day(),
-		month:      int(cT.Month()),
-		year:       cT.Year(),
+	c := &Calendar{
 		startTime:  cT,
 		onSelected: onSelected,
 	}
