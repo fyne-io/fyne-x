@@ -128,7 +128,7 @@ func (c *Calendar) dateForButton(dayNum int) time.Time {
 }
 
 func (c *Calendar) monthYear() string {
-	return c.currentTime.Month().String() + " " + strconv.Itoa(c.currentTime.Year())
+	return c.currentTime.Format("January 2006")
 }
 
 func (c *Calendar) calendarObjects() []fyne.CanvasObject {
