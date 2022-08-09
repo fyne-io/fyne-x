@@ -7,7 +7,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	xWidget "fyne.io/x/fyne/widget"
+	xwidget "fyne.io/x/fyne/widget"
 )
 
 func main() {
@@ -22,7 +22,7 @@ func main() {
 
 	// Defines which date you would like the calendar to start
 	startingDate := time.Now()
-	calendar := xWidget.NewCalendar(startingDate, d.onSelected)
+	calendar := xwidget.NewCalendar(startingDate, d.onSelected)
 
 	c := container.NewVBox(i, l, calendar)
 
