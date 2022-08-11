@@ -57,6 +57,29 @@ Community contributed widgets.
 
 `import "fyne.io/x/fyne/widget"`
 
+### Calendar
+
+  
+
+A date picker which returns a [time](https://pkg.go.dev/time) object with the selected date.
+
+<p  align="center"  class="align:center;margin:auto">
+
+<img  src="https://user-images.githubusercontent.com/45520351/179398051-a1f961fd-64be-4214-a565-0da85ce4a543.png"  style="max-width: 100%"  alt="Calendar widget"/>
+
+</p>
+
+  
+
+To use create a new calendar with a given time and a callback function:
+
+```go
+
+calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
+
+```
+[Demo](./cmd/hexwidget_demo/main.go) available for example usage
+
 ### Animated Gif
 
 A widget that will run animated gifs.
