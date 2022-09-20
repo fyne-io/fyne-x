@@ -46,7 +46,7 @@ Optionally, Each canvas object can be encapsulated with `Responsive()` function 
 ```go
 layout := NewResponsiveLayout(
     Responsive(object1),            // all sizes to 100%
-    Responsive(object2, 0.5, 0.75), // small to 50%, medium to 75%, all others to 100% 
+    Responsive(object2, 0.5, 0.75), // small to 50%, medium to 75%, all others to 100%
 )
 ```
 
@@ -59,7 +59,7 @@ Community contributed widgets.
 
 ### Calendar
 
-  
+
 
 A date picker which returns a [time](https://pkg.go.dev/time) object with the selected date.
 
@@ -69,7 +69,7 @@ A date picker which returns a [time](https://pkg.go.dev/time) object with the se
 
 </p>
 
-  
+
 
 To use create a new calendar with a given time and a callback function:
 
@@ -223,6 +223,16 @@ if err := token.Error(); err != nil {
 
 s, err := binding.NewMqttString(client, "fyne.io/x/string")
 ```
+
+### DisableableBinding
+
+A `DisableableBinding` creates a `Bool` data binding which accepts `Disableable` targets to control.
+When the `bool` binding is changed, all targets `Enable` or `Disable` methods will be executed depending on the settings.
+
+The binding accepts targets when created with `NewDisableableBinding` or via the method `AddTargets`.
+The behaviour of the binding can be inverted, so true disables and false enables. This is done through method `Invert`.
+
+All targets are updated when either `AddTargets` or `Invert` is executed.
 
 ## Data Validation
 
