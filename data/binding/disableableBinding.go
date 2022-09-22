@@ -11,15 +11,15 @@ type disableableBinding struct {
 	binding.Bool
 
 	inverted bool
-	targets  []fyne.Disableable
+	widgets  []fyne.Disableable
 }
 
-// NewDisableableBinding returns a `Bool` binding which accepts Disableable targets.
-// When the Bool changes, the targets Enable or Disable method will be executed.
-func NewDisableableBinding(targets ...fyne.Disableable) *disableableBinding {
+// NewDisableableBinding returns a `Bool` binding which accepts Disableable widgets.
+// When the Bool changes, the widgets Enable or Disable method will be executed.
+func NewDisableableBinding(widgets ...fyne.Disableable) *disableableBinding {
 	newBinding := &disableableBinding{
 		Bool:    binding.NewBool(),
-		targets: targets,
+		widgets: widgets,
 	}
 
 	// Add default listener
@@ -28,16 +28,16 @@ func NewDisableableBinding(targets ...fyne.Disableable) *disableableBinding {
 	return newBinding
 }
 
-// Adding targets to the binding.
-// This will update the Disable status of the targets immediately.
-func (b *disableableBinding) AddTargets(targets ...fyne.Disableable) {
-	b.targets = append(b.targets, targets...)
+// Adding widgets to the binding.
+// This will update the Disable status of the widgets immediately.
+func (b *disableableBinding) AddWidgets(widgets ...fyne.Disableable) {
+	b.widgets = append(b.widgets, widgets...)
 	b.update()
 }
 
-// Invert will switch the behavior of when the targets will be Enabled or Disabled.
-// This will update the Disable status of the targets immediately.
-func (b *disableableBinding) Invert(inverted bool) {
+// SetInverted will switch the behavior of when the widgets will be Enabled or Disabled.
+// This will update the Disable status of the widgets immediately.
+func (b *disableableBinding) SetInverted(inverted bool) {
 	b.inverted = inverted
 	b.update()
 }
@@ -50,12 +50,12 @@ func (b *disableableBinding) update() {
 	}
 
 	if (!b.inverted && val) || (b.inverted && !val) {
-		for _, target := range b.targets {
-			target.Enable()
+		for _, widget := range b.widgets {
+			widget.Enable()
 		}
 	} else {
-		for _, target := range b.targets {
-			target.Disable()
+		for _, widget := range b.widgets {
+			widget.Disable()
 		}
 	}
 }

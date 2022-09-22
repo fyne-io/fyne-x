@@ -226,13 +226,13 @@ s, err := binding.NewMqttString(client, "fyne.io/x/string")
 
 ### DisableableBinding
 
-A `DisableableBinding` creates a `Bool` data binding which accepts `Disableable` targets to control.
-When the `bool` binding is changed, all targets `Enable` or `Disable` methods will be executed depending on the settings.
+A `DisableableBinding` creates a `Bool` data binding which accepts `Disableable` widgets to control.
+When the `bool` binding is changed, all widgets `Enable` or `Disable` methods will be executed depending on the settings.
 
-The binding accepts targets when created with `NewDisableableBinding` or via the method `AddTargets`.
+The binding accepts widgets when created with `NewDisableableBinding` or via the method `AddWidgets`.
 The behaviour of the binding can be inverted, so true disables and false enables. This is done through method `Invert`.
 
-All targets are updated when either `AddTargets` or `Invert` is executed.
+All widgets are updated when either `AddWidgets` or `Invert` is executed.
 
 ## Data Validation
 
