@@ -431,16 +431,24 @@ func (gnome *GnomeTheme) calculateVariant() {
 	out, err := cmd.CombinedOutput()
 	gnome.variant = new(fyne.ThemeVariant)
 	if err == nil {
-		if strings.Contains(string(out), "prefer-dark") {
+		w := strings.TrimSpace(string(out))
+		w = strings.Trim(w, "'")
+		switch w {
+		case "prefer-dark":
 			*gnome.variant = ft.VariantDark
 			return
-		}
-		if strings.Contains(string(out), "prefer-light") {
+		case "prefer-light":
+			*gnome.variant = ft.VariantLight
+			return
+		case "default":
 			*gnome.variant = ft.VariantLight
 			return
 		}
 	}
 
+	// Here, we will try to calculate the variant from the background color
+	// This is not perfect, but it works in most cases.
+	// For Gnome < 42
 	r, g, b, _ := gnome.Color(ft.ColorNameBackground, 0).RGBA()
 
 	brightness := (r/255*299 + g/255*587 + b/255*114) / 1000
@@ -465,18 +473,35 @@ func (gnome *GnomeTheme) findThemeInformation(gtkVersion int, variant fyne.Theme
 
 // getGTKVersion gets the available GTK version for the given theme. If the version cannot be
 // determine, it will return 3 wich is the most common used version.
-func (gnome *GnomeTheme) getGTKVersion() int {
+func (gnome *GnomeTheme) getGTKVersion() (version int) {
+
+	defer func() {
+		log.Println("Detected version", version)
+	}()
+	version = 3
+
+	// get the gnome version
+	cmd := exec.Command("gnome-shell", "--version")
+	out, err := cmd.CombinedOutput()
+	if err == nil {
+		w := strings.TrimSpace(string(out))
+		w = strings.Trim(w, "'")
+		w = strings.ToLower(w)
+		if strings.Contains(w, "gnome shell 42") {
+			version = 4
+		}
+	}
 
 	themename := gnome.getThemeName()
 	if themename == "" {
-		return 3 // default to 3
+		return
 	}
 
 	// ok so now, find if the theme is gtk4, either fallback to gtk3
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Println(err)
-		return 3 // default to Gtk 3
+		return
 	}
 
 	possiblePaths := []string{
@@ -492,14 +517,16 @@ func (gnome *GnomeTheme) getGTKVersion() int {
 			// now check if it is gtk4 compatible
 			if _, err := os.Stat(path + "gtk-4.0/gtk.css"); err == nil {
 				// it is gtk4
-				return 4
+				version = 3
+				return
 			}
 			if _, err := os.Stat(path + "gtk-3.0/gtk.css"); err == nil {
-				return 3
+				version = 3
+				return
 			}
 		}
 	}
-	return 3 // default, but that may be a false positive now
+	return // default, but that may be a false positive now
 }
 
 // getIconThemeName return the current icon theme name.
