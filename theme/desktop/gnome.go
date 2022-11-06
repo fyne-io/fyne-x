@@ -425,10 +425,25 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 
 // calculateVariant calculates the variant of the theme using the background color.
 func (gnome *GnomeTheme) calculateVariant() {
+
+	// fetch org.gnome.desktop.interface color-scheme 'prefer-dark' or 'prefer-light' from gsettings
+	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "color-scheme")
+	out, err := cmd.CombinedOutput()
+	gnome.variant = new(fyne.ThemeVariant)
+	if err == nil {
+		if strings.Contains(string(out), "prefer-dark") {
+			*gnome.variant = ft.VariantDark
+			return
+		}
+		if strings.Contains(string(out), "prefer-light") {
+			*gnome.variant = ft.VariantLight
+			return
+		}
+	}
+
 	r, g, b, _ := gnome.Color(ft.ColorNameBackground, 0).RGBA()
 
 	brightness := (r/255*299 + g/255*587 + b/255*114) / 1000
-	gnome.variant = new(fyne.ThemeVariant)
 	if brightness > 125 {
 		*gnome.variant = ft.VariantLight
 	} else {
