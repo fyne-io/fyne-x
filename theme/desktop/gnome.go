@@ -168,12 +168,21 @@ type GnomeTheme struct {
 	fontSize        float32
 	variant         *fyne.ThemeVariant
 	iconCache       map[string]fyne.Resource
+
+	versionNumber int
+	themeName     string
 }
 
 // Color returns the color for the given color name
 //
 // Implements: fyne.Theme
 func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
+
+	// Sepcial case for Adwaita on Gnome ><42 -> theme is light or dark, variant correct
+	if gnome.version() >= 42 && gnome.themeName == "Adwaita" {
+		return ft.DefaultTheme().Color(name, *gnome.variant)
+	}
+
 	if col, ok := gnome.colors[name]; ok {
 		return col
 	}
@@ -434,14 +443,11 @@ func (gnome *GnomeTheme) calculateVariant() {
 		w := strings.TrimSpace(string(out))
 		w = strings.Trim(w, "'")
 		switch w {
+		case "prefer-light", "default":
+			*gnome.variant = ft.VariantLight
+			return
 		case "prefer-dark":
 			*gnome.variant = ft.VariantDark
-			return
-		case "prefer-light":
-			*gnome.variant = ft.VariantLight
-			return
-		case "default":
-			*gnome.variant = ft.VariantLight
 			return
 		}
 	}
@@ -462,6 +468,12 @@ func (gnome *GnomeTheme) calculateVariant() {
 // findThemeInformation decodes the theme from the gsettings and Gtk API.
 func (gnome *GnomeTheme) findThemeInformation(gtkVersion int, variant fyne.ThemeVariant) {
 	// make things faster in concurrent mode
+
+	themename := gnome.getThemeName()
+	if themename == "" {
+		return
+	}
+	gnome.themeName = themename
 	wg := sync.WaitGroup{}
 	wg.Add(4)
 	go gnome.applyColors(gtkVersion, &wg)
@@ -471,31 +483,41 @@ func (gnome *GnomeTheme) findThemeInformation(gtkVersion int, variant fyne.Theme
 	wg.Wait()
 }
 
-// getGTKVersion gets the available GTK version for the given theme. If the version cannot be
-// determine, it will return 3 wich is the most common used version.
-func (gnome *GnomeTheme) getGTKVersion() (version int) {
+func (gnome *GnomeTheme) version() int {
 
-	defer func() {
-		log.Println("Detected version", version)
-	}()
-	version = 3
+	if gnome.versionNumber != 0 {
+		return gnome.versionNumber
+	}
 
-	// get the gnome version
 	cmd := exec.Command("gnome-shell", "--version")
 	out, err := cmd.CombinedOutput()
+	version := 40
 	if err == nil {
 		w := strings.TrimSpace(string(out))
 		w = strings.Trim(w, "'")
 		w = strings.ToLower(w)
-		if strings.Contains(w, "gnome shell 42") {
-			version = 4
+		versionNumberParts := strings.Split(w, " ")
+		if len(versionNumberParts) > 1 {
+			versionNumber := versionNumberParts[len(versionNumberParts)-1]
+			releaseParts := strings.Split(versionNumber, ".")
+			version, err = strconv.Atoi(releaseParts[0])
+			if err != nil {
+				version = 40 // fallback
+			}
 		}
+	} else {
+		log.Println("gnome-shell version not found, fallback to 40", err)
+		version = 40 // fallback
 	}
+	gnome.versionNumber = version // int will truncate the float
+	return gnome.version()
+}
 
-	themename := gnome.getThemeName()
-	if themename == "" {
-		return
-	}
+// getGTKVersion gets the available GTK version for the given theme. If the version cannot be
+// determine, it will return 3 wich is the most common used version.
+func (gnome *GnomeTheme) getGTKVersion() (version int) {
+
+	version = 3
 
 	// ok so now, find if the theme is gtk4, either fallback to gtk3
 	home, err := os.UserHomeDir()
@@ -512,7 +534,7 @@ func (gnome *GnomeTheme) getGTKVersion() (version int) {
 	}
 
 	for _, path := range possiblePaths {
-		path = filepath.Join(path, themename)
+		path = filepath.Join(path, gnome.themeName)
 		if _, err := os.Stat(path); err == nil {
 			// now check if it is gtk4 compatible
 			if _, err := os.Stat(path + "gtk-4.0/gtk.css"); err == nil {
@@ -652,6 +674,8 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 	}
 	gnome.findThemeInformation(gtkVersion, ft.VariantDark)
 
+	interfaceName := "org.freedesktop.portal.Settings"
+
 	for _, flag := range flags {
 		switch flag {
 		case GnomeFlagAutoReload:
@@ -669,14 +693,14 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 				}
 				if err := conn.AddMatchSignal(
 					dbus.WithMatchObjectPath("/org/freedesktop/portal/desktop"),
-					dbus.WithMatchInterface("org.freedesktop.portal.Settings"),
+					dbus.WithMatchInterface(interfaceName),
 					dbus.WithMatchMember("SettingChanged"),
 				); err != nil {
 					log.Println(err)
 					return
 				}
 				defer conn.Close()
-				dbusChan := make(chan *dbus.Signal, 5)
+				dbusChan := make(chan *dbus.Signal, 10)
 				conn.Signal(dbusChan)
 
 				for {
@@ -690,8 +714,8 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 						// reload the theme if the changed setting is the Gtk theme
 						for _, v := range sig.Body {
 							switch v {
-							case "gtk-theme", "icon-theme", "text-scaling-factor", "font-name":
-								go fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
+							case "gtk-theme", "icon-theme", "text-scaling-factor", "font-name", "color-scheme":
+								fyne.CurrentApp().Settings().SetTheme(NewGnomeTheme(gtkVersion, flags...))
 								return
 							}
 						}
