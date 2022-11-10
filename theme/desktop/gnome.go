@@ -179,7 +179,7 @@ type GnomeTheme struct {
 func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 
 	// Sepcial case for Adwaita on Gnome ><42 -> theme is light or dark, variant correct
-	if gnome.version() >= 42 && gnome.themeName == "Adwaita" {
+	if gnome.version() >= 42 && strings.HasPrefix(gnome.themeName, "Adwaita") {
 		return ft.DefaultTheme().Color(name, *gnome.variant)
 	}
 
@@ -507,7 +507,6 @@ func (gnome *GnomeTheme) version() int {
 		}
 	} else {
 		log.Println("gnome-shell version not found, fallback to 40", err)
-		version = 40 // fallback
 	}
 	gnome.versionNumber = version // int will truncate the float
 	return gnome.version()
@@ -598,6 +597,7 @@ func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 	if filename, ok := gnome.icons[name]; ok {
 		content, err := ioutil.ReadFile(filename)
 		if err != nil {
+			log.Println("Error while loading icon", err)
 			return
 		}
 		if strings.HasSuffix(filename, ".svg") {
