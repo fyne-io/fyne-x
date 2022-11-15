@@ -237,7 +237,7 @@ func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 	case ft.SizeNameText:
 		return g.fontScaleFactor * g.fontSize
 	}
-	return ft.DefaultTheme().Size(s)
+	return ft.DefaultTheme().Size(s) * g.fontScaleFactor
 }
 
 // applyColors sets the colors for the Gnome theme. Colors are defined by a GJS script.
