@@ -121,7 +121,7 @@ print(JSON.stringify(colors));
 const gjsIconsScript = `
 let gtkVersion = Number(ARGV[0] || 4);
 imports.gi.versions.Gtk = gtkVersion + ".0";
-const iconSize = 32; // can be 8, 16, 24, 32, 48, 64, 96
+const iconSize = 96; // can be 8, 16, 24, 32, 48, 64, 96
 
 const { Gtk, Gdk } = imports.gi;
 if (gtkVersion === 3) {
@@ -605,7 +605,7 @@ func (gnome *GnomeTheme) loadIcon(name string) (resource fyne.Resource) {
 			buff := bytes.NewBuffer(content)
 			_, err := oksvg.ReadIconStream(buff)
 			if err != nil {
-				// try to convert it to png with imageMagik
+				// try to convert it to png with a converter
 				log.Println("Cannot load file", filename, err, ", try to convert with tools")
 				resource, err = convertSVGtoPNG(filename)
 				if err != nil {
