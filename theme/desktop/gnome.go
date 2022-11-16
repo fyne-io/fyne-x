@@ -163,11 +163,11 @@ type GnomeTheme struct {
 	colors map[fyne.ThemeColorName]color.Color
 	icons  map[string]string
 
-	fontScaleFactor float32
-	font            fyne.Resource
-	fontSize        float32
-	variant         *fyne.ThemeVariant
-	iconCache       map[string]fyne.Resource
+	scaleFactor float32
+	font        fyne.Resource
+	fontSize    float32
+	variant     *fyne.ThemeVariant
+	iconCache   map[string]fyne.Resource
 
 	versionNumber int
 	themeName     string
@@ -235,9 +235,9 @@ func (gnome *GnomeTheme) Invert() {
 func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 	switch s {
 	case ft.SizeNameText:
-		return g.fontScaleFactor * g.fontSize
+		return g.scaleFactor * g.fontSize
 	}
-	return ft.DefaultTheme().Size(s) * g.fontScaleFactor
+	return ft.DefaultTheme().Size(s) * g.scaleFactor
 }
 
 // applyColors sets the colors for the Gnome theme. Colors are defined by a GJS script.
@@ -341,7 +341,7 @@ func (gnome *GnomeTheme) applyFontScale(wg *sync.WaitGroup) {
 		defer wg.Done()
 	}
 	// for any error below, we will use the default
-	gnome.fontScaleFactor = 1
+	gnome.scaleFactor = 1
 
 	// call gsettings get org.gnome.desktop.interface text-scaling-factor
 	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "text-scaling-factor")
@@ -352,13 +352,13 @@ func (gnome *GnomeTheme) applyFontScale(wg *sync.WaitGroup) {
 
 	// get the text scaling factor
 	ts := strings.TrimSpace(string(out))
-	textScale, err := strconv.ParseFloat(ts, 32)
+	scaleValue, err := strconv.ParseFloat(ts, 32)
 	if err != nil {
 		return
 	}
 
 	// return the text scaling factor
-	gnome.fontScaleFactor = float32(textScale)
+	gnome.scaleFactor = float32(scaleValue)
 }
 
 // applyIcons gets the icon theme from gsettings and call GJS script to get the icon set.
