@@ -1,6 +1,13 @@
 package desktop
 
-import "fyne.io/fyne/v2/app"
+import (
+	"testing"
+
+	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/test"
+	"fyne.io/fyne/v2/widget"
+)
 
 func ExampleNewGnomeTheme() {
 	app := app.New()
@@ -18,4 +25,14 @@ func ExampleNewGnomeTheme_forceGtkVersion() {
 func ExampleNewGnomeTheme_autoReload() {
 	app := app.New()
 	app.Settings().SetTheme(NewGnomeTheme(0, GnomeFlagAutoReload))
+}
+
+// Check if  the GnomeTheme can be loaded.
+func TestGnomeTheme(t *testing.T) {
+	app := test.NewApp()
+	app.Settings().SetTheme(NewGnomeTheme(0))
+	win := app.NewWindow("Test")
+	defer win.Close()
+	win.Resize(fyne.NewSize(200, 200))
+	win.SetContent(widget.NewLabel("Hello"))
 }
