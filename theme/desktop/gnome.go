@@ -331,6 +331,10 @@ func (gnome *GnomeTheme) applyFont(wg *sync.WaitGroup) {
 	fontSize := parts[len(parts)-1]
 	// convert the size to a float
 	size, err := strconv.ParseFloat(fontSize, 32)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	// apply this to the fontScaleFactor
 	gnome.fontSize = float32(size)
 
@@ -649,11 +653,14 @@ func (gnome *GnomeTheme) setFont(fontname string) {
 // the theme will try to determine the higher Gtk version available for the current GtkTheme.
 func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 	gnome := &GnomeTheme{
-		fontSize:  theme.DefaultTheme().Size(theme.SizeNameText),
-		iconCache: map[string]fyne.Resource{},
-		icons:     map[string]string{},
-		colors:    map[fyne.ThemeColorName]color.Color{},
-		variant:   new(fyne.ThemeVariant),
+		fontSize:      theme.DefaultTheme().Size(theme.SizeNameText),
+		iconCache:     map[string]fyne.Resource{},
+		icons:         map[string]string{},
+		colors:        map[fyne.ThemeColorName]color.Color{},
+		variant:       new(fyne.ThemeVariant),
+		font:          theme.DefaultTextFont(),
+		scaleFactor:   1.0,
+		versionNumber: 40,
 	}
 
 	*gnome.variant = theme.VariantDark
