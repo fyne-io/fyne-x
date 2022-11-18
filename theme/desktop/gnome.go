@@ -15,7 +15,7 @@ import (
 	"sync"
 
 	"fyne.io/fyne/v2"
-	ft "fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/theme"
 	"github.com/godbus/dbus/v5"
 	"github.com/srwiley/oksvg"
 )
@@ -30,59 +30,59 @@ const (
 
 // mapping to gnome/gtk icon names.
 var gnomeIconMap = map[fyne.ThemeIconName]string{
-	ft.IconNameInfo:     "dialog-information",
-	ft.IconNameError:    "dialog-error",
-	ft.IconNameQuestion: "dialog-question",
+	theme.IconNameInfo:     "dialog-information",
+	theme.IconNameError:    "dialog-error",
+	theme.IconNameQuestion: "dialog-question",
 
-	ft.IconNameFolder:     "folder",
-	ft.IconNameFolderNew:  "folder-new",
-	ft.IconNameFolderOpen: "folder-open",
-	ft.IconNameHome:       "go-home",
-	ft.IconNameDownload:   "download",
+	theme.IconNameFolder:     "folder",
+	theme.IconNameFolderNew:  "folder-new",
+	theme.IconNameFolderOpen: "folder-open",
+	theme.IconNameHome:       "go-home",
+	theme.IconNameDownload:   "download",
 
-	ft.IconNameDocument:        "document",
-	ft.IconNameFileImage:       "image",
-	ft.IconNameFileApplication: "binary",
-	ft.IconNameFileText:        "text",
-	ft.IconNameFileVideo:       "video",
-	ft.IconNameFileAudio:       "audio",
-	ft.IconNameComputer:        "computer",
-	ft.IconNameMediaPhoto:      "photo",
-	ft.IconNameMediaVideo:      "video",
-	ft.IconNameMediaMusic:      "music",
+	theme.IconNameDocument:        "document",
+	theme.IconNameFileImage:       "image",
+	theme.IconNameFileApplication: "binary",
+	theme.IconNameFileText:        "text",
+	theme.IconNameFileVideo:       "video",
+	theme.IconNameFileAudio:       "audio",
+	theme.IconNameComputer:        "computer",
+	theme.IconNameMediaPhoto:      "photo",
+	theme.IconNameMediaVideo:      "video",
+	theme.IconNameMediaMusic:      "music",
 
-	ft.IconNameConfirm: "dialog-apply",
-	ft.IconNameCancel:  "cancel",
+	theme.IconNameConfirm: "dialog-apply",
+	theme.IconNameCancel:  "cancel",
 
-	ft.IconNameCheckButton:        "checkbox-symbolic",
-	ft.IconNameCheckButtonChecked: "checkbox-checked-symbolic",
-	ft.IconNameRadioButton:        "radio-symbolic",
-	ft.IconNameRadioButtonChecked: "radio-checked-symbolic",
+	theme.IconNameCheckButton:        "checkbox-symbolic",
+	theme.IconNameCheckButtonChecked: "checkbox-checked-symbolic",
+	theme.IconNameRadioButton:        "radio-symbolic",
+	theme.IconNameRadioButtonChecked: "radio-checked-symbolic",
 
-	ft.IconNameArrowDropDown:   "arrow-down",
-	ft.IconNameArrowDropUp:     "arrow-up",
-	ft.IconNameNavigateNext:    "go-right",
-	ft.IconNameNavigateBack:    "go-left",
-	ft.IconNameMoveDown:        "go-down",
-	ft.IconNameMoveUp:          "go-up",
-	ft.IconNameSettings:        "document-properties",
-	ft.IconNameHistory:         "history-view",
-	ft.IconNameList:            "view-list",
-	ft.IconNameGrid:            "view-grid",
-	ft.IconNameColorPalette:    "color-select",
-	ft.IconNameColorChromatic:  "color-select",
-	ft.IconNameColorAchromatic: "color-picker-grey",
+	theme.IconNameArrowDropDown:   "arrow-down",
+	theme.IconNameArrowDropUp:     "arrow-up",
+	theme.IconNameNavigateNext:    "go-right",
+	theme.IconNameNavigateBack:    "go-left",
+	theme.IconNameMoveDown:        "go-down",
+	theme.IconNameMoveUp:          "go-up",
+	theme.IconNameSettings:        "document-properties",
+	theme.IconNameHistory:         "history-view",
+	theme.IconNameList:            "view-list",
+	theme.IconNameGrid:            "view-grid",
+	theme.IconNameColorPalette:    "color-select",
+	theme.IconNameColorChromatic:  "color-select",
+	theme.IconNameColorAchromatic: "color-picker-grey",
 }
 
 // Map Fyne colorname to Adwaita/GTK color names
 // See https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html
 var gnomeColorMap = map[fyne.ThemeColorName]string{
-	ft.ColorNameBackground:      "theme_bg_color,window_bg_color",
-	ft.ColorNameForeground:      "theme_text_color,view_fg_color",
-	ft.ColorNameButton:          "theme_base_color,view_bg_color",
-	ft.ColorNameInputBackground: "theme_base_color,view_bg_color",
-	ft.ColorNamePrimary:         "accent_color,success_color",
-	ft.ColorNameError:           "error_color",
+	theme.ColorNameBackground:      "theme_bg_color,window_bg_color",
+	theme.ColorNameForeground:      "theme_text_color,view_fg_color",
+	theme.ColorNameButton:          "theme_base_color,view_bg_color",
+	theme.ColorNameInputBackground: "theme_base_color,view_bg_color",
+	theme.ColorNamePrimary:         "accent_color,success_color",
+	theme.ColorNameError:           "error_color",
 }
 
 // Script to get the colors from the Gnome GTK/Adwaita theme.
@@ -180,7 +180,7 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVaria
 
 	// Sepcial case for Adwaita on Gnome ><42 -> theme is light or dark, variant correct
 	if gnome.version() >= 42 && strings.HasPrefix(gnome.themeName, "Adwaita") {
-		return ft.DefaultTheme().Color(name, *gnome.variant)
+		return theme.DefaultTheme().Color(name, *gnome.variant)
 	}
 
 	if col, ok := gnome.colors[name]; ok {
@@ -188,10 +188,10 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVaria
 	}
 
 	if gnome.variant == nil {
-		return ft.DefaultTheme().Color(name, *gnome.variant)
+		return theme.DefaultTheme().Color(name, *gnome.variant)
 	}
 
-	return ft.DefaultTheme().Color(name, variant)
+	return theme.DefaultTheme().Color(name, variant)
 }
 
 // Font returns the font for the given name.
@@ -199,7 +199,7 @@ func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVaria
 // Implements: fyne.Theme
 func (gnome *GnomeTheme) Font(s fyne.TextStyle) fyne.Resource {
 	if gnome.font == nil {
-		return ft.DefaultTheme().Font(s)
+		return theme.DefaultTheme().Font(s)
 	}
 	return gnome.font
 }
@@ -213,19 +213,19 @@ func (gnome *GnomeTheme) Icon(i fyne.ThemeIconName) fyne.Resource {
 			return resource
 		}
 	}
-	return ft.DefaultTheme().Icon(i)
+	return theme.DefaultTheme().Icon(i)
 }
 
 // Invert is a specific Gnome/GTK option to invert the theme color for background of window and some input
 // widget. This to help to imitate some GTK application with "views" inside the window.
 func (gnome *GnomeTheme) Invert() {
 
-	gnome.colors[ft.ColorNameBackground],
-		gnome.colors[ft.ColorNameInputBackground],
-		gnome.colors[ft.ColorNameButton] =
-		gnome.colors[ft.ColorNameButton],
-		gnome.colors[ft.ColorNameBackground],
-		gnome.colors[ft.ColorNameBackground]
+	gnome.colors[theme.ColorNameBackground],
+		gnome.colors[theme.ColorNameInputBackground],
+		gnome.colors[theme.ColorNameButton] =
+		gnome.colors[theme.ColorNameButton],
+		gnome.colors[theme.ColorNameBackground],
+		gnome.colors[theme.ColorNameBackground]
 }
 
 // Size returns the size for the given name. It will scale the detected Gnome font size
@@ -234,15 +234,16 @@ func (gnome *GnomeTheme) Invert() {
 // Implements: fyne.Theme
 func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 	switch s {
-	case ft.SizeNameText:
+	case theme.SizeNameText:
 		return g.scaleFactor * g.fontSize
 	}
-	return ft.DefaultTheme().Size(s) * g.scaleFactor
+	return theme.DefaultTheme().Size(s) * g.scaleFactor
 }
 
 // applyColors sets the colors for the Gnome theme. Colors are defined by a GJS script.
 func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 
+	defer gnome.calculateVariant()
 	if wg != nil {
 		defer wg.Done()
 	}
@@ -299,8 +300,6 @@ func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 		gnome.colors[name] = gnome.parseColor(rgba)
 	}
 
-	gnome.calculateVariant()
-
 }
 
 // applyFont gets the font name from gsettings and set the font size. This also calls
@@ -311,7 +310,7 @@ func (gnome *GnomeTheme) applyFont(wg *sync.WaitGroup) {
 		defer wg.Done()
 	}
 
-	gnome.font = ft.TextFont()
+	gnome.font = theme.TextFont()
 	// call gsettings get org.gnome.desktop.interface font-name
 	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "font-name")
 	out, err := cmd.CombinedOutput()
@@ -438,16 +437,15 @@ func (gnome *GnomeTheme) calculateVariant() {
 	// fetch org.gnome.desktop.interface color-scheme 'prefer-dark' or 'prefer-light' from gsettings
 	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "color-scheme")
 	out, err := cmd.CombinedOutput()
-	gnome.variant = new(fyne.ThemeVariant)
 	if err == nil {
 		w := strings.TrimSpace(string(out))
 		w = strings.Trim(w, "'")
 		switch w {
 		case "prefer-light", "default":
-			*gnome.variant = ft.VariantLight
+			*gnome.variant = theme.VariantLight
 			return
 		case "prefer-dark":
-			*gnome.variant = ft.VariantDark
+			*gnome.variant = theme.VariantDark
 			return
 		}
 	}
@@ -455,13 +453,13 @@ func (gnome *GnomeTheme) calculateVariant() {
 	// Here, we will try to calculate the variant from the background color
 	// This is not perfect, but it works in most cases.
 	// For Gnome < 42
-	r, g, b, _ := gnome.Color(ft.ColorNameBackground, 0).RGBA()
+	r, g, b, _ := gnome.Color(theme.ColorNameBackground, 0).RGBA()
 
 	brightness := (r/255*299 + g/255*587 + b/255*114) / 1000
 	if brightness > 125 {
-		*gnome.variant = ft.VariantLight
+		*gnome.variant = theme.VariantLight
 	} else {
-		*gnome.variant = ft.VariantDark
+		*gnome.variant = theme.VariantDark
 	}
 }
 
@@ -662,17 +660,20 @@ func (gnome *GnomeTheme) setFont(fontname string) {
 // the theme will try to determine the higher Gtk version available for the current GtkTheme.
 func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 	gnome := &GnomeTheme{
-		fontSize:  ft.DefaultTheme().Size(ft.SizeNameText),
+		fontSize:  theme.DefaultTheme().Size(theme.SizeNameText),
 		iconCache: map[string]fyne.Resource{},
 		icons:     map[string]string{},
 		colors:    map[fyne.ThemeColorName]color.Color{},
+		variant:   new(fyne.ThemeVariant),
 	}
+
+	*gnome.variant = theme.VariantDark
 
 	if gtkVersion <= 0 {
 		// detect gtkVersion
 		gtkVersion = gnome.getGTKVersion()
 	}
-	gnome.findThemeInformation(gtkVersion, ft.VariantDark)
+	gnome.findThemeInformation(gtkVersion, theme.VariantDark)
 
 	interfaceName := "org.freedesktop.portal.Settings"
 
