@@ -1,3 +1,6 @@
+//go:build linux
+// +build linux
+
 package desktop
 
 import (
@@ -39,7 +42,7 @@ func convertSVGtoPNG(filename string) (fyne.Resource, error) {
 	}
 
 	if commandName == "" {
-		return nil, errors.New("You must install inkscape or imageMagik (convert command) to be able to convert SVG icons to PNG.")
+		return nil, errors.New("you must install inkscape or imageMagik (convert command) to be able to convert SVG icons to PNG")
 	}
 
 	// convert the svg to png, no background

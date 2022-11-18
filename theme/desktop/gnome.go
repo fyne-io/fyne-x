@@ -1,3 +1,6 @@
+//go:build linux
+// +build linux
+
 package desktop
 
 import (
@@ -20,6 +23,7 @@ import (
 	"github.com/srwiley/oksvg"
 )
 
+// GnomeFlag provides options for the Gnome theme. See GnomeFlagAutoReload (the only one at this time).
 type GnomeFlag uint8
 
 const (
@@ -232,12 +236,12 @@ func (gnome *GnomeTheme) Invert() {
 // by the Gnome font factor.
 //
 // Implements: fyne.Theme
-func (g *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
+func (gnome *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 	switch s {
 	case theme.SizeNameText:
-		return g.scaleFactor * g.fontSize
+		return gnome.scaleFactor * gnome.fontSize
 	}
-	return theme.DefaultTheme().Size(s) * g.scaleFactor
+	return theme.DefaultTheme().Size(s) * gnome.scaleFactor
 }
 
 // applyColors sets the colors for the Gnome theme. Colors are defined by a GJS script.
