@@ -16,7 +16,7 @@ import (
 func setup() (tmp, home string) {
 	// create a false home directory
 	var err error
-	tmp, err = os.MkdirTemp("", "fyne-test-")
+	tmp, err = ioutil.TempDir("", "fyne-test-")
 	if err != nil {
 		panic(err)
 	}
