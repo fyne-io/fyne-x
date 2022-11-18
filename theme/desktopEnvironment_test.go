@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -23,8 +24,11 @@ func setup() (tmp, home string) {
 	os.Setenv("HOME", tmp)
 
 	// creat a false KDE configuration
-	os.MkdirAll(tmp+"/.config", 0755)
-	os.WriteFile(tmp+"/.config/kdeglobals", []byte("[General]\nwidgetStyle=GTK"), 0644)
+	if err = os.MkdirAll(tmp+"/.config", 0755); err != nil {
+		panic(err)
+	}
+	content := []byte("[General]\nwidgetStyle=GTK")
+	ioutil.WriteFile(tmp+"/.config/kdeglobals", content, 0644)
 
 	return
 }
