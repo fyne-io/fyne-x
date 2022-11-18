@@ -3,7 +3,10 @@
 
 package theme
 
-import fynetheme "fyne.io/x/fyne/v2/theme"
+import (
+	"fyne.io/fyne/v2"
+	fynetheme "fyne.io/fyne/v2/theme"
+)
 
 func FromDesktopEnvironment() fyne.Theme {
 	return fynetheme.DefaultTheme()
