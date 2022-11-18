@@ -552,21 +552,6 @@ func (gnome *GnomeTheme) getGTKVersion() (version int) {
 	return // default, but that may be a false positive now
 }
 
-// getIconThemeName return the current icon theme name.
-func (gnome *GnomeTheme) getIconThemeName() string {
-	// call gsettings get org.gnome.desktop.interface icon-theme
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "icon-theme")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		log.Println(err)
-		log.Println(string(out))
-		return ""
-	}
-	themename := strings.TrimSpace(string(out))
-	themename = strings.Trim(themename, "'")
-	return themename
-}
-
 // getThemeName gets the current theme name.
 func (gnome *GnomeTheme) getThemeName() string {
 	// call gsettings get org.gnome.desktop.interface gtk-theme
