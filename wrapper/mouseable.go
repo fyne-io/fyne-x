@@ -1,4 +1,4 @@
-package utils
+package wrapper
 
 import (
 	"fyne.io/fyne/v2"
