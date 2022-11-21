@@ -22,11 +22,11 @@ func main() {
 	label3 := widget.NewLabel("Label 3, move mouse over me")
 	positionLabel := widget.NewLabel("Informations will be displayed here")
 
-	wrapped := wrapper.SetTappable(label2, func(e *fyne.PointEvent) {
+	wrapped := wrapper.MakeTappable(label2, func(e *fyne.PointEvent) {
 		dialog.ShowInformation("Tapped", "Label 1 was tapped", win)
 	})
 
-	mousable := wrapper.SetHoverable(label3,
+	mousable := wrapper.MakeHoverable(label3,
 		func(e *desktop.MouseEvent) {
 			positionLabel.SetText("Mouse in")
 		}, func(e *desktop.MouseEvent) {
