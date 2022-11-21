@@ -47,8 +47,8 @@ func (t *tappableObject) Tapped(e *fyne.PointEvent) {
 	t.onTapped(e)
 }
 
-// SetTappable set the object to be tappable.
-func SetTappable(object fyne.CanvasObject, ontapped func(*fyne.PointEvent)) fyne.CanvasObject {
+// MakeTappable set the object to be tappable.
+func MakeTappable(object fyne.CanvasObject, ontapped func(*fyne.PointEvent)) fyne.CanvasObject {
 	tappable := &tappableObject{object: object, onTapped: ontapped}
 	tappable.ExtendBaseWidget(tappable)
 	return tappable

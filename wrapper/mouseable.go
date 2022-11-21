@@ -81,8 +81,8 @@ func (m *mouseableObject) MouseOut() {
 	m.mouseOut()
 }
 
-// SetHoverable sets the object to be hoverable.
-func SetHoverable(object fyne.CanvasObject, mouseIn, mouseMoved func(*desktop.MouseEvent), mouseout func()) fyne.CanvasObject {
+// Make sets the object to be hoverable.
+func MakeHoverable(object fyne.CanvasObject, mouseIn, mouseMoved func(*desktop.MouseEvent), mouseout func()) fyne.CanvasObject {
 	m := &mouseableObject{
 		object:     object,
 		mouseIn:    mouseIn,

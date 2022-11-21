@@ -21,7 +21,7 @@ func TestMouseable(t *testing.T) {
 	pos := fyne.NewPos(0, 0)
 	in := false
 	out := false
-	mouseable := SetHoverable(label, func(e *desktop.MouseEvent) {
+	mouseable := MakeHoverable(label, func(e *desktop.MouseEvent) {
 		in = true
 	}, func(e *desktop.MouseEvent) {
 		pos = e.Position

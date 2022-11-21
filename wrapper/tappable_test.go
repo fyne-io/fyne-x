@@ -19,7 +19,7 @@ func TestTappable(t *testing.T) {
 	label2 := widget.NewLabel("Label 2, click me")
 
 	tapped := false
-	wrapped := SetTappable(label2, func(e *fyne.PointEvent) {
+	wrapped := MakeTappable(label2, func(e *fyne.PointEvent) {
 		tapped = true
 	})
 
