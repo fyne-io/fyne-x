@@ -24,7 +24,7 @@ func FromDesktopEnvironment() fyne.Theme {
 
 	switch wm {
 	case "gnome", "xfce", "unity", "gnome-shell", "gnome-classic", "mate", "gnome-mate":
-		return desktop.NewGnomeTheme(-1, desktop.GnomeFlagAutoReload)
+		return desktop.NewGnomeTheme(-1)
 	case "kde", "kde-plasma", "plasma":
 		return desktop.NewKDETheme()
 
