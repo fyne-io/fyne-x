@@ -27,7 +27,7 @@ func ExampleNewGnomeTheme_forceGtkVersion() {
 // connecting to DBus signal.
 func ExampleNewGnomeTheme_autoReload() {
 	app := app.New()
-	app.Settings().SetTheme(NewGnomeTheme(0, GnomeFlagAutoReload))
+	app.Settings().SetTheme(NewGnomeTheme(0))
 }
 
 // Check if  the GnomeTheme can be loaded.
