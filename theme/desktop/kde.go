@@ -163,7 +163,7 @@ func (k *KDETheme) setFont() {
 		return
 	}
 	// the fontline is in the form "fontline,size,...", so we can split it
-	fontline := strings.Split(k.fontConfig, ",")
+	fontline := strings.SplitN(k.fontConfig, ",", 2)
 	name := fontline[0]
 	size, _ := strconv.ParseFloat(fontline[1], 32)
 	k.fontSize = float32(size)
