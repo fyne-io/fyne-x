@@ -162,8 +162,7 @@ type GnomeTheme struct {
 	fontSize    float32
 	iconCache   map[string]fyne.Resource
 
-	versionNumber int
-	themeName     string
+	themeName string
 }
 
 // Color returns the color for the given color name
