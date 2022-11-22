@@ -170,7 +170,6 @@ type GnomeTheme struct {
 	scaleFactor float32
 	font        fyne.Resource
 	fontSize    float32
-	variant     *fyne.ThemeVariant
 	iconCache   map[string]fyne.Resource
 
 	versionNumber int
@@ -182,17 +181,8 @@ type GnomeTheme struct {
 // Implements: fyne.Theme
 func (gnome *GnomeTheme) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 
-	// Sepcial case for Adwaita on Gnome ><42 -> theme is light or dark, variant correct
-	if gnome.version() >= 42 && strings.HasPrefix(gnome.themeName, "Adwaita") {
-		return theme.DefaultTheme().Color(name, *gnome.variant)
-	}
-
 	if col, ok := gnome.colors[name]; ok {
 		return col
-	}
-
-	if gnome.variant == nil {
-		return theme.DefaultTheme().Color(name, *gnome.variant)
 	}
 
 	return theme.DefaultTheme().Color(name, variant)
@@ -247,7 +237,6 @@ func (gnome *GnomeTheme) Size(s fyne.ThemeSizeName) float32 {
 // applyColors sets the colors for the Gnome theme. Colors are defined by a GJS script.
 func (gnome *GnomeTheme) applyColors(gtkVersion int, wg *sync.WaitGroup) {
 
-	defer gnome.calculateVariant()
 	if wg != nil {
 		defer wg.Done()
 	}
@@ -439,38 +428,6 @@ func (gnome *GnomeTheme) applyIcons(gtkVersion int, wg *sync.WaitGroup) {
 	}
 }
 
-// calculateVariant calculates the variant of the theme using the background color.
-func (gnome *GnomeTheme) calculateVariant() {
-
-	// fetch org.gnome.desktop.interface color-scheme 'prefer-dark' or 'prefer-light' from gsettings
-	cmd := exec.Command("gsettings", "get", "org.gnome.desktop.interface", "color-scheme")
-	out, err := cmd.CombinedOutput()
-	if err == nil {
-		w := strings.TrimSpace(string(out))
-		w = strings.Trim(w, "'")
-		switch w {
-		case "prefer-light", "default":
-			*gnome.variant = theme.VariantLight
-			return
-		case "prefer-dark":
-			*gnome.variant = theme.VariantDark
-			return
-		}
-	}
-
-	// Here, we will try to calculate the variant from the background color
-	// This is not perfect, but it works in most cases.
-	// For Gnome < 42
-	r, g, b, _ := gnome.Color(theme.ColorNameBackground, 0).RGBA()
-
-	brightness := (r/255*299 + g/255*587 + b/255*114) / 1000
-	if brightness > 125 {
-		*gnome.variant = theme.VariantLight
-	} else {
-		*gnome.variant = theme.VariantDark
-	}
-}
-
 // findThemeInformation decodes the theme from the gsettings and Gtk API.
 func (gnome *GnomeTheme) findThemeInformation(gtkVersion int, variant fyne.ThemeVariant) {
 	// make things faster in concurrent mode
@@ -657,13 +614,10 @@ func NewGnomeTheme(gtkVersion int, flags ...GnomeFlag) fyne.Theme {
 		iconCache:     map[string]fyne.Resource{},
 		icons:         map[string]string{},
 		colors:        map[fyne.ThemeColorName]color.Color{},
-		variant:       new(fyne.ThemeVariant),
 		font:          theme.DefaultTextFont(),
 		scaleFactor:   1.0,
 		versionNumber: 40,
 	}
-
-	*gnome.variant = theme.VariantDark
 
 	if gtkVersion <= 0 {
 		// detect gtkVersion
