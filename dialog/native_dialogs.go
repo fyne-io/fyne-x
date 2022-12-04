@@ -20,13 +20,6 @@ const (
 	wm_KDE
 )
 
-type FileSelector struct {
-	Title        string
-	Filters      []string
-	callback     func(fyne.URIReadCloser, error)
-	parentWindow fyne.Window
-}
-
 func detectWM() wm {
 	// detect WM
 	xdgCurrentDesktop := os.Getenv("XDG_CURRENT_DESKTOP")
@@ -40,71 +33,113 @@ func detectWM() wm {
 	}
 }
 
-func NewFileSelector(callback func(fyne.URIReadCloser, error), parent fyne.Window) *FileSelector {
-	return &FileSelector{
-		Title:    "Select a file",
-		callback: callback,
+// FileDialog is a file dialog that uses native file dialogs on Linux.
+type FileDialog struct {
+	*fyneDialog.FileDialog
+	Title        string
+	filter       storage.FileFilter
+	callback     interface{}
+	parentWindow fyne.Window
+	save         bool
+}
+
+// NewFileOpen creates a new file dialog that uses native file dialogs on Linux.
+func NewFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) *FileDialog {
+	return &FileDialog{
+		FileDialog: fyneDialog.NewFileOpen(callback, parent),
+		Title:      "Select a file",
+		callback:   callback,
+		save:       false,
 	}
 }
 
-func ShowFileSelector(callback func(fyne.URIReadCloser, error), parent fyne.Window) {
-	NewFileSelector(callback, parent).Show()
+func NewFileSave(callback func(fyne.URIWriteCloser, error), parent fyne.Window) *FileDialog {
+	return &FileDialog{
+		FileDialog: fyneDialog.NewFileSave(callback, parent),
+		Title:      "Save file",
+		callback:   callback,
+		save:       true,
+	}
 }
 
-func (f *FileSelector) AddFilter(name string, extensions ...string) {
-	f.Filters = append(f.Filters, name)
+// SaveFileDialog is a save file dialog that uses native file dialogs on Linux.
+func ShowFileOpen(callback func(fyne.URIReadCloser, error), parent fyne.Window) {
+	NewFileOpen(callback, parent).Show()
 }
 
-func (f *FileSelector) Show() {
+// SaveFileDialog is a save file dialog that uses native file dialogs on Linux. At this time, it does not support filters.
+func (f *FileDialog) SetFilter(filter storage.FileFilter) {
+	f.FileDialog.SetFilter(filter)
+	f.filter = filter
+}
+
+// Show shows the file dialog.
+func (f *FileDialog) Show() {
 	wm := detectWM()
 	log.Println("WM:", wm)
 	switch wm {
 	case wm_GNOME:
-		// use zenity
-		//command := exec.Command("zenity", "--file-selection", "--title", f.Title)
-		command := exec.Command("zenity", "--file-selection", "--title", f.Title, "--file-filter", "All files | *")
-		out, err := command.Output()
-		if err != nil {
-			f.defaultDialog()
-			return
+		if u, err := f.zenityFileDialog(); err != nil {
+			log.Println("zenity error:", err)
+			f.FileDialog.Show()
+		} else {
+			if !f.save {
+				f.callback.(func(fyne.URIReadCloser, error))(u.(fyne.URIReadCloser), nil)
+			} else {
+				f.callback.(func(fyne.URIWriteCloser, error))(u.(fyne.URIWriteCloser), nil)
+			}
 		}
-		path := string(out)
-		u, err := f.getReadCloser(path)
-		if err != nil {
-			log.Println("Error:", err)
-			return
-		}
-		f.callback(u, nil)
 	case wm_KDE:
-		// use kdialog
-		//command := exec.Command("kdialog", "--getopenfilename", f.Title)
-		command := exec.Command("kdialog", "--getopenfilename", f.Title, "All files | *")
-		out, err := command.Output()
-		if err != nil {
-			f.defaultDialog()
-			return
+		if u, err := f.kdialogFileDialog(); err != nil {
+			log.Println("kdialog error:", err)
+			f.FileDialog.Show()
+		} else {
+			if !f.save {
+				f.callback.(func(fyne.URIReadCloser, error))(u.(fyne.URIReadCloser), nil)
+			} else {
+				f.callback.(func(fyne.URIWriteCloser, error))(u.(fyne.URIWriteCloser), nil)
+			}
 		}
-		path := string(out)
-		u, err := f.getReadCloser(path)
-		if err != nil {
-			log.Println("Error:", err)
-			return
-		}
-		f.callback(u, nil)
-
 	default:
-		// use native dialog
-		f.defaultDialog()
+		f.FileDialog.Show()
 	}
 
 }
 
-func (f *FileSelector) defaultDialog() {
-	d := fyneDialog.NewFileOpen(f.callback, f.parentWindow)
-	d.Show()
-}
-
-func (f *FileSelector) getReadCloser(path string) (fyne.URIReadCloser, error) {
+func (f *FileDialog) getReadCloser(path string) (fyne.URIReadCloser, error) {
 	uri := repository.NewFileURI(strings.TrimSpace(path))
 	return storage.Reader(uri)
+}
+
+func (f *FileDialog) getWriteCloser(path string) (fyne.URIWriteCloser, error) {
+	uri := repository.NewFileURI(strings.TrimSpace(path))
+	return storage.Writer(uri)
+}
+
+func (f *FileDialog) zenityFileDialog() (interface{}, error) {
+	command := exec.Command("zenity", "--file-selection", "--title", f.Title, "--file-filter", "All files | *")
+	out, err := command.Output()
+	if err != nil {
+		return nil, err
+	}
+	path := string(out)
+
+	if f.save {
+		return f.getWriteCloser(path)
+	}
+
+	return f.getReadCloser(path)
+}
+
+func (f *FileDialog) kdialogFileDialog() (interface{}, error) {
+	command := exec.Command("kdialog", "--getopenfilename", f.Title, "All files | *")
+	out, err := command.Output()
+	if err != nil {
+		return nil, err
+	}
+	path := string(out)
+	if f.save {
+		return f.getWriteCloser(path)
+	}
+	return f.getReadCloser(path)
 }

@@ -14,9 +14,9 @@ func main() {
 	w := app.NewWindow("Hello")
 
 	button := widget.NewButton("Click Me", func() {
-		dialog.NewFileSelector(func(file fyne.URIReadCloser, err error) {
+		dialog.NewFileOpen(func(file fyne.URIReadCloser, err error) {
 			log.Println("File selected", file.URI(), err)
-		}, w).Open()
+		}, w).Show()
 
 	})
 
