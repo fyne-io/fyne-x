@@ -22,6 +22,7 @@ type AnimatedGif struct {
 
 	src               *gif.GIF
 	dst               *canvas.Image
+	noDisposeIndex    int
 	remaining         int
 	stopping, running bool
 	runLock           sync.RWMutex
@@ -103,6 +104,41 @@ func (g *AnimatedGif) SetMinSize(min fyne.Size) {
 	g.min = min
 }
 
+func (g *AnimatedGif) draw(dst draw.Image, index int) {
+	defer g.dst.Refresh()
+	if index == 0 {
+		// first frame
+		draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[index], image.Point{}, draw.Src)
+		g.dst.Image = dst
+		g.noDisposeIndex = -1
+		return
+	}
+
+	switch g.src.Disposal[index-1] {
+	case gif.DisposalNone:
+		// Do not dispose old frame, draw new frame over old
+		draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[index], image.Point{}, draw.Over)
+		// will be used in case of disposalPrevious
+		g.noDisposeIndex = index - 1
+	case gif.DisposalBackground:
+		// clear with background then render new frame Over it
+		// replacing entirely with new frame should achieve this?
+		draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[index], image.Point{}, draw.Src)
+	case gif.DisposalPrevious:
+		// restore frame with previous image then render new over it
+		if g.noDisposeIndex >= 0 {
+			draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[g.noDisposeIndex], image.Point{}, draw.Src)
+			draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[index], image.Point{}, draw.Over)
+		} else {
+			// there was no previous graphic, render background instead?
+			draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[index], image.Point{}, draw.Src)
+		}
+	default:
+		// Disposal = Unspecified/Reserved, simply draw new frame over previous
+		draw.Draw(dst, g.dst.Image.Bounds(), g.src.Image[index], image.Point{}, draw.Over)
+	}
+}
+
 // Start begins the animation. The speed of the transition is controlled by the loaded gif file.
 func (g *AnimatedGif) Start() {
 	if g.isRunning() {
@@ -113,9 +149,7 @@ func (g *AnimatedGif) Start() {
 	g.runLock.Unlock()
 
 	buffer := image.NewNRGBA(g.dst.Image.Bounds())
-	draw.Draw(buffer, g.dst.Image.Bounds(), g.src.Image[0], image.Point{}, draw.Src)
-	g.dst.Image = buffer
-	g.dst.Refresh()
+	g.draw(buffer, 0)
 
 	go func() {
 		switch g.src.LoopCount {
@@ -128,12 +162,11 @@ func (g *AnimatedGif) Start() {
 		}
 
 		for g.remaining != 0 {
-			for c, srcImg := range g.src.Image {
+			for c := range g.src.Image {
 				if g.isStopping() {
 					break
 				}
-				draw.Draw(buffer, g.dst.Image.Bounds(), srcImg, image.Point{}, draw.Src)
-				g.dst.Refresh()
+				g.draw(buffer, c)
 
 				time.Sleep(time.Millisecond * time.Duration(g.src.Delay[c]) * 10)
 			}
