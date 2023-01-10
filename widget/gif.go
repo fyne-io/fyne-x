@@ -113,7 +113,7 @@ func (g *AnimatedGif) Start() {
 	g.runLock.Unlock()
 
 	buffer := image.NewNRGBA(g.dst.Image.Bounds())
-	draw.Draw(buffer, g.dst.Image.Bounds(), g.src.Image[0], image.Point{}, draw.Over)
+	draw.Draw(buffer, g.dst.Image.Bounds(), g.src.Image[0], image.Point{}, draw.Src)
 	g.dst.Image = buffer
 	g.dst.Refresh()
 
@@ -132,7 +132,7 @@ func (g *AnimatedGif) Start() {
 				if g.isStopping() {
 					break
 				}
-				draw.Draw(buffer, g.dst.Image.Bounds(), srcImg, image.Point{}, draw.Over)
+				draw.Draw(buffer, g.dst.Image.Bounds(), srcImg, image.Point{}, draw.Src)
 				g.dst.Refresh()
 
 				time.Sleep(time.Millisecond * time.Duration(g.src.Delay[c]) * 10)
