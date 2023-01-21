@@ -160,11 +160,11 @@ func (g *AnimatedGif) Start() {
 		default:
 			g.remaining = g.src.LoopCount + 1
 		}
-
+	loop:
 		for g.remaining != 0 {
 			for c := range g.src.Image {
 				if g.isStopping() {
-					break
+					break loop
 				}
 				g.draw(buffer, c)
 
@@ -174,13 +174,18 @@ func (g *AnimatedGif) Start() {
 				g.remaining--
 			}
 		}
-
+		g.runLock.Lock()
 		g.running = false
+		g.stopping = false
+		g.runLock.Unlock()
 	}()
 }
 
 // Stop will request that the animation stops running, the last frame will remain visible
 func (g *AnimatedGif) Stop() {
+	if !g.isRunning() {
+		return
+	}
 	g.runLock.Lock()
 	g.stopping = true
 	g.runLock.Unlock()
