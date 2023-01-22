@@ -102,6 +102,12 @@ func NewFileTree(root fyne.URI) *FileTree {
 		}
 		c.Objects[0].(*widget.Label).SetText(l)
 	}
+
+	// reset sorted child ID cache if the branch is closed - in the future we do FS watch
+	tree.OnBranchClosed = func(id widget.TreeNodeID) {
+		delete(tree.listCache, id)
+	}
+
 	tree.ExtendBaseWidget(tree)
 	return tree
 }
