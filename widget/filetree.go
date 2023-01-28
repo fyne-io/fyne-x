@@ -17,6 +17,7 @@ type FileTree struct {
 	ShowRootPath bool
 	Sorter       func(fyne.URI, fyne.URI) bool
 
+	listCache     map[widget.TreeNodeID][]widget.TreeNodeID
 	listableCache map[widget.TreeNodeID]fyne.ListableURI
 	uriCache      map[widget.TreeNodeID]fyne.URI
 }
@@ -36,6 +37,7 @@ func NewFileTree(root fyne.URI) *FileTree {
 				return container.NewBorder(nil, nil, icon, nil, widget.NewLabel("Template Object"))
 			},
 		},
+		listCache:     make(map[widget.TreeNodeID][]widget.TreeNodeID),
 		listableCache: make(map[widget.TreeNodeID]fyne.ListableURI),
 		uriCache:      make(map[widget.TreeNodeID]fyne.URI),
 	}
@@ -50,6 +52,11 @@ func NewFileTree(root fyne.URI) *FileTree {
 			return
 		}
 
+		ids, ok := tree.listCache[id]
+		if ok {
+			return ids
+		}
+
 		uris, err := listable.List()
 		if err != nil {
 			fyne.LogError("Unable to list "+listable.String(), err)
@@ -60,6 +67,8 @@ func NewFileTree(root fyne.URI) *FileTree {
 			// Convert to String
 			c = append(c, u.String())
 		}
+
+		tree.listCache[id] = c
 		return
 	}
 	tree.UpdateNode = func(id widget.TreeNodeID, branch bool, node fyne.CanvasObject) {
@@ -93,6 +102,12 @@ func NewFileTree(root fyne.URI) *FileTree {
 		}
 		c.Objects[0].(*widget.Label).SetText(l)
 	}
+
+	// reset sorted child ID cache if the branch is closed - in the future we do FS watch
+	tree.OnBranchClosed = func(id widget.TreeNodeID) {
+		delete(tree.listCache, id)
+	}
+
 	tree.ExtendBaseWidget(tree)
 	return tree
 }
