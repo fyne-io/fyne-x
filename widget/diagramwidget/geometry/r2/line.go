@@ -2,13 +2,12 @@ package r2
 
 // Line describes a line in R2
 //
-//  (1) A.X,A.Y  +
-//                \
-//                 \
-//                  \
-//                   \
-//                    + A.X+S.X,A.Y+S.Y (2)
-//
+//	(1) A.X,A.Y  +
+//	              \
+//	               \
+//	                \
+//	                 \
+//	                  + A.X+S.X,A.Y+S.Y (2)
 type Line struct {
 	// A defines the basis point of the line
 	A Vec2

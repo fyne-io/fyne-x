@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	defaultTheta       float32 = 10
+	defaultTheta       float32 = 0.5235
 	defaultStrokeWidth float32 = 2
 	defaultLength      int     = 15
 )
@@ -45,7 +45,7 @@ type Arrowhead struct {
 	StrokeColor color.Color
 
 	// Theta is the angle between the two "tails" that intersect at the
-	// tip.
+	// tip. This angle is in radians.
 	Theta float32
 
 	// Length is the length of the two "tails" that intersect at the tip.
@@ -107,17 +107,37 @@ func (a *Arrowhead) Refresh() {
 }
 
 func (a *Arrowhead) LeftPoint() fyne.Position {
-	return a.Tip.Add(fyne.Position{
-		X: float32(float64(a.Length) * math.Cos(float64(a.Theta))),
-		Y: float32(float64(a.Length) * math.Sin(float64(a.Theta))),
-	})
+	// Have to change the sign of Y because the window coordinated Y axis goes down rather than up
+	baseVector := r2.Vec2{
+		X: float64(a.Base.X - a.Tip.X),
+		Y: -float64(a.Base.Y - a.Tip.Y),
+	}
+	baseAngle := baseVector.Angle()
+	leftAngle := r2.AddAngles(baseAngle, -float64(a.Theta))
+	// We have to change the sign of Y because the window coordinate Y axis goes down rather than up
+	leftPosition := fyne.Position{
+		X: float32(float64(a.Length) * math.Cos(leftAngle)),
+		Y: -float32(float64(a.Length) * math.Sin(leftAngle)),
+	}
+	leftPoint := a.Tip.Add(leftPosition)
+	return leftPoint
 }
 
 func (a *Arrowhead) RightPoint() fyne.Position {
-	return a.Tip.Add(fyne.Position{
-		X: float32(float64(a.Length) * math.Cos(float64(a.Theta))),
-		Y: float32(float64(a.Length) * -1.0 * math.Sin(float64(a.Theta))),
-	})
+	// Have to change the sign of Y because the window coordinated Y axis goes down rather than up
+	baseVector := r2.Vec2{
+		X: float64(a.Base.X - a.Tip.X),
+		Y: -float64(a.Base.Y - a.Tip.Y),
+	}
+	baseAngle := baseVector.Angle()
+	rightAngle := r2.AddAngles(baseAngle, float64(a.Theta))
+	// We have to change the sign of Y because the window coordinate Y axis goes down rather than up
+	rightPosition := fyne.Position{
+		X: float32(float64(a.Length) * math.Cos(rightAngle)),
+		Y: -float32(float64(a.Length) * math.Sin(rightAngle)),
+	}
+	rightPoint := a.Tip.Add(rightPosition)
+	return rightPoint
 }
 
 func (a *Arrowhead) Size() fyne.Size {

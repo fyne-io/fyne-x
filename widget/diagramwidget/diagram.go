@@ -16,7 +16,11 @@ type diagramRenderer struct {
 type DiagramWidget struct {
 	widget.BaseWidget
 
-	Offset fyne.Position
+	// Diagrams may want to use a different theme and variant than the application. The default value is the
+	// applicaton's theme and variant
+	DiagramTheme fyne.Theme
+	ThemeVariant fyne.ThemeVariant
+	Offset       fyne.Position
 
 	// DesiredSize specifies the size which the graph widget should take
 	// up, defaults to 800 x 600
@@ -99,10 +103,12 @@ func (g *DiagramWidget) MouseMoved(event *desktop.MouseEvent) {
 
 func NewDiagram() *DiagramWidget {
 	d := &DiagramWidget{
-		DesiredSize: fyne.Size{Width: 800, Height: 600},
-		Offset:      fyne.Position{X: 0, Y: 0},
-		Nodes:       map[string]*DiagramNode{},
-		Links:       map[string]*DiagramLink{},
+		DiagramTheme: fyne.CurrentApp().Settings().Theme(),
+		ThemeVariant: fyne.CurrentApp().Settings().ThemeVariant(),
+		DesiredSize:  fyne.Size{Width: 800, Height: 600},
+		Offset:       fyne.Position{X: 0, Y: 0},
+		Nodes:        map[string]*DiagramNode{},
+		Links:        map[string]*DiagramLink{},
 	}
 
 	d.ExtendBaseWidget(d)

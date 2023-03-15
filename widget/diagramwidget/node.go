@@ -15,7 +15,7 @@ import (
 const (
 	// default inner size
 	defaultWidth  float32 = 50
-	defaultHeight float32 = 50
+	defaultHeight float32 = 25
 
 	// default padding around the inner object in a node
 	defaultPadding float32 = 10
@@ -52,11 +52,11 @@ type DiagramNode struct {
 	BoxStrokeWidth float32
 
 	// BoxFill is the fill color of the node, the inner object will be
-	// drawn on top of this. Defaults to the theme.BackgroundColor().
+	// drawn on top of this. Defaults to the DiagramTheme's BackgroundColor.
 	BoxFillColor color.Color
 
 	// BoxStrokeColor is the stroke color of the node rectangle. Defaults
-	// to theme.TextColor().
+	// to DiagramTheme's ForegroundColor
 	BoxStrokeColor color.Color
 
 	// HandleColor is the color of node handle.
@@ -125,7 +125,7 @@ func (r *diagramNodeRenderer) Refresh() {
 }
 
 func (r *diagramNodeRenderer) BackgroundColor() color.Color {
-	return theme.BackgroundColor()
+	return r.node.Diagram.DiagramTheme.Color(theme.ColorNameBackground, r.node.Diagram.ThemeVariant)
 }
 
 func (r *diagramNodeRenderer) Destroy() {
@@ -160,11 +160,11 @@ func NewDiagramNode(d *DiagramWidget, obj fyne.CanvasObject) *DiagramNode {
 		Diagram:        d,
 		InnerSize:      fyne.Size{Width: defaultWidth, Height: defaultHeight},
 		InnerObject:    obj,
-		Padding:        defaultPadding,
+		Padding:        d.DiagramTheme.Size(theme.SizeNamePadding),
 		BoxStrokeWidth: 1,
-		BoxFillColor:   theme.BackgroundColor(),
-		BoxStrokeColor: theme.TextColor(),
-		HandleColor:    theme.TextColor(),
+		BoxFillColor:   d.DiagramTheme.Color(theme.ColorNameBackground, d.ThemeVariant),
+		BoxStrokeColor: d.DiagramTheme.Color(theme.ColorNameForeground, d.ThemeVariant),
+		HandleColor:    d.DiagramTheme.Color(theme.ColorNameForeground, d.ThemeVariant),
 		HandleStroke:   3,
 	}
 
@@ -199,12 +199,12 @@ func (n *DiagramNode) Dragged(event *fyne.DragEvent) {
 }
 
 func (n *DiagramNode) MouseIn(event *desktop.MouseEvent) {
-	n.HandleColor = theme.FocusColor()
+	n.HandleColor = n.Diagram.DiagramTheme.Color(theme.ColorNameFocus, n.Diagram.ThemeVariant)
 	n.Refresh()
 }
 
 func (n *DiagramNode) MouseOut() {
-	n.HandleColor = theme.TextColor()
+	n.HandleColor = n.Diagram.DiagramTheme.Color(theme.ColorNameForeground, n.Diagram.ThemeVariant)
 	n.Refresh()
 }
 
