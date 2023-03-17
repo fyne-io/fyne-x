@@ -106,7 +106,10 @@ func main() {
 	g.Links["edge1"] = edge1
 	edge1.LinkColor = color.RGBA{255, 64, 64, 255}
 	edge1.TargetDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
-	edge1.MidpointDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
+	edge1.TargetDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
+	edge1.MidpointDecorations = append(g.Links["edge1"].MidpointDecorations, arrowhead.NewArrowhead())
+	edge1.MidpointDecorations = append(g.Links["edge1"].MidpointDecorations, arrowhead.NewArrowhead())
+	edge1.SourceDecorations = append(g.Links["edge1"].SourceDecorations, arrowhead.NewArrowhead())
 	edge1.SourceDecorations = append(g.Links["edge1"].SourceDecorations, arrowhead.NewArrowhead())
 	g.Links["edge2"] = diagramwidget.NewDiagramLink(g, n1, n4)
 	g.Links["edge3"] = diagramwidget.NewDiagramLink(g, n3, n4)

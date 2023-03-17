@@ -194,6 +194,10 @@ func (ar *arrowheadRenderer) MinSize() fyne.Size {
 }
 
 func (ar *arrowheadRenderer) Layout(size fyne.Size) {
+	ar.left.Position1 = fyne.Position{X: 0, Y: 0}
+	ar.left.Position2 = ar.widget.LeftPoint()
+	ar.right.Position1 = fyne.Position{X: 0, Y: 0}
+	ar.right.Position2 = ar.widget.RightPoint()
 }
 
 func (ar *arrowheadRenderer) ApplyTheme(size fyne.Size) {
@@ -206,10 +210,6 @@ func (ar *arrowheadRenderer) Refresh() {
 	ar.right.StrokeWidth = ar.widget.StrokeWidth
 	ar.left.StrokeColor = ar.widget.StrokeColor
 	ar.right.StrokeColor = ar.widget.StrokeColor
-	ar.left.Position1 = fyne.Position{X: 0, Y: 0}
-	ar.left.Position2 = ar.widget.LeftPoint()
-	ar.right.Position1 = fyne.Position{X: 0, Y: 0}
-	ar.right.Position2 = ar.widget.RightPoint()
 	if ar.widget.visible {
 		ar.left.Show()
 		ar.right.Show()

@@ -78,12 +78,6 @@ func (r *diagramLinkRenderer) MinSize() fyne.Size {
 }
 
 func (r *diagramLinkRenderer) Layout(size fyne.Size) {
-}
-
-func (r *diagramLinkRenderer) ApplyTheme(size fyne.Size) {
-}
-
-func (r *diagramLinkRenderer) Refresh() {
 	l := r.edge.R2Line()
 	sourceBox := r.edge.Origin.R2Box()
 	targetBox := r.edge.Target.R2Box()
@@ -104,29 +98,59 @@ func (r *diagramLinkRenderer) Refresh() {
 	lineVector := r2.Vec2{X: float64(r.line.Position2.X - r.line.Position1.X), Y: -float64(r.line.Position2.Y - r.line.Position1.Y)}
 	sourceAngle := lineVector.Angle()
 	targetAngle := r2.AddAngles(sourceAngle, math.Pi)
+	sourceOffset := 0.0
 	for _, decoration := range r.edge.SourceDecorations {
-		decoration.SetStrokeColor(r.edge.LinkColor)
-		decoration.SetStrokeWidth(r.edge.Width)
-		decoration.SetReferencePoint(r.line.Position1)
+		decorationReferencePoint := fyne.Position{
+			X: float32(float64(r.line.Position1.X) + math.Cos(sourceAngle)*sourceOffset),
+			Y: float32(float64(r.line.Position1.Y) - math.Sin(sourceAngle)*sourceOffset),
+		}
+		decoration.SetReferencePoint(decorationReferencePoint)
 		decoration.SetReferenceAngle(sourceAngle)
-		decoration.Refresh()
+		sourceOffset = sourceOffset + float64(decoration.GetReferenceLength())
 	}
 	midPosition := fyne.Position{
 		X: float32((sourcePoint.X + targetPoint.X) / 2),
 		Y: float32((sourcePoint.Y + targetPoint.Y) / 2),
 	}
+	midOffset := 0.0
+	for _, decoration := range r.edge.MidpointDecorations {
+		decorationReferencePoint := fyne.Position{
+			X: float32(float64(midPosition.X) + math.Cos(targetAngle)*midOffset),
+			Y: float32(float64(midPosition.Y) - math.Sin(targetAngle)*midOffset),
+		}
+		decoration.SetReferencePoint(decorationReferencePoint)
+		decoration.SetReferenceAngle(targetAngle)
+		midOffset = midOffset + float64(decoration.GetReferenceLength())
+	}
+	targetOffset := 0.0
+	for _, decoration := range r.edge.TargetDecorations {
+		decorationReferencePoint := fyne.Position{
+			X: float32(float64(r.line.Position2.X) + math.Cos(targetAngle)*targetOffset),
+			Y: float32(float64(r.line.Position2.Y) - math.Sin(targetAngle)*targetOffset),
+		}
+		decoration.SetReferencePoint(decorationReferencePoint)
+		decoration.SetReferenceAngle(targetAngle)
+		targetOffset = targetOffset + float64(decoration.GetReferenceLength())
+	}
+}
+
+func (r *diagramLinkRenderer) ApplyTheme(size fyne.Size) {
+}
+
+func (r *diagramLinkRenderer) Refresh() {
+	for _, decoration := range r.edge.SourceDecorations {
+		decoration.SetStrokeColor(r.edge.LinkColor)
+		decoration.SetStrokeWidth(r.edge.Width)
+		decoration.Refresh()
+	}
 	for _, decoration := range r.edge.MidpointDecorations {
 		decoration.SetStrokeColor(r.edge.LinkColor)
 		decoration.SetStrokeWidth(r.edge.Width)
-		decoration.SetReferencePoint(midPosition)
-		decoration.SetReferenceAngle(targetAngle)
 		decoration.Refresh()
 	}
 	for _, decoration := range r.edge.TargetDecorations {
 		decoration.SetStrokeColor(r.edge.LinkColor)
 		decoration.SetStrokeWidth(r.edge.Width)
-		decoration.SetReferencePoint(r.line.Position2)
-		decoration.SetReferenceAngle(targetAngle)
 		decoration.Refresh()
 	}
 }
