@@ -10,134 +10,156 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/theme"
+	"fyne.io/fyne/v2/widget"
 )
 
 const (
-	defaultTheta       float32 = 0.5235
+	defaultTheta       float64 = 0.5235 // 30 degrees in radians
 	defaultStrokeWidth float32 = 2
 	defaultLength      int     = 15
 )
 
 // Arrowhead defines a canvas object which renders an arrow pointing in
-// a particular direction.
+// a particular direction. The direction is indicated by the BaseAngle.
+// The arrowhead is defined with respect to a nominal reference axis with the
+// BaseAngle 0. The Tip is the reference point.
 //
 //	        Left
 //	          \
 //	           \  Length
 //	      Theta \
-//	Base ------- + Tip
+//	Axis ------- + Tip
 //	            /
 //	           /
 //	          /
 //	        Right
 type Arrowhead struct {
-	// Base is used to define the "base" of the arrow, which thus defines
-	// the direction which the arrow faces.
-	Base fyne.Position
-
+	widget.BaseWidget
+	// BaseAngle is used to define direction in which the arrowhead points
+	// Base fyne.Position
+	BaseAngle float64
 	// Tip is the point at which the tip of the arrow will be placed.
 	Tip fyne.Position
-
 	// StrokeWidth is the width of the arrowhead lines
 	StrokeWidth float32
-
 	// StrokeColor is the color of the arrowhead
 	StrokeColor color.Color
-
-	// Theta is the angle between the two "tails" that intersect at the
-	// tip. This angle is in radians.
-	Theta float32
-
+	// Theta is the angle between each of the tails and the nominal reference axis.
+	// This angle is in radians.
+	Theta float64
 	// Length is the length of the two "tails" that intersect at the tip.
 	Length int
-
-	central *canvas.Line
+	// central *canvas.Line
 	left    *canvas.Line
 	right   *canvas.Line
 	visible bool
 }
 
-func MakeArrowhead(base, tip fyne.Position) *Arrowhead {
-	return &Arrowhead{
-		Base:        base,
-		Tip:         tip,
+func NewArrowhead() *Arrowhead {
+	a := &Arrowhead{
+		BaseAngle:   0.0,
+		Tip:         fyne.Position{X: 0, Y: 0},
 		StrokeWidth: defaultStrokeWidth,
-		StrokeColor: theme.TextColor(),
+		StrokeColor: theme.ForegroundColor(),
 		Theta:       defaultTheta,
 		Length:      defaultLength,
-		central:     canvas.NewLine(theme.TextColor()),
-		left:        canvas.NewLine(theme.TextColor()),
-		right:       canvas.NewLine(theme.TextColor()),
-		visible:     true,
+		// central:     canvas.NewLine(theme.TextColor()),
+		visible: true,
 	}
+	a.ExtendBaseWidget(a)
+	return a
 }
 
-func (a *Arrowhead) Refresh() {
-	a.central.StrokeWidth = a.StrokeWidth
-	a.left.StrokeWidth = a.StrokeWidth
-	a.right.StrokeWidth = a.StrokeWidth
-
-	a.central.StrokeColor = a.StrokeColor
-	a.left.StrokeColor = a.StrokeColor
-	a.right.StrokeColor = a.StrokeColor
-
-	a.central.Position1 = a.Tip
-	a.central.Position2 = a.Base
-
-	a.left.Position1 = a.Tip
-	a.left.Position2 = a.LeftPoint()
-
-	a.right.Position1 = a.Tip
-	a.right.Position2 = a.RightPoint()
-
-	if a.visible {
-		a.central.Show()
-		a.left.Show()
-		a.right.Show()
-	} else {
-		a.central.Hide()
-		a.left.Hide()
-		a.right.Hide()
+func (a *Arrowhead) CreateRenderer() fyne.WidgetRenderer {
+	ar := arrowheadRenderer{
+		widget: a,
+		left:   canvas.NewLine(theme.ForegroundColor()),
+		right:  canvas.NewLine(theme.ForegroundColor()),
 	}
 
-	canvas.Refresh(a.central)
-	canvas.Refresh(a.left)
-	canvas.Refresh(a.right)
+	(&ar).Refresh()
 
+	return &ar
+}
+
+// GetReferenceLength returns the length of the decoration along the reference axis
+func (a *Arrowhead) GetReferenceLength() float32 {
+	return float32(math.Abs(math.Cos(float64(a.Theta)) * float64(a.Length)))
+}
+
+func (a *Arrowhead) Hide() {
+	a.visible = false
 }
 
 func (a *Arrowhead) LeftPoint() fyne.Position {
-	// Have to change the sign of Y because the window coordinated Y axis goes down rather than up
-	baseVector := r2.Vec2{
-		X: float64(a.Base.X - a.Tip.X),
-		Y: -float64(a.Base.Y - a.Tip.Y),
-	}
-	baseAngle := baseVector.Angle()
-	leftAngle := r2.AddAngles(baseAngle, -float64(a.Theta))
+	leftAngle := r2.AddAngles(a.BaseAngle, -a.Theta)
 	// We have to change the sign of Y because the window coordinate Y axis goes down rather than up
 	leftPosition := fyne.Position{
 		X: float32(float64(a.Length) * math.Cos(leftAngle)),
 		Y: -float32(float64(a.Length) * math.Sin(leftAngle)),
 	}
-	leftPoint := a.Tip.Add(leftPosition)
-	return leftPoint
+	return leftPosition
+}
+
+func (a *Arrowhead) MinSize() fyne.Size {
+	return a.Size()
+}
+
+func (a *Arrowhead) Move(p fyne.Position) {
+	a.Tip = p
+}
+
+func (a *Arrowhead) Objects() []fyne.CanvasObject {
+	return []fyne.CanvasObject{
+		a.left,
+		a.right,
+	}
+}
+
+func (a *Arrowhead) Position() fyne.Position {
+	return a.Tip
+}
+
+func (a *Arrowhead) Resize(s fyne.Size) {
+	// We get the current size and scale the length based on the difference between sizes
+	currentSize := a.Size()
+	currentLengthVector := r2.V2(float64(currentSize.Width), float64(currentSize.Height))
+	currentLength := currentLengthVector.Length()
+	newLengthVector := r2.V2(float64(s.Width), float64(s.Height))
+	newLength := newLengthVector.Length()
+	a.Length = int(float64(a.Length) * newLength / currentLength)
 }
 
 func (a *Arrowhead) RightPoint() fyne.Position {
-	// Have to change the sign of Y because the window coordinated Y axis goes down rather than up
-	baseVector := r2.Vec2{
-		X: float64(a.Base.X - a.Tip.X),
-		Y: -float64(a.Base.Y - a.Tip.Y),
-	}
-	baseAngle := baseVector.Angle()
-	rightAngle := r2.AddAngles(baseAngle, float64(a.Theta))
+	rightAngle := r2.AddAngles(a.BaseAngle, a.Theta)
 	// We have to change the sign of Y because the window coordinate Y axis goes down rather than up
 	rightPosition := fyne.Position{
 		X: float32(float64(a.Length) * math.Cos(rightAngle)),
 		Y: -float32(float64(a.Length) * math.Sin(rightAngle)),
 	}
-	rightPoint := a.Tip.Add(rightPosition)
-	return rightPoint
+	return rightPosition
+}
+
+func (a *Arrowhead) SetStrokeColor(strokeColor color.Color) {
+	a.StrokeColor = strokeColor
+}
+
+func (a *Arrowhead) SetStrokeWidth(strokeWidth float32) {
+	a.StrokeWidth = strokeWidth
+}
+
+// SetReferencePoint sets the position of the decoration's reference point
+func (a *Arrowhead) SetReferencePoint(point fyne.Position) {
+	a.Move(point)
+}
+
+// SetReferenceAngle sets the angle (in radians) of the reference axis
+func (a *Arrowhead) SetReferenceAngle(angle float64) {
+	a.BaseAngle = angle
+}
+
+func (a *Arrowhead) Show() {
+	a.visible = true
 }
 
 func (a *Arrowhead) Size() fyne.Size {
@@ -145,7 +167,7 @@ func (a *Arrowhead) Size() fyne.Size {
 	rp := a.RightPoint()
 	points := []r2.Vec2{
 		{X: float64(a.Tip.X), Y: float64(a.Tip.Y)},
-		{X: float64(a.Base.X), Y: float64(a.Base.Y)},
+		// {X: float64(a.Base.X), Y: float64(a.Base.Y)},
 		{X: float64(lp.X), Y: float64(lp.Y)},
 		{X: float64(rp.X), Y: float64(rp.Y)},
 	}
@@ -157,55 +179,59 @@ func (a *Arrowhead) Size() fyne.Size {
 	}
 }
 
-func (a *Arrowhead) Resize(s fyne.Size) {
-	l := r2.V2(float64(s.Width), float64(s.Height))
-	a.Length = int(l.Length())
-
-	tip := r2.V2(float64(a.Tip.X), float64(a.Tip.Y))
-	base := r2.V2(float64(a.Base.X), float64(a.Base.Y))
-	v := tip.Add(base.Scale(-1))
-	v = v.ScaleToLength(l.Length())
-	base = tip.Add(v)
-
-	a.Base = fyne.Position{X: float32(base.X), Y: float32(base.Y)}
-}
-
-func (a *Arrowhead) Move(p fyne.Position) {
-	a.Tip = p
-
-	tip := r2.V2(float64(a.Tip.X), float64(a.Tip.Y))
-	base := r2.V2(float64(a.Base.X), float64(a.Base.Y))
-	v := tip.Add(base.Scale(-1))
-	base = tip.Add(v)
-
-	a.Base = fyne.Position{X: float32(base.X), Y: float32(base.Y)}
-}
-
-func (a *Arrowhead) MinSize() fyne.Size {
-	return a.Size()
-}
-
 func (a *Arrowhead) Visible() bool {
 	return a.visible
 }
 
-func (a *Arrowhead) Show() {
-	a.visible = true
+type arrowheadRenderer struct {
+	widget *Arrowhead
+	left   *canvas.Line
+	right  *canvas.Line
 }
 
-func (a *Arrowhead) Hide() {
-	a.visible = false
+func (ar *arrowheadRenderer) MinSize() fyne.Size {
+	return ar.widget.Size()
 }
 
-func (a *Arrowhead) Position() fyne.Position {
-	return a.Tip
+func (ar *arrowheadRenderer) Layout(size fyne.Size) {
 }
 
-// temporary hack, don't do this
-func (a *Arrowhead) Objects() []fyne.CanvasObject {
-	return []fyne.CanvasObject{
-		a.central,
-		a.left,
-		a.right,
+func (ar *arrowheadRenderer) ApplyTheme(size fyne.Size) {
+}
+
+func (ar *arrowheadRenderer) Refresh() {
+	// Coordinates for the lines are relative to the arrowhead tip position
+	// a.central.StrokeWidth = a.StrokeWidth
+	ar.left.StrokeWidth = ar.widget.StrokeWidth
+	ar.right.StrokeWidth = ar.widget.StrokeWidth
+	ar.left.StrokeColor = ar.widget.StrokeColor
+	ar.right.StrokeColor = ar.widget.StrokeColor
+	ar.left.Position1 = fyne.Position{X: 0, Y: 0}
+	ar.left.Position2 = ar.widget.LeftPoint()
+	ar.right.Position1 = fyne.Position{X: 0, Y: 0}
+	ar.right.Position2 = ar.widget.RightPoint()
+	if ar.widget.visible {
+		ar.left.Show()
+		ar.right.Show()
+	} else {
+		ar.left.Hide()
+		ar.right.Hide()
 	}
+	canvas.Refresh(ar.left)
+	canvas.Refresh(ar.right)
+}
+
+func (ar *arrowheadRenderer) BackgroundColor() color.Color {
+	return theme.BackgroundColor()
+}
+
+func (ar *arrowheadRenderer) Destroy() {
+}
+
+func (ar *arrowheadRenderer) Objects() []fyne.CanvasObject {
+	obj := []fyne.CanvasObject{
+		ar.left,
+		ar.right,
+	}
+	return obj
 }

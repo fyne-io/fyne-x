@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"fyne.io/x/fyne/widget/diagramwidget"
+	"fyne.io/x/fyne/widget/diagramwidget/arrowhead"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -100,13 +101,16 @@ func main() {
 
 	globaldiagram = g
 
-	g.Links["edge0"] = diagramwidget.NewDiagramEdge(g, n1, n2)
-	g.Links["edge1"] = diagramwidget.NewDiagramEdge(g, n3, n2)
-	g.Links["edge1"].LinkColor = color.RGBA{255, 64, 64, 255}
-	g.Links["edge1"].Directed = true
-	g.Links["edge2"] = diagramwidget.NewDiagramEdge(g, n1, n4)
-	g.Links["edge3"] = diagramwidget.NewDiagramEdge(g, n3, n4)
-	g.Links["edge4"] = diagramwidget.NewDiagramEdge(g, n5, n4)
+	g.Links["edge0"] = diagramwidget.NewDiagramLink(g, n1, n2)
+	edge1 := diagramwidget.NewDiagramLink(g, n3, n2)
+	g.Links["edge1"] = edge1
+	edge1.LinkColor = color.RGBA{255, 64, 64, 255}
+	edge1.TargetDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
+	edge1.MidpointDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
+	edge1.SourceDecorations = append(g.Links["edge1"].SourceDecorations, arrowhead.NewArrowhead())
+	g.Links["edge2"] = diagramwidget.NewDiagramLink(g, n1, n4)
+	g.Links["edge3"] = diagramwidget.NewDiagramLink(g, n3, n4)
+	g.Links["edge4"] = diagramwidget.NewDiagramLink(g, n5, n4)
 
 	w.SetContent(g)
 

@@ -63,6 +63,21 @@ func (r *diagramRenderer) Objects() []fyne.CanvasObject {
 	}
 	for _, e := range r.graph.Links {
 		obj = append(obj, e)
+		for _, sourceDecoration := range e.SourceDecorations {
+			if sourceDecoration != nil {
+				obj = append(obj, sourceDecoration)
+			}
+		}
+		for _, midpointDecoration := range e.MidpointDecorations {
+			if midpointDecoration != nil {
+				obj = append(obj, midpointDecoration)
+			}
+		}
+		for _, targetDecoration := range e.TargetDecorations {
+			if targetDecoration != nil {
+				obj = append(obj, targetDecoration)
+			}
+		}
 	}
 
 	return obj
