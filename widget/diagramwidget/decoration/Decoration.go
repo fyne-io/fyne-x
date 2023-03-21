@@ -22,8 +22,6 @@ type Decoration interface {
 	fyne.Widget
 	SetStrokeColor(color color.Color)
 	SetStrokeWidth(width float32)
-	// SetReferencePoint sets the position of the decoration's reference point
-	SetReferencePoint(point fyne.Position)
 	// SetReferenceAngle sets the angle of the reference axis
 	SetReferenceAngle(angle float64) // Angle in radians
 	// GetReferenceLength returns the length of the decoration along the reference axis

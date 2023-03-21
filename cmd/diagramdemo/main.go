@@ -16,8 +16,6 @@ import (
 
 var forceticks int = 0
 
-var globaldiagram *diagramwidget.DiagramWidget
-
 func forceanim() {
 
 	// XXX: very naughty -- accesses shared memory in potentially unsafe
@@ -25,8 +23,8 @@ func forceanim() {
 
 	for {
 		if forceticks > 0 {
-			globaldiagram.StepForceLayout(300)
-			globaldiagram.Refresh()
+			diagramwidget.Globaldiagram.StepForceLayout(300)
+			diagramwidget.Globaldiagram.Refresh()
 			forceticks--
 			fmt.Printf("forceticks=%d\n", forceticks)
 		}
@@ -41,81 +39,90 @@ func main() {
 
 	w.SetMaster()
 
-	g := diagramwidget.NewDiagram()
+	diagramWidget := diagramwidget.NewDiagramWidget()
+	diagramwidget.Globaldiagram = diagramWidget
 
 	go forceanim()
 
-	l := widget.NewLabel("teeexxttt")
-	n := diagramwidget.NewDiagramNode(g, l)
-	g.Nodes["node0"] = n
-	n1 := n
+	// Node 0
+	node0Label := widget.NewLabel("Node0")
+	node0 := diagramwidget.NewDiagramNode(diagramWidget, node0Label)
+	diagramWidget.Nodes["node0"] = node0
 
-	b := widget.NewButton("button", func() { fmt.Printf("tapped!\n") })
-	n = diagramwidget.NewDiagramNode(g, b)
-	n.Move(fyne.Position{X: 200, Y: 200})
-	g.Nodes["node1"] = n
-	n2 := n
+	// Node 1
+	node1Button := widget.NewButton("Node1 Button", func() { fmt.Printf("tapped Node1!\n") })
+	node1 := diagramwidget.NewDiagramNode(diagramWidget, node1Button)
+	node1.Move(fyne.Position{X: 200, Y: 200})
+	diagramWidget.Nodes["node1"] = node1
 
-	n = diagramwidget.NewDiagramNode(g, nil)
-	c := container.NewVBox(
-		widget.NewLabel("Fancy node!"),
+	// Node 2
+	node2 := diagramwidget.NewDiagramNode(diagramWidget, nil)
+	node2Container := container.NewVBox(
+		widget.NewLabel("Node2 - with structure"),
 		widget.NewButton("Up", func() {
-			n.Displace(fyne.Position{X: 0, Y: -10})
-			n.Refresh()
+			node2.Displace(fyne.Position{X: 0, Y: -10})
+			node2.Refresh()
 		}),
 		widget.NewButton("Down", func() {
-			n.Displace(fyne.Position{X: 0, Y: 10})
-			n.Refresh()
+			node2.Displace(fyne.Position{X: 0, Y: 10})
+			node2.Refresh()
 		}),
 		container.NewHBox(
 			widget.NewButton("Left", func() {
-				n.Displace(fyne.Position{X: -10, Y: 0})
-				n.Refresh()
+				node2.Displace(fyne.Position{X: -10, Y: 0})
+				node2.Refresh()
 			}),
 			widget.NewButton("Right", func() {
-				n.Displace(fyne.Position{X: 10, Y: 0})
-				n.Refresh()
+				node2.Displace(fyne.Position{X: 10, Y: 0})
+				node2.Refresh()
 			}),
 		),
 	)
-	n.InnerObject = c
-	n.Move(fyne.Position{X: 300, Y: 300})
-	g.Nodes["node2"] = n
-	n3 := n
+	node2.InnerObject = node2Container
+	node2.Move(fyne.Position{X: 300, Y: 300})
+	diagramWidget.Nodes["node2"] = node2
 
-	n = diagramwidget.NewDiagramNode(g, widget.NewButton("force layout step", func() {
-		g.StepForceLayout(300)
-		g.Refresh()
+	// Node 3
+	node3 := diagramwidget.NewDiagramNode(diagramWidget, widget.NewButton("Node3: Force layout step", func() {
+		diagramWidget.StepForceLayout(300)
+		diagramWidget.Refresh()
 	}))
-	n.Move(fyne.Position{X: 400, Y: 200})
-	g.Nodes["node4"] = n
-	n4 := n
+	node3.Move(fyne.Position{X: 400, Y: 200})
+	diagramWidget.Nodes["node3"] = node3
 
-	n = diagramwidget.NewDiagramNode(g, widget.NewButton("auto layout", func() {
+	// Node 4
+	node4 := diagramwidget.NewDiagramNode(diagramWidget, widget.NewButton("Node4: auto layout", func() {
 		forceticks += 100
-		g.Refresh()
+		diagramWidget.Refresh()
 	}))
-	n.Move(fyne.Position{X: 400, Y: 500})
-	g.Nodes["node5"] = n
-	n5 := n
+	node4.Move(fyne.Position{X: 400, Y: 500})
+	diagramWidget.Nodes["node4"] = node4
 
-	globaldiagram = g
+	link0 := diagramwidget.NewDiagramLink(diagramWidget, node0, node1)
+	diagramWidget.Links["link0"] = link0
+	link0.AddSourceAnchoredText("sourceRole", "sourceRole")
 
-	g.Links["edge0"] = diagramwidget.NewDiagramLink(g, n1, n2)
-	edge1 := diagramwidget.NewDiagramLink(g, n3, n2)
-	g.Links["edge1"] = edge1
-	edge1.LinkColor = color.RGBA{255, 64, 64, 255}
-	edge1.TargetDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
-	edge1.TargetDecorations = append(g.Links["edge1"].TargetDecorations, arrowhead.NewArrowhead())
-	edge1.MidpointDecorations = append(g.Links["edge1"].MidpointDecorations, arrowhead.NewArrowhead())
-	edge1.MidpointDecorations = append(g.Links["edge1"].MidpointDecorations, arrowhead.NewArrowhead())
-	edge1.SourceDecorations = append(g.Links["edge1"].SourceDecorations, arrowhead.NewArrowhead())
-	edge1.SourceDecorations = append(g.Links["edge1"].SourceDecorations, arrowhead.NewArrowhead())
-	g.Links["edge2"] = diagramwidget.NewDiagramLink(g, n1, n4)
-	g.Links["edge3"] = diagramwidget.NewDiagramLink(g, n3, n4)
-	g.Links["edge4"] = diagramwidget.NewDiagramLink(g, n5, n4)
+	link1 := diagramwidget.NewDiagramLink(diagramWidget, node2, node1)
+	diagramWidget.Links["link1"] = link1
+	link1.LinkColor = color.RGBA{255, 64, 64, 255}
+	link1.TargetDecorations = append(diagramWidget.Links["link1"].TargetDecorations, arrowhead.NewArrowhead())
+	link1.TargetDecorations = append(diagramWidget.Links["link1"].TargetDecorations, arrowhead.NewArrowhead())
+	link1.MidpointDecorations = append(diagramWidget.Links["link1"].MidpointDecorations, arrowhead.NewArrowhead())
+	link1.MidpointDecorations = append(diagramWidget.Links["link1"].MidpointDecorations, arrowhead.NewArrowhead())
+	link1.SourceDecorations = append(diagramWidget.Links["link1"].SourceDecorations, arrowhead.NewArrowhead())
+	link1.SourceDecorations = append(diagramWidget.Links["link1"].SourceDecorations, arrowhead.NewArrowhead())
 
-	w.SetContent(g)
+	diagramWidget.Links["link2"] = diagramwidget.NewDiagramLink(diagramWidget, node0, node3)
+
+	link3 := diagramwidget.NewDiagramLink(diagramWidget, node2, node3)
+	link3.AddSourceAnchoredText("sourceRole", "sourceRole")
+	link3.AddMidpointAnchoredText("linkName", "Link 3")
+	link3.AddTargetAnchoredText("targetRole", "targetRole")
+	diagramWidget.Links["link3"] = link3
+
+	diagramWidget.Links["link4"] = diagramwidget.NewDiagramLink(diagramWidget, node4, node3)
+
+	w.SetContent(diagramWidget)
 
 	w.ShowAndRun()
 }
