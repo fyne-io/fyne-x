@@ -1,5 +1,4 @@
-// Package arrowhead implements an arrowhead canvas object.
-package arrowhead
+package decoration
 
 import (
 	"image/color"
@@ -69,9 +68,9 @@ func NewArrowhead() *Arrowhead {
 
 func (a *Arrowhead) CreateRenderer() fyne.WidgetRenderer {
 	ar := arrowheadRenderer{
-		widget: a,
-		left:   canvas.NewLine(theme.ForegroundColor()),
-		right:  canvas.NewLine(theme.ForegroundColor()),
+		arrowhead: a,
+		left:      canvas.NewLine(theme.ForegroundColor()),
+		right:     canvas.NewLine(theme.ForegroundColor()),
 	}
 	return &ar
 }
@@ -145,37 +144,12 @@ func (a *Arrowhead) Size() fyne.Size {
 }
 
 type arrowheadRenderer struct {
-	widget *Arrowhead
-	left   *canvas.Line
-	right  *canvas.Line
-}
-
-func (ar *arrowheadRenderer) MinSize() fyne.Size {
-	return ar.widget.Size()
-}
-
-func (ar *arrowheadRenderer) Layout(size fyne.Size) {
-	ar.left.Position1 = fyne.Position{X: 0, Y: 0}
-	ar.left.Position2 = ar.widget.LeftPoint()
-	ar.right.Position1 = fyne.Position{X: 0, Y: 0}
-	ar.right.Position2 = ar.widget.RightPoint()
+	arrowhead *Arrowhead
+	left      *canvas.Line
+	right     *canvas.Line
 }
 
 func (ar *arrowheadRenderer) ApplyTheme(size fyne.Size) {
-}
-
-func (ar *arrowheadRenderer) Refresh() {
-	ar.left.StrokeWidth = ar.widget.StrokeWidth
-	ar.right.StrokeWidth = ar.widget.StrokeWidth
-	ar.left.StrokeColor = ar.widget.StrokeColor
-	ar.right.StrokeColor = ar.widget.StrokeColor
-	if ar.widget.visible {
-		ar.left.Show()
-		ar.right.Show()
-	} else {
-		ar.left.Hide()
-		ar.right.Hide()
-	}
 }
 
 func (ar *arrowheadRenderer) BackgroundColor() color.Color {
@@ -185,10 +159,35 @@ func (ar *arrowheadRenderer) BackgroundColor() color.Color {
 func (ar *arrowheadRenderer) Destroy() {
 }
 
+func (ar *arrowheadRenderer) MinSize() fyne.Size {
+	return ar.arrowhead.Size()
+}
+
+func (ar *arrowheadRenderer) Layout(size fyne.Size) {
+	ar.left.Position1 = fyne.Position{X: 0, Y: 0}
+	ar.left.Position2 = ar.arrowhead.LeftPoint()
+	ar.right.Position1 = fyne.Position{X: 0, Y: 0}
+	ar.right.Position2 = ar.arrowhead.RightPoint()
+}
+
 func (ar *arrowheadRenderer) Objects() []fyne.CanvasObject {
 	obj := []fyne.CanvasObject{
 		ar.left,
 		ar.right,
 	}
 	return obj
+}
+
+func (ar *arrowheadRenderer) Refresh() {
+	ar.left.StrokeWidth = ar.arrowhead.StrokeWidth
+	ar.right.StrokeWidth = ar.arrowhead.StrokeWidth
+	ar.left.StrokeColor = ar.arrowhead.StrokeColor
+	ar.right.StrokeColor = ar.arrowhead.StrokeColor
+	if ar.arrowhead.visible {
+		ar.left.Show()
+		ar.right.Show()
+	} else {
+		ar.left.Hide()
+		ar.right.Hide()
+	}
 }

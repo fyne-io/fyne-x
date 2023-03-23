@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"fyne.io/x/fyne/widget/diagramwidget"
-	"fyne.io/x/fyne/widget/diagramwidget/arrowhead"
+	"fyne.io/x/fyne/widget/diagramwidget/decoration"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
@@ -105,12 +105,12 @@ func main() {
 	link1 := diagramwidget.NewDiagramLink(diagramWidget, node2, node1)
 	diagramWidget.Links["link1"] = link1
 	link1.LinkColor = color.RGBA{255, 64, 64, 255}
-	link1.TargetDecorations = append(diagramWidget.Links["link1"].TargetDecorations, arrowhead.NewArrowhead())
-	link1.TargetDecorations = append(diagramWidget.Links["link1"].TargetDecorations, arrowhead.NewArrowhead())
-	link1.MidpointDecorations = append(diagramWidget.Links["link1"].MidpointDecorations, arrowhead.NewArrowhead())
-	link1.MidpointDecorations = append(diagramWidget.Links["link1"].MidpointDecorations, arrowhead.NewArrowhead())
-	link1.SourceDecorations = append(diagramWidget.Links["link1"].SourceDecorations, arrowhead.NewArrowhead())
-	link1.SourceDecorations = append(diagramWidget.Links["link1"].SourceDecorations, arrowhead.NewArrowhead())
+	link1.TargetDecorations = append(diagramWidget.Links["link1"].TargetDecorations, decoration.NewArrowhead())
+	link1.TargetDecorations = append(diagramWidget.Links["link1"].TargetDecorations, decoration.NewArrowhead())
+	link1.MidpointDecorations = append(diagramWidget.Links["link1"].MidpointDecorations, decoration.NewArrowhead())
+	link1.MidpointDecorations = append(diagramWidget.Links["link1"].MidpointDecorations, decoration.NewArrowhead())
+	link1.SourceDecorations = append(diagramWidget.Links["link1"].SourceDecorations, decoration.NewArrowhead())
+	link1.SourceDecorations = append(diagramWidget.Links["link1"].SourceDecorations, decoration.NewArrowhead())
 
 	diagramWidget.Links["link2"] = diagramwidget.NewDiagramLink(diagramWidget, node0, node3)
 

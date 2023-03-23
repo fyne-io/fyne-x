@@ -15,11 +15,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var hoverable desktop.Hoverable
+// hoverable used during testing to determine whether DiagramLink fully implements the Hoverable interface.
+// Assign an instance of DiagramLink to hoverable: if you don't get a compiler error, it is fully implemented
+// var hoverable desktop.Hoverable
 
 type DiagramLink struct {
 	widget.BaseWidget
-	Diagram              *DiagramWidget
+	diagramElement
 	LinkColor            color.Color
 	Width                float32
 	Origin               *DiagramNode
@@ -35,9 +37,8 @@ type DiagramLink struct {
 	midpointAnchoredText map[string]*AnchoredText
 }
 
-func NewDiagramLink(g *DiagramWidget, v, u *DiagramNode) *DiagramLink {
+func NewDiagramLink(diagram *DiagramWidget, v, u *DiagramNode) *DiagramLink {
 	dl := &DiagramLink{
-		Diagram:              g,
 		LinkColor:            theme.TextColor(),
 		Width:                2,
 		Origin:               v,
@@ -46,10 +47,12 @@ func NewDiagramLink(g *DiagramWidget, v, u *DiagramNode) *DiagramLink {
 		midpointAnchoredText: make(map[string]*AnchoredText),
 		targetAnchoredText:   make(map[string]*AnchoredText),
 	}
+	dl.diagramElement.diagram = diagram
 
 	dl.ExtendBaseWidget(dl)
 
-	hoverable = dl
+	// Use during testing to ensure that the instance fully implements Hoverable
+	// hoverable = dl
 	return dl
 }
 
