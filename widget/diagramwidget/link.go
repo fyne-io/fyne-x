@@ -11,13 +11,11 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-// hoverable used during testing to determine whether DiagramLink fully implements the Hoverable interface.
-// Assign an instance of DiagramLink to hoverable: if you don't get a compiler error, it is fully implemented
-// var hoverable desktop.Hoverable
+// Validate Hoverable Implementation
+var _ desktop.Hoverable = (*DiagramLink)(nil)
 
 type DiagramLink struct {
 	widget.BaseWidget
@@ -37,9 +35,9 @@ type DiagramLink struct {
 	midpointAnchoredText map[string]*AnchoredText
 }
 
-func NewDiagramLink(diagram *DiagramWidget, v, u *DiagramNode) *DiagramLink {
+func NewDiagramLink(diagram *DiagramWidget, v, u *DiagramNode, linkID string) *DiagramLink {
 	dl := &DiagramLink{
-		LinkColor:            theme.TextColor(),
+		LinkColor:            diagram.GetForegroundColor(),
 		Width:                2,
 		Origin:               v,
 		Target:               u,
@@ -47,13 +45,23 @@ func NewDiagramLink(diagram *DiagramWidget, v, u *DiagramNode) *DiagramLink {
 		midpointAnchoredText: make(map[string]*AnchoredText),
 		targetAnchoredText:   make(map[string]*AnchoredText),
 	}
-	dl.diagramElement.diagram = diagram
+	dl.diagramElement.initialize(diagram, linkID)
 
 	dl.ExtendBaseWidget(dl)
 
-	// Use during testing to ensure that the instance fully implements Hoverable
-	// hoverable = dl
+	dl.diagram.Links[linkID] = dl
 	return dl
+}
+
+func (dl *DiagramLink) CreateRenderer() fyne.WidgetRenderer {
+	dlr := diagramLinkRenderer{
+		link: dl,
+		line: canvas.NewLine(dl.LinkColor),
+	}
+
+	(&dlr).Refresh()
+
+	return &dlr
 }
 
 func (dl *DiagramLink) AddSourceAnchoredText(key string, displayedText string) {
@@ -74,15 +82,8 @@ func (dl *DiagramLink) AddTargetAnchoredText(key string, displayedText string) {
 	at.Move(fyne.Position{X: float32(dl.targetPoint.X), Y: float32(dl.targetPoint.Y)})
 }
 
-func (dl *DiagramLink) CreateRenderer() fyne.WidgetRenderer {
-	dlr := diagramLinkRenderer{
-		link: dl,
-		line: canvas.NewLine(dl.LinkColor),
-	}
+func (dl *DiagramLink) HideHandles() {
 
-	(&dlr).Refresh()
-
-	return &dlr
 }
 
 func (dl *DiagramLink) R2Line() r2.Line {
@@ -101,9 +102,17 @@ func (dl *DiagramLink) MouseOut() {
 	log.Printf("MouseOut DiagramLink Text %p", dl)
 }
 
+func (dl *DiagramLink) ShowHandles() {
+
+}
+
+// diagramLinkRenderer
 type diagramLinkRenderer struct {
 	link *DiagramLink
 	line *canvas.Line
+}
+
+func (dlr *diagramLinkRenderer) Destroy() {
 }
 
 func (dlr *diagramLinkRenderer) MinSize() fyne.Size {
@@ -185,34 +194,6 @@ func (dlr *diagramLinkRenderer) Layout(size fyne.Size) {
 	}
 }
 
-func (dlr *diagramLinkRenderer) ApplyTheme(size fyne.Size) {
-}
-
-func (dlr *diagramLinkRenderer) Refresh() {
-	for _, decoration := range dlr.link.SourceDecorations {
-		decoration.SetStrokeColor(dlr.link.LinkColor)
-		decoration.SetStrokeWidth(dlr.link.Width)
-		decoration.Refresh()
-	}
-	for _, decoration := range dlr.link.MidpointDecorations {
-		decoration.SetStrokeColor(dlr.link.LinkColor)
-		decoration.SetStrokeWidth(dlr.link.Width)
-		decoration.Refresh()
-	}
-	for _, decoration := range dlr.link.TargetDecorations {
-		decoration.SetStrokeColor(dlr.link.LinkColor)
-		decoration.SetStrokeWidth(dlr.link.Width)
-		decoration.Refresh()
-	}
-}
-
-func (dlr *diagramLinkRenderer) BackgroundColor() color.Color {
-	return theme.BackgroundColor()
-}
-
-func (dlr *diagramLinkRenderer) Destroy() {
-}
-
 func (dlr *diagramLinkRenderer) Objects() []fyne.CanvasObject {
 	obj := []fyne.CanvasObject{
 		dlr.line,
@@ -243,4 +224,22 @@ func (dlr *diagramLinkRenderer) Objects() []fyne.CanvasObject {
 	}
 
 	return obj
+}
+
+func (dlr *diagramLinkRenderer) Refresh() {
+	for _, decoration := range dlr.link.SourceDecorations {
+		decoration.SetStrokeColor(dlr.link.LinkColor)
+		decoration.SetStrokeWidth(dlr.link.Width)
+		decoration.Refresh()
+	}
+	for _, decoration := range dlr.link.MidpointDecorations {
+		decoration.SetStrokeColor(dlr.link.LinkColor)
+		decoration.SetStrokeWidth(dlr.link.Width)
+		decoration.Refresh()
+	}
+	for _, decoration := range dlr.link.TargetDecorations {
+		decoration.SetStrokeColor(dlr.link.LinkColor)
+		decoration.SetStrokeWidth(dlr.link.Width)
+		decoration.Refresh()
+	}
 }

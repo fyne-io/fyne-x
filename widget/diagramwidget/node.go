@@ -12,16 +12,14 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// Validate that DiagramNode is a DiagramElement
+// Validate that DiagramNode implements DiagramElement and Tappable
 var _ DiagramElement = (*DiagramNode)(nil)
+var _ fyne.Tappable = (*DiagramNode)(nil)
 
 const (
 	// default inner size
 	defaultWidth  float32 = 50
 	defaultHeight float32 = 25
-
-	// default padding around the inner object in a node
-	defaultPadding float32 = 10
 )
 
 // DiagramNode represents a node in the diagram widget. It contains an inner
@@ -44,47 +42,43 @@ type DiagramNode struct {
 	BoxStrokeWidth float32
 	// BoxFill is the fill color of the node, the inner object will be
 	// drawn on top of this. Defaults to the DiagramTheme's BackgroundColor.
-	BoxFillColor color.Color
-	// BoxStrokeColor is the stroke color of the node rectangle. Defaults
-	// to DiagramTheme's ForegroundColor
-	BoxStrokeColor color.Color
-	// HandleColor is the color of node handle.
 	HandleColor color.Color
 	// HandleStrokeWidth is the stroke width of the node handle, defaults
 	// to 3.
 	HandleStroke float32
-	handles      map[string]*Handle
+	edgePad      *RectanglePad
 }
 
-func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject) *DiagramNode {
+func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) *DiagramNode {
 	dn := &DiagramNode{
 		InnerSize:      fyne.Size{Width: defaultWidth, Height: defaultHeight},
 		InnerObject:    obj,
 		Padding:        diagram.DiagramTheme.Size(theme.SizeNamePadding),
 		BoxStrokeWidth: 1,
-		BoxFillColor:   diagram.DiagramTheme.Color(theme.ColorNameBackground, diagram.ThemeVariant),
-		BoxStrokeColor: diagram.DiagramTheme.Color(theme.ColorNameForeground, diagram.ThemeVariant),
 		HandleColor:    diagram.DiagramTheme.Color(theme.ColorNameForeground, diagram.ThemeVariant),
 		HandleStroke:   3,
-		handles:        make(map[string]*Handle),
 	}
-	dn.diagramElement.diagram = diagram
+	dn.diagramElement.initialize(diagram, nodeID)
+	dn.edgePad = NewRectanglePad(dn)
+	dn.edgePad.Hide()
 	for _, handleKey := range []string{"upperLeft", "upperMiddle", "upperRight", "leftMiddle", "rightMiddle", "lowerLeft", "lowerMiddle", "lowerRight"} {
 		newHandle := NewHandle(dn)
 		dn.handles[handleKey] = newHandle
+		newHandle.Hide()
 	}
 	dn.ExtendBaseWidget(dn)
+	dn.diagram.Nodes[nodeID] = dn
 	return dn
 }
 
 func (dn *DiagramNode) CreateRenderer() fyne.WidgetRenderer {
 	dnr := diagramNodeRenderer{
 		node: dn,
-		box:  canvas.NewRectangle(dn.BoxStrokeColor),
+		box:  canvas.NewRectangle(dn.diagram.GetForegroundColor()),
 	}
 
 	dnr.box.StrokeWidth = dn.BoxStrokeWidth
-	dnr.box.FillColor = dn.BoxFillColor
+	dnr.box.FillColor = dn.diagram.GetBackgroundColor()
 
 	(&dnr).Refresh()
 
@@ -204,34 +198,40 @@ func (dn *DiagramNode) Center() fyne.Position {
 	return fyne.Position{X: float32(dn.R2Center().X), Y: float32(dn.R2Center().Y)}
 }
 
+func (dn *DiagramNode) Tapped(event *fyne.PointEvent) {
+	dn.diagram.DiagramElementTapped(dn, event)
+}
+
 // diagramNodeRenderer
 type diagramNodeRenderer struct {
 	node *DiagramNode
 	box  *canvas.Rectangle
 }
 
-func (r *diagramNodeRenderer) ApplyTheme(size fyne.Size) {
+func (dnr *diagramNodeRenderer) ApplyTheme(size fyne.Size) {
 }
 
-func (r *diagramNodeRenderer) BackgroundColor() color.Color {
-	return r.node.diagram.DiagramTheme.Color(theme.ColorNameBackground, r.node.diagram.ThemeVariant)
+func (dnr *diagramNodeRenderer) BackgroundColor() color.Color {
+	return dnr.node.diagram.DiagramTheme.Color(theme.ColorNameBackground, dnr.node.diagram.ThemeVariant)
 }
 
-func (r *diagramNodeRenderer) Destroy() {
+func (dnr *diagramNodeRenderer) Destroy() {
 }
 
-func (r *diagramNodeRenderer) MinSize() fyne.Size {
+func (dnr *diagramNodeRenderer) MinSize() fyne.Size {
 	// space for the inner widget, plus padding on all sides.
-	inner := r.node.effectiveInnerSize()
+	inner := dnr.node.effectiveInnerSize()
 	return fyne.Size{
-		Width:  inner.Width + float32(2*r.node.Padding),
-		Height: inner.Height + float32(2*r.node.Padding),
+		Width:  inner.Width + float32(2*dnr.node.Padding),
+		Height: inner.Height + float32(2*dnr.node.Padding),
 	}
 }
 
 func (dnr *diagramNodeRenderer) Layout(size fyne.Size) {
 	nodeSize := dnr.MinSize().Max(size)
 	dnr.node.Resize(nodeSize)
+	dnr.node.edgePad.Resize(nodeSize)
+	dnr.node.edgePad.Move(fyne.NewPos(0, 0))
 
 	dnr.node.InnerObject.Move(dnr.node.innerPos())
 	dnr.node.InnerObject.Resize(dnr.node.effectiveInnerSize())
@@ -266,6 +266,7 @@ func (dnr *diagramNodeRenderer) Layout(size fyne.Size) {
 func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
 	obj := make([]fyne.CanvasObject, 0)
 	obj = append(obj, dnr.box)
+	obj = append(obj, dnr.node.edgePad)
 	obj = append(obj, dnr.node.InnerObject)
 	for _, handle := range dnr.node.handles {
 		obj = append(obj, handle)
@@ -273,11 +274,12 @@ func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
 	return obj
 }
 
-func (r *diagramNodeRenderer) Refresh() {
-	r.box.StrokeWidth = r.node.BoxStrokeWidth
-	r.box.FillColor = r.node.BoxFillColor
-	r.box.StrokeColor = r.node.BoxStrokeColor
-	for _, e := range r.node.diagram.GetEdges(r.node) {
+func (dnr *diagramNodeRenderer) Refresh() {
+	dnr.box.StrokeWidth = dnr.node.BoxStrokeWidth
+	dnr.box.FillColor = color.Transparent
+	dnr.box.StrokeColor = dnr.node.diagram.GetForegroundColor()
+	for _, e := range dnr.node.diagram.GetEdges(dnr.node) {
 		e.Refresh()
 	}
+	dnr.node.edgePad.Refresh()
 }

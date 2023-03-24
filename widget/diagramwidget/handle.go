@@ -2,19 +2,16 @@ package diagramwidget
 
 import (
 	"image/color"
-	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
-// draggable is used to verify that objects implement the Draggable interface. An assignment to
-// draggable will fail at compile time if the interface is not fully implemented.
-var draggable fyne.Draggable
-var hoverable desktop.Hoverable
+// Validate implementation of Draggable and Hoverable
+var _ fyne.Draggable = (*Handle)(nil)
+var _ desktop.Hoverable = (*Handle)(nil)
 
 var defaultHandleSize float32 = 10.0
 
@@ -29,9 +26,6 @@ func NewHandle(diagramElement DiagramElement) *Handle {
 		de:         diagramElement,
 		handleSize: defaultHandleSize,
 	}
-	// This assignment verifies that handle fully implements the Draggable interface
-	draggable = handle
-	hoverable = handle
 	handle.BaseWidget.ExtendBaseWidget(handle)
 	return handle
 }
@@ -41,6 +35,7 @@ func (h *Handle) CreateRenderer() fyne.WidgetRenderer {
 		handle: h,
 		rect:   canvas.NewRectangle(h.getStrokeColor()),
 	}
+	hr.rect.FillColor = color.Transparent
 	hr.Refresh()
 	ForceRefresh()
 	return hr
@@ -48,7 +43,6 @@ func (h *Handle) CreateRenderer() fyne.WidgetRenderer {
 
 func (h *Handle) Dragged(event *fyne.DragEvent) {
 	h.de.handleDragged(h, event)
-	log.Print("Handle dragged")
 }
 
 func (h *Handle) DragEnd() {
@@ -56,8 +50,7 @@ func (h *Handle) DragEnd() {
 }
 
 func (h *Handle) getStrokeColor() color.Color {
-	variant := h.de.GetDiagram().ThemeVariant
-	return h.de.GetDiagram().DiagramTheme.Color(theme.ColorNameForeground, variant)
+	return h.de.GetDiagram().GetForegroundColor()
 }
 
 func (h *Handle) getStrokeWidth() float32 {
@@ -65,17 +58,14 @@ func (h *Handle) getStrokeWidth() float32 {
 }
 
 func (h *Handle) MouseIn(*desktop.MouseEvent) {
-	log.Print("Mouse in handle")
 }
 
 // MouseMoved is a hook that is called if the mouse pointer moved over the element.
 func (h *Handle) MouseMoved(*desktop.MouseEvent) {
-	log.Print("Mouse moved in handle")
 }
 
 // MouseOut is a hook that is called if the mouse pointer leaves the element.
 func (h *Handle) MouseOut() {
-	log.Print("Mouse out of handle")
 }
 
 func (h *Handle) Move(position fyne.Position) {
@@ -111,6 +101,7 @@ func (hr *handleRenderer) Objects() []fyne.CanvasObject {
 
 func (hr *handleRenderer) Refresh() {
 	hr.rect.StrokeColor = hr.handle.getStrokeColor()
+	hr.rect.FillColor = color.Transparent
 	hr.rect.StrokeWidth = hr.handle.getStrokeWidth()
 	ForceRefresh()
 }

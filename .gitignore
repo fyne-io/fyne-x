@@ -40,3 +40,4 @@ Session.vim
 tags
 # Persistent undo
 [._]*.un~
+cmd/diagramdemo/__debug_bin.exe
