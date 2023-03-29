@@ -3,6 +3,8 @@ package diagramwidget
 import (
 	"image/color"
 
+	"fyne.io/x/fyne/widget/diagramwidget/geometry/r2"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -19,6 +21,8 @@ type ConnectionPad interface {
 	fyne.Widget
 	desktop.Hoverable
 	GetPadOwner() DiagramElement
+	GetCenter() fyne.Position
+	GetConnectionPoint(referencePoint fyne.Position) fyne.Position
 }
 
 type connectionPad struct {
@@ -57,6 +61,15 @@ func (pp *PointPad) CreateRenderer() fyne.WidgetRenderer {
 	ppr.l1.StrokeWidth = padLineWidth
 	ppr.l2.StrokeWidth = padLineWidth
 	return ppr
+}
+
+// GetCenter returns the position in diagram coordinates
+func (pp *PointPad) GetCenter() fyne.Position {
+	return pp.padOwner.Position().Add(pp.Position())
+}
+
+func (pp *PointPad) GetConnectionPoint(referencePoint fyne.Position) fyne.Position {
+	return pp.GetCenter()
 }
 
 func (pp *PointPad) MouseIn(event *desktop.MouseEvent) {
@@ -118,6 +131,8 @@ var _ ConnectionPad = (*RectanglePad)(nil)
 type RectanglePad struct {
 	widget.BaseWidget
 	connectionPad
+	// box is the pad shape in diagram coordinates
+	// box r2.Box
 }
 
 func NewRectanglePad(padOwner DiagramElement) *RectanglePad {
@@ -135,6 +150,33 @@ func (rp *RectanglePad) CreateRenderer() fyne.WidgetRenderer {
 	// rpr.rect.FillColor = color.Transparent
 	rpr.rect.StrokeWidth = padLineWidth
 	return rpr
+}
+
+// GetCenter() returns the center of the pad in the diagram's coordinate system
+func (rp *RectanglePad) GetCenter() fyne.Position {
+	box := rp.makeBox()
+	r2Center := box.Center()
+	return fyne.NewPos(float32(r2Center.X), float32(r2Center.Y))
+}
+
+func (rp *RectanglePad) GetConnectionPoint(referencePoint fyne.Position) fyne.Position {
+	box := rp.makeBox()
+	r2ReferencePoint := r2.MakeVec2(float64(referencePoint.X), float64(referencePoint.Y))
+	linkLine := r2.MakeLineFromEndpoints(box.Center(), r2ReferencePoint)
+	r2Intersection, _ := box.Intersect(linkLine)
+	return fyne.NewPos(float32(r2Intersection.X), float32(r2Intersection.Y))
+}
+
+// makeBox returns an r2 box representing the rectangle pad's position and size in the
+// diagram's coorinate system
+func (rp *RectanglePad) makeBox() r2.Box {
+	diagramCoordinatePosition := rp.padOwner.Position().Add(rp.Position())
+	r2Position := r2.V2(float64(diagramCoordinatePosition.X), float64(diagramCoordinatePosition.Y))
+	s := r2.V2(
+		float64(rp.Size().Width),
+		float64(rp.Size().Height),
+	)
+	return r2.MakeBox(r2Position, s)
 }
 
 func (rp *RectanglePad) MouseIn(event *desktop.MouseEvent) {
@@ -160,8 +202,9 @@ func (rpr *rectanglePadRenderer) Destroy() {
 }
 
 func (rpr *rectanglePadRenderer) Layout(size fyne.Size) {
-	rpr.rp.Resize(rpr.rp.padOwner.Size())
-	rpr.rect.Resize(rpr.rp.padOwner.Size())
+	padOwnerSize := rpr.rp.padOwner.Size()
+	rpr.rp.Resize(padOwnerSize)
+	rpr.rect.Resize(padOwnerSize)
 }
 
 func (rpr *rectanglePadRenderer) MinSize() fyne.Size {
@@ -179,5 +222,5 @@ func (rpr *rectanglePadRenderer) Refresh() {
 	rpr.rect.StrokeColor = rpr.rp.padOwner.GetDiagram().GetForegroundColor()
 	rpr.rect.FillColor = color.Transparent
 	rpr.rect.StrokeWidth = padLineWidth
-	ForceRefresh()
+	ForceRepaint()
 }

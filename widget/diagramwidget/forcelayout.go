@@ -9,10 +9,10 @@ import (
 )
 
 // adjacent returns true if there is at least one edge between n1 and n2
-func (g *DiagramWidget) adjacent(n1, n2 *DiagramNode) bool {
+func (dw *DiagramWidget) adjacent(n1, n2 *DiagramNode) bool {
 	// TODO: expensive, may be worth caching?
-	for _, e := range g.Links {
-		if ((e.Origin == n1) && (e.Target == n2)) || ((e.Origin == n2) && (e.Target == n1)) {
+	for _, e := range dw.Links {
+		if ((e.sourcePad.GetPadOwner() == n1) && (e.targetPad.GetPadOwner() == n2)) || ((e.sourcePad.GetPadOwner() == n2) && (e.targetPad.GetPadOwner() == n1)) {
 			return true
 		}
 	}
@@ -27,14 +27,14 @@ func calculateDistance(n1, n2 *DiagramNode) float64 {
 // calculateForce calculates the force between the given pair of nodes.
 //
 // The force is calculated at n1.
-func (g *DiagramWidget) calculateForce(n1, n2 *DiagramNode, targetLength float64) r2.Vec2 {
+func (dw *DiagramWidget) calculateForce(n1, n2 *DiagramNode, targetLength float64) r2.Vec2 {
 	// spring constant for linear spring
 	k := float64(0.01)
 	d := calculateDistance(n1, n2)
 
 	v := n2.R2Center().Add(n1.R2Center().Scale(-1)).Unit().Scale(-1)
 
-	if g.adjacent(n1, n2) {
+	if dw.adjacent(n1, n2) {
 		// adjacent nodes act like springs, and want to be close to the given
 		// length.
 
@@ -61,24 +61,24 @@ func (g *DiagramWidget) calculateForce(n1, n2 *DiagramNode, targetLength float64
 
 // StepForceLayout calculates one step of force directed graph layout, with
 // the target distance between adjacent nodes being targetLength.
-func (g *DiagramWidget) StepForceLayout(targetLength float64) {
+func (dw *DiagramWidget) StepForceLayout(targetLength float64) {
 	deltas := make(map[string]r2.Vec2)
 
 	// calculate all the deltas from the current state
-	for k, nk := range g.Nodes {
+	for k, nk := range dw.Nodes {
 		deltas[k] = r2.V2(0, 0)
 
-		for j, nj := range g.Nodes {
+		for j, nj := range dw.Nodes {
 			if j == k {
 				continue
 			}
-			deltas[k] = deltas[k].Add(g.calculateForce(nk, nj, targetLength))
+			deltas[k] = deltas[k].Add(dw.calculateForce(nk, nj, targetLength))
 		}
 	}
 
 	// flip into current state
-	for k, nk := range g.Nodes {
-		nk.Displace(fyne.Position{X: float32(deltas[k].X), Y: float32(deltas[k].Y)})
+	for k, nk := range dw.Nodes {
+		dw.DisplaceNode(nk, fyne.Position{X: float32(deltas[k].X), Y: float32(deltas[k].Y)})
 	}
 
 }

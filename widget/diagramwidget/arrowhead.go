@@ -1,4 +1,4 @@
-package decoration
+package diagramwidget
 
 import (
 	"image/color"
@@ -34,6 +34,7 @@ const (
 //	        Right
 type Arrowhead struct {
 	widget.BaseWidget
+	link *DiagramLink
 	// BaseAngle is used to define direction in which the arrowhead points
 	// Base fyne.Position
 	BaseAngle float64
@@ -48,8 +49,8 @@ type Arrowhead struct {
 	// Length is the length of the two "tails" that intersect at the tip.
 	Length int
 	// central *canvas.Line
-	left    *canvas.Line
-	right   *canvas.Line
+	// left    *canvas.Line
+	// right   *canvas.Line
 	visible bool
 }
 
@@ -69,8 +70,8 @@ func NewArrowhead() *Arrowhead {
 func (a *Arrowhead) CreateRenderer() fyne.WidgetRenderer {
 	ar := arrowheadRenderer{
 		arrowhead: a,
-		left:      canvas.NewLine(theme.ForegroundColor()),
-		right:     canvas.NewLine(theme.ForegroundColor()),
+		left:      canvas.NewLine(a.link.LinkColor),
+		right:     canvas.NewLine(a.link.LinkColor),
 	}
 	return &ar
 }
@@ -112,6 +113,10 @@ func (a *Arrowhead) RightPoint() fyne.Position {
 		Y: -float32(float64(a.Length) * math.Sin(rightAngle)),
 	}
 	return rightPosition
+}
+
+func (a *Arrowhead) setLink(link *DiagramLink) {
+	a.link = link
 }
 
 func (a *Arrowhead) SetStrokeColor(strokeColor color.Color) {

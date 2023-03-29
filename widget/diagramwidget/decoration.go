@@ -1,4 +1,4 @@
-package decoration
+package diagramwidget
 
 import (
 	"image/color"
@@ -20,6 +20,7 @@ import (
 // so that it can adjust the position of the next decoration appropriately.
 type Decoration interface {
 	fyne.Widget
+	setLink(link *DiagramLink)
 	SetStrokeColor(color color.Color)
 	SetStrokeWidth(width float32)
 	// SetReferenceAngle sets the angle of the reference axis

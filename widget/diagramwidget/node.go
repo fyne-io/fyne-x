@@ -31,9 +31,9 @@ type DiagramNode struct {
 	// InnerSize stores size that the inner object should have, may not
 	// be respected if not large enough for the object.
 	InnerSize fyne.Size
-	// InnerObject is the canvas object that should be drawn inside of
+	// innerObject is the canvas object that should be drawn inside of
 	// the diagram node.
-	InnerObject fyne.CanvasObject
+	innerObject fyne.CanvasObject
 	// Padding is the distance between the inner object's drawing area
 	// and the box.
 	Padding float32
@@ -52,7 +52,7 @@ type DiagramNode struct {
 func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) *DiagramNode {
 	dn := &DiagramNode{
 		InnerSize:      fyne.Size{Width: defaultWidth, Height: defaultHeight},
-		InnerObject:    obj,
+		innerObject:    obj,
 		Padding:        diagram.DiagramTheme.Size(theme.SizeNamePadding),
 		BoxStrokeWidth: 1,
 		HandleColor:    diagram.DiagramTheme.Color(theme.ColorNameForeground, diagram.ThemeVariant),
@@ -67,7 +67,8 @@ func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string
 		newHandle.Hide()
 	}
 	dn.ExtendBaseWidget(dn)
-	dn.diagram.Nodes[nodeID] = dn
+	dn.diagram.AddNode(dn)
+	dn.Refresh()
 	return dn
 }
 
@@ -85,25 +86,26 @@ func (dn *DiagramNode) CreateRenderer() fyne.WidgetRenderer {
 	return &dnr
 }
 
-func (dn *DiagramNode) Cursor() desktop.Cursor {
-	return desktop.DefaultCursor
+func (dn *DiagramNode) Center() fyne.Position {
+	return fyne.Position{X: float32(dn.R2Center().X), Y: float32(dn.R2Center().Y)}
 }
 
-func (dn *DiagramNode) Displace(delta fyne.Position) {
-	dn.Move(dn.Position().Add(delta))
+func (dn *DiagramNode) Cursor() desktop.Cursor {
+	return desktop.DefaultCursor
 }
 
 func (dn *DiagramNode) DragEnd() {
 }
 
 func (dn *DiagramNode) Dragged(event *fyne.DragEvent) {
-	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
-	dn.Displace(delta)
-	ForceRefresh()
+	dn.diagram.DiagramNodeDragged(dn, event)
 }
 
 func (dn *DiagramNode) effectiveInnerSize() fyne.Size {
-	return dn.InnerSize.Max(dn.InnerObject.MinSize())
+	if dn.innerObject == nil {
+		return dn.InnerSize
+	}
+	return dn.InnerSize.Max(dn.innerObject.MinSize())
 }
 
 func (dn *DiagramNode) findKeyForHandle(handle *Handle) string {
@@ -113,6 +115,10 @@ func (dn *DiagramNode) findKeyForHandle(handle *Handle) string {
 		}
 	}
 	return ""
+}
+
+func (dn *DiagramNode) GetEdgePad() ConnectionPad {
+	return dn.edgePad
 }
 
 func (dn *DiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent) {
@@ -150,10 +156,10 @@ func (dn *DiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent) {
 	}
 	dn.Move(dn.Position().Add(positionChange))
 	trialInnerSize := dn.InnerSize.Add(sizeChange)
-	dn.InnerSize = dn.InnerObject.MinSize().Max(trialInnerSize)
+	dn.InnerSize = dn.innerObject.MinSize().Max(trialInnerSize)
 	dn.Resize(dn.Size().Add(sizeChange))
 	dn.Refresh()
-	ForceRefresh()
+	ForceRepaint()
 }
 
 func (dn *DiagramNode) innerPos() fyne.Position {
@@ -165,19 +171,20 @@ func (dn *DiagramNode) innerPos() fyne.Position {
 
 func (dn *DiagramNode) MouseIn(event *desktop.MouseEvent) {
 	dn.HandleColor = dn.diagram.DiagramTheme.Color(theme.ColorNameFocus, dn.diagram.ThemeVariant)
-	ForceRefresh()
+	ForceRepaint()
 }
 
 func (dn *DiagramNode) MouseOut() {
 	dn.HandleColor = dn.diagram.DiagramTheme.Color(theme.ColorNameForeground, dn.diagram.ThemeVariant)
-	ForceRefresh()
+	ForceRepaint()
 }
 
 func (dn *DiagramNode) MouseMoved(event *desktop.MouseEvent) {
 }
 
-func (dn *DiagramNode) R2Position() r2.Vec2 {
-	return r2.V2(float64(dn.Position().X), float64(dn.Position().Y))
+func (dn *DiagramNode) Move(position fyne.Position) {
+	dn.BaseWidget.Move(position)
+	dn.Refresh()
 }
 
 func (dn *DiagramNode) R2Box() r2.Box {
@@ -194,8 +201,14 @@ func (dn *DiagramNode) R2Center() r2.Vec2 {
 	return dn.R2Box().Center()
 }
 
-func (dn *DiagramNode) Center() fyne.Position {
-	return fyne.Position{X: float32(dn.R2Center().X), Y: float32(dn.R2Center().Y)}
+func (dn *DiagramNode) R2Position() r2.Vec2 {
+	return r2.V2(float64(dn.Position().X), float64(dn.Position().Y))
+}
+
+func (dn *DiagramNode) SetInnerObject(obj fyne.CanvasObject) {
+	dn.innerObject = obj
+	dn.Refresh()
+	dn.diagram.refreshDependentLinks(dn)
 }
 
 func (dn *DiagramNode) Tapped(event *fyne.PointEvent) {
@@ -228,13 +241,29 @@ func (dnr *diagramNodeRenderer) MinSize() fyne.Size {
 }
 
 func (dnr *diagramNodeRenderer) Layout(size fyne.Size) {
-	nodeSize := dnr.MinSize().Max(size)
+}
+
+func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
+	obj := make([]fyne.CanvasObject, 0)
+	obj = append(obj, dnr.box)
+	obj = append(obj, dnr.node.edgePad)
+	obj = append(obj, dnr.node.innerObject)
+	for _, handle := range dnr.node.handles {
+		obj = append(obj, handle)
+	}
+	return obj
+}
+
+func (dnr *diagramNodeRenderer) Refresh() {
+	nodeSize := dnr.MinSize()
 	dnr.node.Resize(nodeSize)
 	dnr.node.edgePad.Resize(nodeSize)
 	dnr.node.edgePad.Move(fyne.NewPos(0, 0))
 
-	dnr.node.InnerObject.Move(dnr.node.innerPos())
-	dnr.node.InnerObject.Resize(dnr.node.effectiveInnerSize())
+	if dnr.node.innerObject != nil {
+		dnr.node.innerObject.Move(dnr.node.innerPos())
+		dnr.node.innerObject.Resize(dnr.node.effectiveInnerSize())
+	}
 
 	dnr.box.Resize(nodeSize)
 
@@ -261,25 +290,11 @@ func (dnr *diagramNodeRenderer) Layout(size fyne.Size) {
 			handle.Move(fyne.Position{X: width, Y: height})
 		}
 	}
-}
 
-func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
-	obj := make([]fyne.CanvasObject, 0)
-	obj = append(obj, dnr.box)
-	obj = append(obj, dnr.node.edgePad)
-	obj = append(obj, dnr.node.InnerObject)
-	for _, handle := range dnr.node.handles {
-		obj = append(obj, handle)
-	}
-	return obj
-}
-
-func (dnr *diagramNodeRenderer) Refresh() {
 	dnr.box.StrokeWidth = dnr.node.BoxStrokeWidth
 	dnr.box.FillColor = color.Transparent
 	dnr.box.StrokeColor = dnr.node.diagram.GetForegroundColor()
-	for _, e := range dnr.node.diagram.GetEdges(dnr.node) {
-		e.Refresh()
-	}
 	dnr.node.edgePad.Refresh()
+	dnr.node.diagram.refreshDependentLinks(dnr.node)
+	ForceRepaint()
 }

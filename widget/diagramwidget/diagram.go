@@ -12,12 +12,17 @@ import (
 
 var Globaldiagram *DiagramWidget
 
-func ForceRefresh() {
+func ForceRepaint() {
 	Globaldiagram.DummyBox.Refresh()
 }
 
 // Verify that interfaces are fully implemented
 var _ fyne.Tappable = (*DiagramWidget)(nil)
+
+type linkPinPair struct {
+	link *DiagramLink
+	pin  *LinkPoint
+}
 
 type DiagramWidget struct {
 	widget.BaseWidget
@@ -35,39 +40,68 @@ type DiagramWidget struct {
 	// up, defaults to 800 x 600
 	DesiredSize fyne.Size
 
-	Nodes     map[string]*DiagramNode
-	Links     map[string]*DiagramLink
-	selection map[string]DiagramElement
+	Nodes                          map[string]*DiagramNode
+	Links                          map[string]*DiagramLink
+	selection                      map[string]DiagramElement
+	diagramElementLinkDependencies map[string][]linkPinPair
 
 	// TODO Remove DummyBox when fyne rendering issue is resolved
 	DummyBox *canvas.Rectangle
 }
 
 func NewDiagramWidget(id string) *DiagramWidget {
-	d := &DiagramWidget{
-		ID:           id,
-		DiagramTheme: fyne.CurrentApp().Settings().Theme(),
-		ThemeVariant: fyne.CurrentApp().Settings().ThemeVariant(),
-		DesiredSize:  fyne.Size{Width: 800, Height: 600},
-		Offset:       fyne.Position{X: 0, Y: 0},
-		Nodes:        map[string]*DiagramNode{},
-		Links:        map[string]*DiagramLink{},
-		DummyBox:     canvas.NewRectangle(color.Transparent),
-		selection:    map[string]DiagramElement{},
+	dw := &DiagramWidget{
+		ID:                             id,
+		DiagramTheme:                   fyne.CurrentApp().Settings().Theme(),
+		ThemeVariant:                   fyne.CurrentApp().Settings().ThemeVariant(),
+		DesiredSize:                    fyne.Size{Width: 800, Height: 600},
+		Offset:                         fyne.Position{X: 0, Y: 0},
+		Nodes:                          map[string]*DiagramNode{},
+		Links:                          map[string]*DiagramLink{},
+		DummyBox:                       canvas.NewRectangle(color.Transparent),
+		selection:                      map[string]DiagramElement{},
+		diagramElementLinkDependencies: map[string][]linkPinPair{},
 	}
-	d.DummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
-	d.DummyBox.Move(fyne.Position{X: 50, Y: 50})
+	dw.DummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
+	dw.DummyBox.Move(fyne.Position{X: 50, Y: 50})
 
-	d.ExtendBaseWidget(d)
+	dw.ExtendBaseWidget(dw)
 
-	return d
+	return dw
+}
+
+func (dw *DiagramWidget) AddLink(link *DiagramLink) {
+	dw.Links[link.id] = link
+	link.Refresh()
+	// TODO add logic to rezise diagram if necessary
+}
+
+func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *DiagramLink, pin *LinkPoint) {
+	deID := diagramElement.GetDiagramElementID()
+	currentDependencies := dw.diagramElementLinkDependencies[deID]
+	if currentDependencies == nil {
+		dw.diagramElementLinkDependencies[deID] = []linkPinPair{{link, pin}}
+	} else {
+		for _, pair := range currentDependencies {
+			if pair.link == link && pair.pin == pin {
+				// it's already there
+				return
+			}
+		}
+		dw.diagramElementLinkDependencies[deID] = append(currentDependencies, linkPinPair{link, pin})
+	}
+}
+
+func (dw *DiagramWidget) AddNode(node *DiagramNode) {
+	dw.Nodes[node.id] = node
+	node.Refresh()
+	// TODO add logic to rezise diagram if necessary
 }
 
 func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 	r := diagramWidgetRenderer{
 		diagramWidget: dw,
 	}
-
 	return &r
 }
 
@@ -86,7 +120,7 @@ func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.Poi
 	if !dw.IsSelected(de) {
 		dw.addElementToSelection(de)
 	}
-	ForceRefresh()
+	ForceRepaint()
 }
 
 func (dw *DiagramWidget) DragEnd() {
@@ -105,26 +139,24 @@ func (dw *DiagramWidget) GetHoverColor() color.Color {
 	return dw.DiagramTheme.Color(theme.ColorNameHover, dw.ThemeVariant)
 }
 
+func (dw *DiagramWidget) DiagramNodeDragged(node *DiagramNode, event *fyne.DragEvent) {
+	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
+	dw.DisplaceNode(node, delta)
+	ForceRepaint()
+}
+
+func (dw *DiagramWidget) DisplaceNode(node *DiagramNode, delta fyne.Position) {
+	node.Move(node.Position().Add(delta))
+	dw.refreshDependentLinks(node)
+	ForceRepaint()
+}
+
 func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	for _, n := range dw.Nodes {
-		n.Displace(delta)
+		dw.DisplaceNode(n, delta)
 	}
 	dw.Refresh()
-}
-
-func (dw *DiagramWidget) GetEdges(n *DiagramNode) []*DiagramLink {
-	links := []*DiagramLink{}
-
-	for _, link := range dw.Links {
-		if link.Origin == n {
-			links = append(links, link)
-		} else if link.Target == n {
-			links = append(links, link)
-		}
-	}
-
-	return links
 }
 
 func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
@@ -145,11 +177,32 @@ func (dw *DiagramWidget) removeElementFromSelection(de DiagramElement) {
 	de.HideHandles()
 }
 
+func (dw *DiagramWidget) removeLinkDependency(diagramElement DiagramElement, link *DiagramLink, pin *LinkPoint) {
+	deID := diagramElement.GetDiagramElementID()
+	currentDependencies := dw.diagramElementLinkDependencies[deID]
+	if currentDependencies == nil {
+		return
+	}
+	for i, pair := range currentDependencies {
+		if pair.link == link && pair.pin == pin {
+			dw.diagramElementLinkDependencies[deID] = append(currentDependencies[:i], currentDependencies[i+1:]...)
+			return
+		}
+	}
+}
+
+func (dw *DiagramWidget) refreshDependentLinks(de DiagramElement) {
+	dependencies := dw.diagramElementLinkDependencies[de.GetDiagramElementID()]
+	for _, pair := range dependencies {
+		pair.link.Refresh()
+	}
+}
+
 func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
 	for _, de := range dw.selection {
 		dw.removeElementFromSelection(de)
 	}
-	ForceRefresh()
+	ForceRepaint()
 }
 
 // diagramWidgetRenderer

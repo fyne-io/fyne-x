@@ -2,7 +2,6 @@ package diagramwidget
 
 import (
 	"image/color"
-	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -52,29 +51,23 @@ func (at *AnchoredText) Displace(delta fyne.Position) {
 }
 
 func (at *AnchoredText) DragEnd() {
-	log.Printf("DragEnd AnchoredText %p", at)
 	at.Refresh()
 }
 
 func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
-	log.Printf("Ancored Text Dragged %p", at)
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
 	at.Refresh()
-	ForceRefresh()
+	ForceRepaint()
 }
 
 func (at *AnchoredText) MinSize() fyne.Size {
 	minSize := fyne.Size{Height: 25, Width: 50}
-	// log.Printf("AnchoredText size: %v pointer: %p", minSize, at)
 	return minSize
-	// log.Printf("AnchoredText size: %v pointer: %p", at.textObject.Size(), at)
-	// return at.textObject.Size()
 }
 
 func (at *AnchoredText) MouseIn(event *desktop.MouseEvent) {
 	// at.textObject.TextStyle.Bold = true
-	log.Printf("MouseIn Anchored Text %p", at)
 	at.Refresh()
 }
 
@@ -84,7 +77,6 @@ func (at *AnchoredText) MouseMoved(event *desktop.MouseEvent) {
 
 func (at *AnchoredText) MouseOut() {
 	// at.textObject.TextStyle.Bold = false
-	log.Printf("MouseOut Anchored Text %p", at)
 	at.Refresh()
 }
 
