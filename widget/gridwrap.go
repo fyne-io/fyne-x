@@ -14,20 +14,20 @@ import (
 )
 
 // Declare conformity with Widget interface.
-var _ fyne.Widget = (*GridWrapList)(nil)
+var _ fyne.Widget = (*GridWrap)(nil)
 
-// GridWrapListItemID is the ID of an individual item in the GridWrapList widget.
-type GridWrapListItemID int
+// GridWrapItemID is the ID of an individual item in the GridWrap widget.
+type GridWrapItemID int
 
-// GridWrapList is a widget with an API very similar to widget.List,
-// that lays out items in a wrapping grid similar to container.NewGridWrap.
+// GridWrap is a widget with an API very similar to widget.List,
+// that lays out items in a scrollable wrapping grid similar to container.NewGridWrap.
 // It caches and reuses widgets for performance.
-type GridWrapList struct {
+type GridWrap struct {
 	widget.BaseWidget
 
-	Length     func() int                                          `json:"-"`
-	CreateItem func() fyne.CanvasObject                            `json:"-"`
-	UpdateItem func(id GridWrapListItemID, item fyne.CanvasObject) `json:"-"`
+	Length     func() int                                      `json:"-"`
+	CreateItem func() fyne.CanvasObject                        `json:"-"`
+	UpdateItem func(id GridWrapItemID, item fyne.CanvasObject) `json:"-"`
 
 	scroller      *container.Scroll
 	itemMin       fyne.Size
@@ -35,20 +35,20 @@ type GridWrapList struct {
 	offsetUpdated func(fyne.Position)
 }
 
-// NewGridWrapList creates and returns a GridWrapList widget for displaying items in
+// NewGridWrap creates and returns a GridWrap widget for displaying items in
 // a wrapping grid layout with scrolling and caching for performance.
-func NewGridWrapList(length func() int, createItem func() fyne.CanvasObject, updateItem func(GridWrapListItemID, fyne.CanvasObject)) *GridWrapList {
-	gwList := &GridWrapList{BaseWidget: widget.BaseWidget{}, Length: length, CreateItem: createItem, UpdateItem: updateItem}
+func NewGridWrap(length func() int, createItem func() fyne.CanvasObject, updateItem func(GridWrapItemID, fyne.CanvasObject)) *GridWrap {
+	gwList := &GridWrap{BaseWidget: widget.BaseWidget{}, Length: length, CreateItem: createItem, UpdateItem: updateItem}
 	gwList.ExtendBaseWidget(gwList)
 	return gwList
 }
 
-// NewGridWrapListWithData creates a new GridWrapList widget that will display the contents of the provided data.
-func NewGridWrapListWithData(data binding.DataList, createItem func() fyne.CanvasObject, updateItem func(binding.DataItem, fyne.CanvasObject)) *GridWrapList {
-	gwList := NewGridWrapList(
+// NewGridWrapWithData creates a new GridWrap widget that will display the contents of the provided data.
+func NewGridWrapWithData(data binding.DataList, createItem func() fyne.CanvasObject, updateItem func(binding.DataItem, fyne.CanvasObject)) *GridWrap {
+	gwList := NewGridWrap(
 		data.Length,
 		createItem,
-		func(i GridWrapListItemID, o fyne.CanvasObject) {
+		func(i GridWrapItemID, o fyne.CanvasObject) {
 			item, err := data.GetItem(int(i))
 			if err != nil {
 				fyne.LogError(fmt.Sprintf("Error getting data item %d", i), err)
@@ -62,7 +62,7 @@ func NewGridWrapListWithData(data binding.DataList, createItem func() fyne.Canva
 }
 
 // CreateRenderer is a private method to Fyne which links this widget to its renderer.
-func (l *GridWrapList) CreateRenderer() fyne.WidgetRenderer {
+func (l *GridWrap) CreateRenderer() fyne.WidgetRenderer {
 	l.ExtendBaseWidget(l)
 
 	if f := l.CreateItem; f != nil {
@@ -70,28 +70,26 @@ func (l *GridWrapList) CreateRenderer() fyne.WidgetRenderer {
 			l.itemMin = f().MinSize()
 		}
 	}
-	layout := &fyne.Container{}
+	layout := &fyne.Container{Layout: newGridWrapLayout(l)}
 	l.scroller = container.NewVScroll(layout)
-	layout.Layout = newGridWrapListLayout(l)
 	layout.Resize(layout.MinSize())
-	objects := []fyne.CanvasObject{l.scroller}
-	lr := newGridWrapListRenderer(objects, l, l.scroller, layout)
-	return lr
+
+	return newGridWrapRenderer([]fyne.CanvasObject{l.scroller}, l, l.scroller, layout)
 }
 
 // MinSize returns the size that this widget should not shrink below.
-func (l *GridWrapList) MinSize() fyne.Size {
+func (l *GridWrap) MinSize() fyne.Size {
 	l.ExtendBaseWidget(l)
 
 	return l.BaseWidget.MinSize()
 }
 
-func (l *GridWrapList) scrollTo(id GridWrapListItemID) {
+func (l *GridWrap) scrollTo(id GridWrapItemID) {
 	if l.scroller == nil {
 		return
 	}
 	row := math.Floor(float64(id) / float64(l.getColCount()))
-	y := (float32(row) * l.itemMin.Height) + (float32(row) * theme.Padding())
+	y := float32(row)*l.itemMin.Height + float32(row)*theme.Padding()
 	if y < l.scroller.Offset.Y {
 		l.scroller.Offset.Y = y
 	} else if y+l.itemMin.Height > l.scroller.Offset.Y+l.scroller.Size().Height {
@@ -100,15 +98,15 @@ func (l *GridWrapList) scrollTo(id GridWrapListItemID) {
 	l.offsetUpdated(l.scroller.Offset)
 }
 
-// Resize is called when this GridWrapList should change size. We refresh to ensure invisible items are drawn.
-func (l *GridWrapList) Resize(s fyne.Size) {
+// Resize is called when this GridWrap should change size. We refresh to ensure invisible items are drawn.
+func (l *GridWrap) Resize(s fyne.Size) {
 	l.BaseWidget.Resize(s)
 	l.offsetUpdated(l.scroller.Offset)
-	l.scroller.Content.(*fyne.Container).Layout.(*gridWrapListLayout).updateList(true)
+	l.scroller.Content.(*fyne.Container).Layout.(*GridWrapLayout).updateList(true)
 }
 
 // ScrollTo scrolls to the item represented by id
-func (l *GridWrapList) ScrollTo(id GridWrapListItemID) {
+func (l *GridWrap) ScrollTo(id GridWrapItemID) {
 	length := 0
 	if f := l.Length; f != nil {
 		length = f()
@@ -121,7 +119,7 @@ func (l *GridWrapList) ScrollTo(id GridWrapListItemID) {
 }
 
 // ScrollToBottom scrolls to the end of the list
-func (l *GridWrapList) ScrollToBottom() {
+func (l *GridWrap) ScrollToBottom() {
 	length := 0
 	if f := l.Length; f != nil {
 		length = f()
@@ -129,96 +127,92 @@ func (l *GridWrapList) ScrollToBottom() {
 	if length > 0 {
 		length--
 	}
-	l.scrollTo(GridWrapListItemID(length))
+	l.scrollTo(GridWrapItemID(length))
 	l.Refresh()
 }
 
 // ScrollToTop scrolls to the start of the list
-func (l *GridWrapList) ScrollToTop() {
+func (l *GridWrap) ScrollToTop() {
 	l.scrollTo(0)
 	l.Refresh()
 }
 
 // ScrollToOffset scrolls the list to the given offset position
-func (l *GridWrapList) ScrollToOffset(offset float32) {
+func (l *GridWrap) ScrollToOffset(offset float32) {
 	l.scroller.Offset.Y = offset
 	l.offsetUpdated(l.scroller.Offset)
 }
 
 // GetScrollOffset returns the current scroll offset position
-func (l *GridWrapList) GetScrollOffset() float32 {
+func (l *GridWrap) GetScrollOffset() float32 {
 	return l.offsetY
 }
 
 // Declare conformity with WidgetRenderer interface.
-var _ fyne.WidgetRenderer = (*gridWrapListRenderer)(nil)
+var _ fyne.WidgetRenderer = (*GridWrapRenderer)(nil)
 
-type gridWrapListRenderer struct {
+type GridWrapRenderer struct {
 	objects []fyne.CanvasObject
 
-	list     *GridWrapList
+	list     *GridWrap
 	scroller *container.Scroll
 	layout   *fyne.Container
 }
 
-func newGridWrapListRenderer(objects []fyne.CanvasObject, l *GridWrapList, scroller *container.Scroll, layout *fyne.Container) *gridWrapListRenderer {
-	lr := &gridWrapListRenderer{objects: objects, list: l, scroller: scroller, layout: layout}
+func newGridWrapRenderer(objects []fyne.CanvasObject, l *GridWrap, scroller *container.Scroll, layout *fyne.Container) *GridWrapRenderer {
+	lr := &GridWrapRenderer{objects: objects, list: l, scroller: scroller, layout: layout}
 	lr.scroller.OnScrolled = l.offsetUpdated
 	return lr
 }
 
-func (l *gridWrapListRenderer) Layout(size fyne.Size) {
+func (l *GridWrapRenderer) Layout(size fyne.Size) {
 	l.scroller.Resize(size)
 }
 
-func (l *gridWrapListRenderer) MinSize() fyne.Size {
+func (l *GridWrapRenderer) MinSize() fyne.Size {
 	return l.scroller.MinSize().Max(l.list.itemMin)
 }
 
-func (l *gridWrapListRenderer) Refresh() {
+func (l *GridWrapRenderer) Refresh() {
 	if f := l.list.CreateItem; f != nil {
 		l.list.itemMin = f().MinSize()
 	}
 	l.Layout(l.list.Size())
 	l.scroller.Refresh()
-	l.layout.Layout.(*gridWrapListLayout).updateList(true)
+	l.layout.Layout.(*GridWrapLayout).updateList(true)
 	canvas.Refresh(l.list)
 }
 
-func (l *gridWrapListRenderer) Destroy() {
+func (l *GridWrapRenderer) Destroy() {
 }
 
-func (l *gridWrapListRenderer) Objects() []fyne.CanvasObject {
+func (l *GridWrapRenderer) Objects() []fyne.CanvasObject {
 	return l.objects
 }
 
-func (r *gridWrapListRenderer) SetObjects(objects []fyne.CanvasObject) {
-	r.objects = objects
-}
-
 // Declare conformity with Layout interface.
-var _ fyne.Layout = (*gridWrapListLayout)(nil)
+var _ fyne.Layout = (*GridWrapLayout)(nil)
 
-type gridWrapListLayout struct {
-	list     *GridWrapList
+type GridWrapLayout struct {
+	list     *GridWrap
 	children []fyne.CanvasObject
 
 	itemPool   *syncPool
-	visible    map[GridWrapListItemID]fyne.CanvasObject
+	visible    map[GridWrapItemID]fyne.CanvasObject
 	renderLock sync.Mutex
 }
 
-func newGridWrapListLayout(list *GridWrapList) fyne.Layout {
-	l := &gridWrapListLayout{list: list, itemPool: &syncPool{}, visible: make(map[GridWrapListItemID]fyne.CanvasObject)}
+func newGridWrapLayout(list *GridWrap) fyne.Layout {
+	l := &GridWrapLayout{list: list, itemPool: &syncPool{}, visible: make(map[GridWrapItemID]fyne.CanvasObject)}
 	list.offsetUpdated = l.offsetUpdated
 	return l
 }
 
-func (l *gridWrapListLayout) Layout([]fyne.CanvasObject, fyne.Size) {
+func (l *GridWrapLayout) Layout([]fyne.CanvasObject, fyne.Size) {
 	l.updateList(true)
 }
 
-func (l *gridWrapListLayout) MinSize([]fyne.CanvasObject) fyne.Size {
+func (l *GridWrapLayout) MinSize([]fyne.CanvasObject) fyne.Size {
 	if lenF := l.list.Length; lenF != nil {
 		cols := l.list.getColCount()
 		rows := float32(math.Ceil(float64(lenF()) / float64(cols)))
@@ -228,7 +222,7 @@ func (l *gridWrapListLayout) MinSize([]fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(0, 0)
 }
 
-func (l *gridWrapListLayout) getItem() fyne.CanvasObject {
+func (l *GridWrapLayout) getItem() fyne.CanvasObject {
 	item := l.itemPool.Obtain()
 	if item == nil {
 		if f := l.list.CreateItem; f != nil {
@@ -238,7 +232,7 @@ func (l *gridWrapListLayout) getItem() fyne.CanvasObject {
 	return item
 }
 
-func (l *gridWrapListLayout) offsetUpdated(pos fyne.Position) {
+func (l *GridWrapLayout) offsetUpdated(pos fyne.Position) {
 	if l.list.offsetY == pos.Y {
 		return
 	}
@@ -246,13 +240,13 @@ func (l *gridWrapListLayout) offsetUpdated(pos fyne.Position) {
 	l.updateList(false)
 }
 
-func (l *gridWrapListLayout) setupListItem(li fyne.CanvasObject, id GridWrapListItemID) {
+func (l *GridWrapLayout) setupListItem(li fyne.CanvasObject, id GridWrapItemID) {
 	if f := l.list.UpdateItem; f != nil {
 		f(id, li)
 	}
 }
 
-func (l *GridWrapList) getColCount() int {
+func (l *GridWrap) getColCount() int {
 	colCount := 1
 	width := l.Size().Width
 	if width > l.itemMin.Width {
@@ -261,7 +255,7 @@ func (l *GridWrapList) getColCount() int {
 	return colCount
 }
 
-func (l *gridWrapListLayout) updateList(refresh bool) {
+func (l *GridWrapLayout) updateList(refresh bool) {
 	// code here is a mashup of listLayout.updateList and gridWrapLayout.Layout
 
 	l.renderLock.Lock()
@@ -276,16 +270,16 @@ func (l *gridWrapListLayout) updateList(refresh bool) {
 
 	offY := l.list.offsetY - float32(math.Mod(float64(l.list.offsetY), float64(l.list.itemMin.Height+theme.Padding())))
 	minRow := int(offY / (l.list.itemMin.Height + theme.Padding()))
-	minItem := GridWrapListItemID(minRow * colCount)
+	minItem := GridWrapItemID(minRow * colCount)
 	maxRow := int(math.Min(float64(minRow+visibleRowsCount), math.Ceil(float64(length)/float64(colCount))))
-	maxItem := GridWrapListItemID(math.Min(float64(maxRow*colCount), float64(length-1)))
+	maxItem := GridWrapItemID(math.Min(float64(maxRow*colCount), float64(length-1)))
 
 	if l.list.UpdateItem == nil {
-		fyne.LogError("Missing UpdateCell callback required for GridWrapList", nil)
+		fyne.LogError("Missing UpdateCell callback required for GridWrap", nil)
 	}
 
 	wasVisible := l.visible
-	l.visible = make(map[GridWrapListItemID]fyne.CanvasObject)
+	l.visible = make(map[GridWrapItemID]fyne.CanvasObject)
 	var cells []fyne.CanvasObject
 	y := offY
 	curItem := minItem
