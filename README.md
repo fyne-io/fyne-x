@@ -63,7 +63,7 @@ Community contributed widgets.
 
 A date picker which returns a [time](https://pkg.go.dev/time) object with the selected date.
 
-<p  align="center"  class="align:center;margin:auto">
+<p align="center" class="align:center;margin:auto">
 
 <img  src="https://user-images.githubusercontent.com/45520351/179398051-a1f961fd-64be-4214-a565-0da85ce4a543.png"  style="max-width: 100%"  alt="Calendar widget"/>
 
@@ -83,6 +83,10 @@ calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
 ### Animated Gif
 
 A widget that will run animated gifs.
+
+<p align="center" class="align:center;margin:auto" markdown="1">
+![](img/gifwidget.gif)
+</p>
 
 ```go
 gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
