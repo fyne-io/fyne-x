@@ -85,7 +85,7 @@ calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
 A widget that will run animated gifs.
 
 <p align="center" class="align:center;margin:auto" markdown="1">
-![](img/gifwidget.gif)
+<img src="img/gifwidget.gif" />
 </p>
 
 ```go
