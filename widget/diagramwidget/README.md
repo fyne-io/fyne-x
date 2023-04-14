@@ -74,7 +74,7 @@ be moved interactively with the mouse to a new position. When the reference poin
 moves, the anchored text will also move, maintaining its relative position. 
 
 Users do not create AnchoredText widgets directly: the link itself creates and manages them. 
-the user calls Add*position*AnchoredText(key, text) to add an anchored text. The key is expected
+the user calls Add\<position\>AnchoredText(key, text) to add an anchored text. The key is expected
 to be unique at the position and can be used to update the text later. The AnchoredText can also
 be directly edited in the diagram.  
 
