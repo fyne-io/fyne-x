@@ -24,6 +24,9 @@ type AnchoredText struct {
 	ForegroundColor   color.Color
 }
 
+// NewAnchoredText creates an textual annotation for a link. After it is created, one of the
+// three Add<position>AnchoredText methods must be called on the link to actually associate the
+// anchored text with the appropriate reference point on the link.
 func NewAnchoredText(text string) *AnchoredText {
 	at := &AnchoredText{
 		displayedText:     text,
@@ -35,6 +38,7 @@ func NewAnchoredText(text string) *AnchoredText {
 	return at
 }
 
+// CreateRenderer is the required method for a widget extension
 func (at *AnchoredText) CreateRenderer() fyne.WidgetRenderer {
 	atr := &anchoredTextRenderer{
 		widget:     at,
@@ -46,14 +50,18 @@ func (at *AnchoredText) CreateRenderer() fyne.WidgetRenderer {
 	return atr
 }
 
+// Displace moves the anchored text relative to its reference position.
 func (at *AnchoredText) Displace(delta fyne.Position) {
 	at.Move(at.Position().Add(delta))
 }
 
+// DragEnd is one of the required methods for a draggable widget. It just refreshes the widget.
 func (at *AnchoredText) DragEnd() {
 	at.Refresh()
 }
 
+// Dragged is the required method for a draggable widget. It moves the anchored text
+// relative to its reference position
 func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
@@ -61,36 +69,45 @@ func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	ForceRepaint()
 }
 
+// MinSize returns a fixed minimum size for the anchored text.
 func (at *AnchoredText) MinSize() fyne.Size {
 	minSize := fyne.Size{Height: 25, Width: 50}
 	return minSize
 }
 
+// MouseIn is one of the required methods for a mouseable widget.
 func (at *AnchoredText) MouseIn(event *desktop.MouseEvent) {
 	// at.textObject.TextStyle.Bold = true
 	at.Refresh()
 }
 
+// MouseMoved is one of the required methods for a mouseable widget
 func (at *AnchoredText) MouseMoved(event *desktop.MouseEvent) {
 
 }
 
+// MousOut is one of the required methods for a mouseable widget
 func (at *AnchoredText) MouseOut() {
 	// at.textObject.TextStyle.Bold = false
 	at.Refresh()
 }
 
+// Move overrides the BaseWidget's Move method. It updates the anchored text's offset
+// and then calls the normal BaseWidget.Move method.
 func (at *AnchoredText) Move(position fyne.Position) {
 	delta := r2.MakeVec2(float64(position.X-at.Position().X), float64(position.Y-at.Position().Y))
 	at.offset = at.offset.Add(delta)
 	at.BaseWidget.Move(position)
 }
 
+// SetForegroundColor sets the text color
 func (at *AnchoredText) SetForegroundColor(fc color.Color) {
 	at.ForegroundColor = fc
 	at.Refresh()
 }
 
+// SetReferencePosition sets the reference position of the anchored text and calls
+// the BaseWidget.Move() method to actually move the displayed text
 func (at *AnchoredText) SetReferencePosition(position fyne.Position) {
 	delta := fyne.Delta{DX: float32(position.X - at.referencePosition.X), DY: float32(position.Y - at.referencePosition.Y)}
 	// We don't want to change the offset here, so we call the BaseWidget.Move directly
