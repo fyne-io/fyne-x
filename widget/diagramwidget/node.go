@@ -49,6 +49,10 @@ type DiagramNode struct {
 	edgePad      *RectanglePad
 }
 
+// NewDiagramNode creates a DiagramNode widget and adds it to the DiagramWidget. The user-supplied
+// nodeID string must be unique across all of the DiagramElements in the diagram. It can be used
+// to retrieve the DiagramNode from the DiagramWidget. It is permissible for the canvas object to
+// be nil when this function is called and then add the canvas object later.
 func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) *DiagramNode {
 	dn := &DiagramNode{
 		InnerSize:      fyne.Size{Width: defaultWidth, Height: defaultHeight},
