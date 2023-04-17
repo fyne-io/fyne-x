@@ -12,8 +12,16 @@ import (
 
 var Globaldiagram *DiagramWidget
 
+// ForceRepaint is a workaround for a Fyne bug (Issue #2205) in which moving a canvas object does not
+// trigger repainting. When the issue is resolved, this function and all references to it should be
+// removed. The DummyBox on the GlobalDiagram should also be removed.
+// The conditionals here are required during initialization.
 func ForceRepaint() {
-	Globaldiagram.DummyBox.Refresh()
+	if Globaldiagram != nil {
+		if Globaldiagram.DummyBox != nil {
+			Globaldiagram.DummyBox.Refresh()
+		}
+	}
 }
 
 // Verify that interfaces are fully implemented
