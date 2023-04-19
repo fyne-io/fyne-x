@@ -41,7 +41,7 @@ func FloatBind(i float64) binding.DataItem {
 func TestNewStructForm(t *testing.T) {
 	type args struct {
 		s      interface{}
-		submit func(s interface{})
+		submit func(s interface{}, err error)
 		cancel func()
 	}
 	type res struct {
@@ -58,7 +58,10 @@ func TestNewStructForm(t *testing.T) {
 			"testFoo",
 			args{
 				testFoo{},
-				func(s interface{}) {
+				func(s interface{}, err error) {
+					if err != nil {
+						t.Error(err)
+					}
 					val, ok := s.(testFoo)
 					if !ok {
 						t.Errorf("testFoo struct not created %v from %v", val, s)
@@ -93,17 +96,16 @@ func TestNewStructForm(t *testing.T) {
 						Widget: widget.NewEntry(),
 					},
 				},
-				bindings: []binding.DataItem{
-					StringBind("John Doe"),
-					StringBind("1234 Main St."),
-				},
 			},
 		},
 		{
 			"testBar",
 			args{
 				testBar{},
-				func(s interface{}) {
+				func(s interface{}, err error) {
+					if err != nil {
+						t.Error(err)
+					}
 					val, ok := s.(testBar)
 					if !ok {
 						t.Errorf("testFoo struct not created %v from %v", val, s)
@@ -126,9 +128,6 @@ func TestNewStructForm(t *testing.T) {
 						Text:   "Field1",
 						Widget: NewNumericalEntry(),
 					},
-				},
-				bindings: []binding.DataItem{
-					FloatBind(1.0),
 				},
 			},
 		},
@@ -161,13 +160,8 @@ func TestNewStructForm(t *testing.T) {
 						reflect.TypeOf(got.widgets[i].Widget), reflect.TypeOf(tt.want.widgets[i].Widget),
 					)
 				}
-				if reflect.TypeOf(got.bindings[i]) != reflect.TypeOf(tt.want.bindings[i]) {
-					t.Errorf(
-						"NewStructForm().bindings[%v] = %v, want %v", i,
-						reflect.TypeOf(got.bindings[i]), reflect.TypeOf(tt.want.bindings[i]),
-					)
-				}
 			}
+			got.Submit()
 		})
 	}
 }

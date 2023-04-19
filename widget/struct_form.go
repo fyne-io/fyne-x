@@ -1,6 +1,8 @@
 package widget
 
 import (
+	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"strings"
@@ -19,16 +21,16 @@ type StructForm struct {
 	fields     []reflect.StructField
 	widgets    []*widget.FormItem
 	bindings   []binding.DataItem
-	submit     func(s interface{})
+	submit     func(s interface{}, err error)
 }
 
-func NewStructForm(s interface{}, submit func(s interface{}), cancel func()) *StructForm {
+func NewStructForm(s interface{}, submit func(s interface{}, err error), cancel func()) *StructForm {
 	sf := &StructForm{}
 	sf.ExtendBaseWidget(sf)
 
 	sf.structType = reflect.TypeOf(s)
 	sf.fields = parseFields(sf.structType)
-	sf.widgets = createWidgets(sf.fields)
+	sf.widgets, sf.bindings = createWidgets(sf.fields)
 	sf.submit = submit
 
 	sf.form = &widget.Form{
@@ -40,7 +42,13 @@ func NewStructForm(s interface{}, submit func(s interface{}), cancel func()) *St
 	return sf
 }
 
-func buildValue(t reflect.Type, fields []reflect.StructField, bindings []binding.DataItem) reflect.Value {
+func buildValue(
+	t reflect.Type,
+	fields []reflect.StructField,
+	bindings []binding.DataItem) (
+	*reflect.Value,
+	error,
+) {
 	val := reflect.New(t)
 
 	for i, f := range fields {
@@ -57,20 +65,30 @@ func buildValue(t reflect.Type, fields []reflect.StructField, bindings []binding
 		}
 
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
-		val.FieldByName(f.Name).Set(
+
+		t_s, t_v := val.Elem().FieldByName(f.Name).Type(), reflect.TypeOf(v)
+		if t_s != t_v {
+			return nil, errors.New(fmt.Sprintf("cannot bind mismatched types %v and %v", t_s, t_v))
+		}
+		val.Elem().FieldByName(f.Name).Set(
 			reflect.ValueOf(v),
 		)
 	}
 
-	return val
+	return &val, nil
 }
 
 func (sf *StructForm) Submit() {
-	sf.submit(buildValue(
+	s, err := buildValue(
 		sf.structType, sf.fields, sf.bindings,
-	).Interface())
+	)
+	if err != nil {
+		sf.submit(nil, err)
+	} else {
+		sf.submit(s.Interface(), err)
+	}
 }
 
 func parseFields(t reflect.Type) []reflect.StructField {
@@ -84,9 +102,9 @@ func parseFields(t reflect.Type) []reflect.StructField {
 	return fields
 }
 
-func createWidgets(fs []reflect.StructField) []*widget.FormItem {
+func createWidgets(fs []reflect.StructField) ([]*widget.FormItem, []binding.DataItem) {
 	widgets := make([]*widget.FormItem, len(fs))
-	binding := make([]*binding.DataItem, len(fs))
+	binding := make([]binding.DataItem, len(fs))
 	matchFirstCap := regexp.MustCompile("(.)([A-Z][a-z]+)")
 	for i, f := range fs {
 		w, b := fieldToWidget(f)
@@ -94,9 +112,9 @@ func createWidgets(fs []reflect.StructField) []*widget.FormItem {
 			Text:   matchFirstCap.ReplaceAllString(f.Name, "${1} ${2}"),
 			Widget: w,
 		}
-		binding[i] = &b
+		binding[i] = b
 	}
-	return widgets
+	return widgets, binding
 }
 
 func fieldToWidget(f reflect.StructField) (fyne.CanvasObject, binding.DataItem) {
