@@ -62,6 +62,8 @@ func buildValue(
 			v, err = bindings[i].(binding.String).Get()
 		case binding.Float:
 			v, err = bindings[i].(binding.Float).Get()
+		case binding.Bool:
+			v, err = bindings[i].(binding.Bool).Get()
 		}
 
 		if err != nil {
@@ -130,6 +132,12 @@ func fieldToWidget(f reflect.StructField) (fyne.CanvasObject, binding.DataItem) 
 		b := binding.NewString()
 		w.Bind(b)
 		return w, binding.StringToInt(b)
+	case reflect.Bool:
+		b := binding.NewBool()
+		w := widget.NewCheck("", func(v bool) {
+			b.Set(v)
+		})
+		return w, b
 	case reflect.TypeOf(time.Time{}).Kind():
 		b := binding.NewUntyped()
 		w := NewCalendar(time.Now(), func(t time.Time) {

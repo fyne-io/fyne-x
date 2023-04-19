@@ -62,7 +62,7 @@ func TestNewStructForm(t *testing.T) {
 					if err != nil {
 						t.Error(err)
 					}
-					val, ok := s.(testFoo)
+					val, ok := s.(*testFoo)
 					if !ok {
 						t.Errorf("testFoo struct not created %v from %v", val, s)
 					}
@@ -92,8 +92,8 @@ func TestNewStructForm(t *testing.T) {
 						Widget: widget.NewEntry(),
 					},
 					{
-						Text:   "Field2",
-						Widget: widget.NewEntry(),
+						Text:   "Field3",
+						Widget: widget.NewCheck("", func(b bool) {}),
 					},
 				},
 			},
@@ -106,7 +106,7 @@ func TestNewStructForm(t *testing.T) {
 					if err != nil {
 						t.Error(err)
 					}
-					val, ok := s.(testBar)
+					val, ok := s.(*testBar)
 					if !ok {
 						t.Errorf("testFoo struct not created %v from %v", val, s)
 					}
