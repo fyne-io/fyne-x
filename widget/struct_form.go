@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/widget"
 )
@@ -15,7 +14,7 @@ import (
 type StructForm struct {
 	widget.BaseWidget
 	structType reflect.Type
-	modal      *widget.PopUp
+	form       *widget.Form
 	canvas     fyne.Canvas
 	fields     []reflect.StructField
 	widgets    []*widget.FormItem
@@ -23,30 +22,20 @@ type StructForm struct {
 	submit     func(s interface{})
 }
 
-func NewStructForm(c fyne.Canvas, s interface{}, submit func(s interface{})) *StructForm {
+func NewStructForm(s interface{}, submit func(s interface{}), cancel func()) *StructForm {
 	sf := &StructForm{}
 	sf.ExtendBaseWidget(sf)
 
-	sf.canvas = c
 	sf.structType = reflect.TypeOf(s)
 	sf.fields = parseFields(sf.structType)
 	sf.widgets = createWidgets(sf.fields)
 	sf.submit = submit
 
-	form := &widget.Form{
-		OnCancel: func() {
-			sf.modal.Hide()
-		},
-		OnSubmit: func() {
-			sf.Submit()
-			sf.modal.Hide()
-		},
-		Items: sf.widgets,
+	sf.form = &widget.Form{
+		OnCancel: cancel,
+		OnSubmit: sf.Submit,
+		Items:    sf.widgets,
 	}
-	sf.modal = widget.NewModalPopUp(
-		container.NewVBox(form),
-		sf.canvas,
-	)
 
 	return sf
 }
@@ -137,10 +126,6 @@ func fieldToWidget(f reflect.StructField) (fyne.CanvasObject, binding.DataItem) 
 	}
 }
 
-func (sf *StructForm) Show() {
-	sf.modal.Show()
-}
-
 func (sf *StructForm) CreateRenderer() fyne.WidgetRenderer {
-	return widget.NewSimpleRenderer(sf.modal)
+	return widget.NewSimpleRenderer(sf.form)
 }
