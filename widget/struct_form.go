@@ -64,6 +64,8 @@ func buildValue(
 			v, err = bindings[i].(binding.Float).Get()
 		case binding.Bool:
 			v, err = bindings[i].(binding.Bool).Get()
+		default:
+			v, err = bindings[i].(binding.Untyped).Get()
 		}
 
 		if err != nil {
@@ -140,8 +142,11 @@ func fieldToWidget(f reflect.StructField) (fyne.CanvasObject, binding.DataItem) 
 		return w, b
 	case reflect.TypeOf(time.Time{}).Kind():
 		b := binding.NewUntyped()
+		if err := b.Set(time.Now()); err != nil {
+			panic(err)
+		}
 		w := NewCalendar(time.Now(), func(t time.Time) {
-			b.Set(&t)
+			b.Set(t)
 		})
 		return w, b
 	default:

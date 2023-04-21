@@ -12,7 +12,8 @@ import (
 type testFoo struct {
 	Field1 string `fyne:"field"`
 	Field2 int
-	Field3 bool `fyne:"field"`
+	Field3 bool      `fyne:"field"`
+	Field4 time.Time `fyne:"field"`
 }
 
 type testBar struct {
@@ -85,6 +86,13 @@ func TestNewStructForm(t *testing.T) {
 						Index:  []int{2},
 						Tag:    reflect.StructTag(`fyne:"field"`),
 					},
+					{
+						Name:   "Field4",
+						Type:   reflect.TypeOf(time.Time{}),
+						Offset: 32,
+						Index:  []int{3},
+						Tag:    reflect.StructTag(`fyne:"field"`),
+					},
 				},
 				widgets: []*widget.FormItem{
 					{
@@ -94,6 +102,10 @@ func TestNewStructForm(t *testing.T) {
 					{
 						Text:   "Field3",
 						Widget: widget.NewCheck("", func(b bool) {}),
+					},
+					{
+						Text:   "Field4",
+						Widget: NewCalendar(time.Now(), func(t time.Time) {}),
 					},
 				},
 			},
