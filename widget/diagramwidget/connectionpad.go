@@ -16,13 +16,13 @@ const (
 	padLineWidth float32 = 3
 )
 
-// ConnectionPad is an interface to a connection area on a DiagramElement.
+// ConnectionPad is an interface to a connection shape on a DiagramElement.
 type ConnectionPad interface {
 	fyne.Widget
 	desktop.Hoverable
 	GetPadOwner() DiagramElement
 	GetCenter() fyne.Position
-	GetConnectionPoint(referencePoint fyne.Position) fyne.Position
+	getConnectionPoint(referencePoint fyne.Position) fyne.Position
 }
 
 type connectionPad struct {
@@ -40,11 +40,14 @@ func (cp *connectionPad) GetPadOwner() DiagramElement {
 // Validate that PointPad implements ConnectionPad
 var _ ConnectionPad = (*PointPad)(nil)
 
+// PointPad is a ConnectionPad consisting of a single point (the Position of the PointPad)
 type PointPad struct {
 	widget.BaseWidget
 	connectionPad
 }
 
+// NewPointPad creates a PointPad and associates it with the DiagramElement. Note that, by default,
+// the position of the PointPad will be (0,0), i.e. the origin of the DiagramElement.
 func NewPointPad(padOwner DiagramElement) *PointPad {
 	pp := &PointPad{}
 	pp.connectionPad.padOwner = padOwner
@@ -52,6 +55,7 @@ func NewPointPad(padOwner DiagramElement) *PointPad {
 	return pp
 }
 
+// CreateRenderer creates the WidgetRenderer for a PointPad
 func (pp *PointPad) CreateRenderer() fyne.WidgetRenderer {
 	ppr := &pointPadRenderer{
 		pp: pp,
@@ -68,18 +72,23 @@ func (pp *PointPad) GetCenter() fyne.Position {
 	return pp.padOwner.Position().Add(pp.Position())
 }
 
-func (pp *PointPad) GetConnectionPoint(referencePoint fyne.Position) fyne.Position {
+// getConnectionPoint returns the point on the pad to which a connection will be made from the referencePoint.
+// For a point pad, this is always the center.
+func (pp *PointPad) getConnectionPoint(referencePoint fyne.Position) fyne.Position {
 	return pp.GetCenter()
 }
 
+// MouseIn responds to mouse movements within the pointPadSize distance of the center
 func (pp *PointPad) MouseIn(event *desktop.MouseEvent) {
-
+	// TODO implement this
 }
 
+// MouseMoved responds to mouse movements within the pointPadSize distance of the center
 func (pp *PointPad) MouseMoved(event *desktop.MouseEvent) {
-
+	// TODO implement this
 }
 
+// MouseOut responds to mouse movements within the pointPadSize distance of the center
 func (pp *PointPad) MouseOut() {
 
 }
@@ -128,13 +137,14 @@ func (ppr *pointPadRenderer) Refresh() {
 // Validate that RectanglePad implements ConnectionPad
 var _ ConnectionPad = (*RectanglePad)(nil)
 
+// RectanglePad provides a ConnectionPad corresponding to the perimeter of the DiagramElement owning the pad.
 type RectanglePad struct {
 	widget.BaseWidget
 	connectionPad
-	// box is the pad shape in diagram coordinates
-	// box r2.Box
 }
 
+// NewRectanglePad creates a RectanglePad and associates it with the DiagramElement. The size of the
+// pad becomes the size of the padOwner.
 func NewRectanglePad(padOwner DiagramElement) *RectanglePad {
 	rp := &RectanglePad{}
 	rp.connectionPad.padOwner = padOwner
@@ -142,6 +152,7 @@ func NewRectanglePad(padOwner DiagramElement) *RectanglePad {
 	return rp
 }
 
+// CreateRenderer creates the WidgetRenderer for the RectanglePad
 func (rp *RectanglePad) CreateRenderer() fyne.WidgetRenderer {
 	rpr := &rectanglePadRenderer{
 		rp:   rp,
@@ -159,7 +170,11 @@ func (rp *RectanglePad) GetCenter() fyne.Position {
 	return fyne.NewPos(float32(r2Center.X), float32(r2Center.Y))
 }
 
-func (rp *RectanglePad) GetConnectionPoint(referencePoint fyne.Position) fyne.Position {
+// getConnectionPoint returns the point at which the connection should be made from a reference point.
+// The reference point is in diagram coordinates and the returned point is also in diagram coordinates.
+// For a RectanglePad this point is the intersection of a line segment from the reference point to the center
+// of the rectangle pad and the rectangle bounding the pad.
+func (rp *RectanglePad) getConnectionPoint(referencePoint fyne.Position) fyne.Position {
 	box := rp.makeBox()
 	r2ReferencePoint := r2.MakeVec2(float64(referencePoint.X), float64(referencePoint.Y))
 	linkLine := r2.MakeLineFromEndpoints(box.Center(), r2ReferencePoint)
@@ -179,16 +194,19 @@ func (rp *RectanglePad) makeBox() r2.Box {
 	return r2.MakeBox(r2Position, s)
 }
 
+// MouseIn responds to the mouse entering the bounds of the RectanglePad
 func (rp *RectanglePad) MouseIn(event *desktop.MouseEvent) {
-
+	// TODO implement this
 }
 
+// MouseMoved responds to mouse movements within the rectangle pad
 func (rp *RectanglePad) MouseMoved(event *desktop.MouseEvent) {
-
+	// TODO implement this
 }
 
+// MouseOut responds to mouse movements leaving the rectangle pad
 func (rp *RectanglePad) MouseOut() {
-
+	// TODO implement this
 }
 
 // rectanglePadRenderer

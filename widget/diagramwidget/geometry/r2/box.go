@@ -143,27 +143,30 @@ func BoundingBox(points []Vec2) Box {
 	if len(points) < 2 {
 		return MakeBox(V2(0, 0), V2(0, 0))
 	}
-
-	topleft := points[0]
-	bottomright := points[1]
-	points = points[1 : len(points)-1]
-
-	for _, p := range points {
-		if p.X < topleft.X {
-			topleft.X = p.X
-		}
-		if p.Y < topleft.Y {
-			topleft.Y = p.Y
-		}
-		if p.X > bottomright.X {
-			bottomright.X = p.X
-		}
-		if p.Y > bottomright.Y {
-			bottomright.Y = p.Y
+	var xMin, xMax, yMin, yMax float64
+	for i, p := range points {
+		if i == 0 {
+			xMin = p.X
+			xMax = p.X
+			yMin = p.Y
+			yMax = p.Y
+		} else {
+			if p.X < xMin {
+				xMin = p.X
+			}
+			if p.Y < yMin {
+				yMin = p.Y
+			}
+			if p.X > xMax {
+				xMax = p.X
+			}
+			if p.Y > yMax {
+				yMax = p.Y
+			}
 		}
 	}
-
-	return MakeBox(topleft, bottomright)
+	// MakeBox expects the first point to be the upper left, second the bottom right
+	return MakeBox(V2(xMin, yMax), V2(xMax-xMin, yMin-yMax))
 }
 
 func (b Box) Width() float64 {

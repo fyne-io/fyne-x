@@ -21,10 +21,16 @@ import (
 type Decoration interface {
 	fyne.Widget
 	setLink(link *DiagramLink)
+	// setBaseAngle sets the angle of the reference axis
+	setBaseAngle(angle float64) // Angle in radians
+	SetFillColor(color color.Color)
+	// SetSolid determines whether the stroke color is used to fill the decoration
+	// It has no impact if the decoration is open
+	SetSolid(bool)
+	// SetStrokeColor sets the color to be used for lines in the decoration
 	SetStrokeColor(color color.Color)
+	// SetStrokeWidth sets the width of the lines to be used in the decoration
 	SetStrokeWidth(width float32)
-	// SetReferenceAngle sets the angle of the reference axis
-	SetReferenceAngle(angle float64) // Angle in radians
 	// GetReferenceLength returns the length of the decoration along the reference axis
 	GetReferenceLength() float32
 }

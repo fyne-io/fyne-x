@@ -100,6 +100,9 @@ func main() {
 	link0 := diagramwidget.NewDiagramLink(diagramWidget, node0.GetEdgePad(), node1.GetEdgePad(), "Link0")
 	link0.AddSourceAnchoredText("sourceRole", "sourceRole")
 	link0.AddMidpointAnchoredText("linkName", "Link 0")
+	solidDiamond := createDiamondDecoration()
+	solidDiamond.SetSolid(true)
+	link0.AddSourceDecoration(solidDiamond)
 
 	// Link1
 	link1 := diagramwidget.NewDiagramLink(diagramWidget, node2.GetEdgePad(), node1.GetEdgePad(), "Link1")
@@ -115,12 +118,14 @@ func main() {
 	// Link2
 	link2 := diagramwidget.NewDiagramLink(diagramWidget, node0.GetEdgePad(), node3.GetEdgePad(), "Link2")
 	link2.AddMidpointAnchoredText("linkName", "Link 2")
+	link2.AddSourceDecoration(createHalfArrowDecoration())
 
 	// Link3
 	link3 := diagramwidget.NewDiagramLink(diagramWidget, node2.GetEdgePad(), node3.GetEdgePad(), "Link3")
 	link3.AddSourceAnchoredText("sourceRole", "sourceRole")
 	link3.AddMidpointAnchoredText("linkName", "Link 3")
 	link3.AddTargetAnchoredText("targetRole", "targetRole")
+	link3.AddMidpointDecoration(createTriangleDecoration())
 
 	// Link4
 	link4 := diagramwidget.NewDiagramLink(diagramWidget, node4.GetEdgePad(), node3.GetEdgePad(), "Link4")
@@ -134,4 +139,35 @@ func main() {
 	w.SetContent(diagramWidget)
 
 	w.ShowAndRun()
+}
+
+func createTriangleDecoration() diagramwidget.Decoration {
+	points := []fyne.Position{
+		{X: 0, Y: 15},
+		{X: 15, Y: 0},
+		{X: 0, Y: -15},
+	}
+	polygon := diagramwidget.NewPolygon(points)
+	return polygon
+}
+
+func createDiamondDecoration() diagramwidget.Decoration {
+	points := []fyne.Position{
+		{X: 0, Y: 0},
+		{X: 8, Y: 4},
+		{X: 16, Y: 0},
+		{X: 8, Y: -4},
+	}
+	polygon := diagramwidget.NewPolygon(points)
+	return polygon
+}
+
+func createHalfArrowDecoration() diagramwidget.Decoration {
+	points := []fyne.Position{
+		{X: 0, Y: 0},
+		{X: 16, Y: 8},
+		{X: 16, Y: 0},
+	}
+	polygon := diagramwidget.NewPolygon(points)
+	return polygon
 }

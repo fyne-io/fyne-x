@@ -18,26 +18,15 @@ const (
 	defaultLength      int     = 15
 )
 
-// Arrowhead defines a canvas object which renders an arrow pointing in
-// a particular direction. The direction is indicated by the BaseAngle.
-// The arrowhead is defined with respect to a nominal reference axis with the
-// BaseAngle 0. The Position() is the reference point.
-//
-//	        Left
-//	          \
-//	           \  Length
-//	      Theta \
-//	Axis ------- + Position()
-//	            /
-//	           /
-//	          /
-//	        Right
+// Arrowhead defines a canvas object which renders an arrow. The arrowhead is defined with reference
+// to X axis, with the tip of the arrow being at the origin. When rendered, the arrowhead is rotated
+// to match the angle of the link's line segment with which it is oriented, indicated by the baseAngle.
 type Arrowhead struct {
 	widget.BaseWidget
 	link *DiagramLink
-	// BaseAngle is used to define direction in which the arrowhead points
+	// baseAngle is used to define direction in which the arrowhead points
 	// Base fyne.Position
-	BaseAngle float64
+	baseAngle float64
 	// Position() is the point at which the tip of the arrow will be placed.
 	// StrokeWidth is the width of the arrowhead lines
 	StrokeWidth float32
@@ -54,9 +43,10 @@ type Arrowhead struct {
 	visible bool
 }
 
+// NewArrowhead creates an arrowhead with defaults
 func NewArrowhead() *Arrowhead {
 	a := &Arrowhead{
-		BaseAngle:   0.0,
+		baseAngle:   0.0,
 		StrokeWidth: defaultStrokeWidth,
 		StrokeColor: theme.ForegroundColor(),
 		Theta:       defaultTheta,
@@ -67,6 +57,7 @@ func NewArrowhead() *Arrowhead {
 	return a
 }
 
+// CreateRenderer creates a renderer for the Arrowhead
 func (a *Arrowhead) CreateRenderer() fyne.WidgetRenderer {
 	ar := arrowheadRenderer{
 		arrowhead: a,
@@ -81,8 +72,9 @@ func (a *Arrowhead) GetReferenceLength() float32 {
 	return float32(math.Abs(math.Cos(float64(a.Theta)) * float64(a.Length)))
 }
 
+// LeftPoint returns the position of the end of the left half of the arrowhead
 func (a *Arrowhead) LeftPoint() fyne.Position {
-	leftAngle := r2.AddAngles(a.BaseAngle, -a.Theta)
+	leftAngle := r2.AddAngles(a.baseAngle, -a.Theta)
 	// We have to change the sign of Y because the window coordinate Y axis goes down rather than up
 	leftPosition := fyne.Position{
 		X: float32(float64(a.Length) * math.Cos(leftAngle)),
@@ -91,10 +83,12 @@ func (a *Arrowhead) LeftPoint() fyne.Position {
 	return leftPosition
 }
 
+// MinSize returns the minimum size which is the actual size of the arrowhead
 func (a *Arrowhead) MinSize() fyne.Size {
 	return a.Size()
 }
 
+// Resize scales the arrowhead
 func (a *Arrowhead) Resize(s fyne.Size) {
 	// We get the current size and scale the length based on the difference between sizes
 	currentSize := a.Size()
@@ -105,8 +99,9 @@ func (a *Arrowhead) Resize(s fyne.Size) {
 	a.Length = int(float64(a.Length) * newLength / currentLength)
 }
 
+// RightPoint returns the position of the end of the right half of the arrowhead
 func (a *Arrowhead) RightPoint() fyne.Position {
-	rightAngle := r2.AddAngles(a.BaseAngle, a.Theta)
+	rightAngle := r2.AddAngles(a.baseAngle, a.Theta)
 	// We have to change the sign of Y because the window coordinate Y axis goes down rather than up
 	rightPosition := fyne.Position{
 		X: float32(float64(a.Length) * math.Cos(rightAngle)),
@@ -115,23 +110,36 @@ func (a *Arrowhead) RightPoint() fyne.Position {
 	return rightPosition
 }
 
+// setBaseAngle sets the angle (in radians) of the reference axis
+func (a *Arrowhead) setBaseAngle(angle float64) {
+	a.baseAngle = angle
+}
+
+// setLink sets the DiagramLink on which this arrowhead appears
 func (a *Arrowhead) setLink(link *DiagramLink) {
 	a.link = link
 }
 
+// SetFillColor is a noop for the arrowhead
+func (a *Arrowhead) SetFillColor(fillColor color.Color) {
+
+}
+
+// SetSolid is a noop because the arrowhead is an open structure
+func (a *Arrowhead) SetSolid(bool) {
+}
+
+// SetStrokeColor sets the color used to draw the arrowhead
 func (a *Arrowhead) SetStrokeColor(strokeColor color.Color) {
 	a.StrokeColor = strokeColor
 }
 
+// SetStrokeWidth sets the width of the lines used to render the arrowhead
 func (a *Arrowhead) SetStrokeWidth(strokeWidth float32) {
 	a.StrokeWidth = strokeWidth
 }
 
-// SetReferenceAngle sets the angle (in radians) of the reference axis
-func (a *Arrowhead) SetReferenceAngle(angle float64) {
-	a.BaseAngle = angle
-}
-
+// Size returns the size of the arrowhead
 func (a *Arrowhead) Size() fyne.Size {
 	lp := a.LeftPoint()
 	rp := a.RightPoint()
@@ -152,13 +160,6 @@ type arrowheadRenderer struct {
 	arrowhead *Arrowhead
 	left      *canvas.Line
 	right     *canvas.Line
-}
-
-func (ar *arrowheadRenderer) ApplyTheme(size fyne.Size) {
-}
-
-func (ar *arrowheadRenderer) BackgroundColor() color.Color {
-	return theme.BackgroundColor()
 }
 
 func (ar *arrowheadRenderer) Destroy() {
