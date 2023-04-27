@@ -18,8 +18,8 @@ var Globaldiagram *DiagramWidget
 // The conditionals here are required during initialization.
 func ForceRepaint() {
 	if Globaldiagram != nil {
-		if Globaldiagram.DummyBox != nil {
-			Globaldiagram.DummyBox.Refresh()
+		if Globaldiagram.dummyBox != nil {
+			Globaldiagram.dummyBox.Refresh()
 		}
 	}
 }
@@ -53,8 +53,8 @@ type DiagramWidget struct {
 	selection                      map[string]DiagramElement
 	diagramElementLinkDependencies map[string][]linkPinPair
 
-	// TODO Remove DummyBox when fyne rendering issue is resolved
-	DummyBox *canvas.Rectangle
+	// TODO Remove dummyBox when fyne rendering issue is resolved
+	dummyBox *canvas.Rectangle
 }
 
 func NewDiagramWidget(id string) *DiagramWidget {
@@ -66,12 +66,12 @@ func NewDiagramWidget(id string) *DiagramWidget {
 		Offset:                         fyne.Position{X: 0, Y: 0},
 		Nodes:                          map[string]*DiagramNode{},
 		Links:                          map[string]*DiagramLink{},
-		DummyBox:                       canvas.NewRectangle(color.Transparent),
+		dummyBox:                       canvas.NewRectangle(color.Transparent),
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPinPair{},
 	}
-	dw.DummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
-	dw.DummyBox.Move(fyne.Position{X: 50, Y: 50})
+	dw.dummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
+	dw.dummyBox.Move(fyne.Position{X: 50, Y: 50})
 
 	dw.ExtendBaseWidget(dw)
 
@@ -237,7 +237,7 @@ func (r *diagramWidgetRenderer) Objects() []fyne.CanvasObject {
 	for _, e := range r.diagramWidget.Links {
 		obj = append(obj, e)
 	}
-	obj = append(obj, r.diagramWidget.DummyBox)
+	obj = append(obj, r.diagramWidget.dummyBox)
 	return obj
 }
 
