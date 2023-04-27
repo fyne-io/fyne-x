@@ -163,7 +163,7 @@ func (dn *DiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent) {
 	dn.InnerSize = dn.innerObject.MinSize().Max(trialInnerSize)
 	dn.Resize(dn.Size().Add(sizeChange))
 	dn.Refresh()
-	ForceRepaint()
+	dn.GetDiagram().forceRepaint()
 }
 
 func (dn *DiagramNode) innerPos() fyne.Position {
@@ -175,12 +175,12 @@ func (dn *DiagramNode) innerPos() fyne.Position {
 
 func (dn *DiagramNode) MouseIn(event *desktop.MouseEvent) {
 	dn.HandleColor = dn.diagram.DiagramTheme.Color(theme.ColorNameFocus, dn.diagram.ThemeVariant)
-	ForceRepaint()
+	dn.GetDiagram().forceRepaint()
 }
 
 func (dn *DiagramNode) MouseOut() {
 	dn.HandleColor = dn.diagram.DiagramTheme.Color(theme.ColorNameForeground, dn.diagram.ThemeVariant)
-	ForceRepaint()
+	dn.GetDiagram().forceRepaint()
 }
 
 func (dn *DiagramNode) MouseMoved(event *desktop.MouseEvent) {
@@ -300,5 +300,5 @@ func (dnr *diagramNodeRenderer) Refresh() {
 	dnr.box.StrokeColor = dnr.node.diagram.GetForegroundColor()
 	dnr.node.edgePad.Refresh()
 	dnr.node.diagram.refreshDependentLinks(dnr.node)
-	ForceRepaint()
+	dnr.node.GetDiagram().forceRepaint()
 }

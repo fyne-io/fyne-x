@@ -10,17 +10,13 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var Globaldiagram *DiagramWidget
-
-// ForceRepaint is a workaround for a Fyne bug (Issue #2205) in which moving a canvas object does not
+// forceRepaint is a workaround for a Fyne bug (Issue #2205) in which moving a canvas object does not
 // trigger repainting. When the issue is resolved, this function and all references to it should be
 // removed. The DummyBox on the GlobalDiagram should also be removed.
 // The conditionals here are required during initialization.
-func ForceRepaint() {
-	if Globaldiagram != nil {
-		if Globaldiagram.dummyBox != nil {
-			Globaldiagram.dummyBox.Refresh()
-		}
+func (dw *DiagramWidget) forceRepaint() {
+	if dw != nil && dw.dummyBox != nil {
+		dw.dummyBox.Refresh()
 	}
 }
 
@@ -44,8 +40,7 @@ type DiagramWidget struct {
 	ThemeVariant fyne.ThemeVariant
 	Offset       fyne.Position
 
-	// DesiredSize specifies the size which the graph widget should take
-	// up, defaults to 800 x 600
+	// DesiredSize specifies the size of the displayed diagram. Defaults to 800 x 600
 	DesiredSize fyne.Size
 
 	Nodes                          map[string]*DiagramNode
@@ -128,7 +123,7 @@ func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.Poi
 	if !dw.IsSelected(de) {
 		dw.addElementToSelection(de)
 	}
-	ForceRepaint()
+	dw.forceRepaint()
 }
 
 func (dw *DiagramWidget) DragEnd() {
@@ -150,13 +145,13 @@ func (dw *DiagramWidget) GetHoverColor() color.Color {
 func (dw *DiagramWidget) DiagramNodeDragged(node *DiagramNode, event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	dw.DisplaceNode(node, delta)
-	ForceRepaint()
+	dw.forceRepaint()
 }
 
 func (dw *DiagramWidget) DisplaceNode(node *DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
-	ForceRepaint()
+	dw.forceRepaint()
 }
 
 func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
@@ -210,7 +205,7 @@ func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
 	for _, de := range dw.selection {
 		dw.removeElementFromSelection(de)
 	}
-	ForceRepaint()
+	dw.forceRepaint()
 }
 
 // diagramWidgetRenderer

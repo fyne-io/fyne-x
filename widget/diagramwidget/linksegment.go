@@ -68,5 +68,5 @@ func (lsr *linkSegmentRenderer) Refresh() {
 	lsr.line.Position2 = lsr.ls.p2
 	lsr.line.StrokeColor = lsr.ls.link.LinkColor
 	lsr.line.StrokeWidth = lsr.ls.link.strokeWidth
-	ForceRepaint()
+	lsr.ls.link.GetDiagram().forceRepaint()
 }

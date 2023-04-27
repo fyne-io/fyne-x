@@ -240,5 +240,5 @@ func (rpr *rectanglePadRenderer) Refresh() {
 	rpr.rect.StrokeColor = rpr.rp.padOwner.GetDiagram().GetForegroundColor()
 	rpr.rect.FillColor = color.Transparent
 	rpr.rect.StrokeWidth = padLineWidth
-	ForceRepaint()
+	rpr.rp.connectionPad.padOwner.GetDiagram().forceRepaint()
 }

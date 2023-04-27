@@ -99,6 +99,7 @@ func (dl *DiagramLink) CreateRenderer() fyne.WidgetRenderer {
 // Multiple AnchoredText widgets can be added.
 func (dl *DiagramLink) AddSourceAnchoredText(key string, displayedText string) {
 	at := NewAnchoredText(displayedText)
+	at.link = dl
 	dl.sourceAnchoredText[key] = at
 	at.SetReferencePosition(dl.getSourcePosition())
 	at.Move(dl.getSourcePosition())
@@ -118,6 +119,7 @@ func (dl *DiagramLink) AddSourceDecoration(decoration Decoration) {
 // Multiple AnchoredText widgets can be added.
 func (dl *DiagramLink) AddMidpointAnchoredText(key string, displayedText string) {
 	at := NewAnchoredText(displayedText)
+	at.link = dl
 	dl.midpointAnchoredText[key] = at
 	at.SetReferencePosition(dl.getMidPosition())
 	at.Move(dl.getMidPosition())
@@ -137,6 +139,7 @@ func (dl *DiagramLink) AddMidpointDecoration(decoration Decoration) {
 // Multiple AnchoredText widgets can be added.
 func (dl *DiagramLink) AddTargetAnchoredText(key string, displayedText string) {
 	at := NewAnchoredText(displayedText)
+	at.link = dl
 	dl.targetAnchoredText[key] = at
 	at.SetReferencePosition(dl.getTargetPosition())
 	at.Move(dl.getTargetPosition())
@@ -357,5 +360,5 @@ func (dlr *diagramLinkRenderer) Refresh() {
 		decoration.Refresh()
 	}
 	dlr.link.diagram.refreshDependentLinks(dlr.link)
-	ForceRepaint()
+	dlr.link.GetDiagram().forceRepaint()
 }

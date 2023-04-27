@@ -15,15 +15,15 @@ import (
 
 var forceticks int = 0
 
-func forceanim() {
+func forceanim(diagramWidget *diagramwidget.DiagramWidget) {
 
 	// XXX: very naughty -- accesses shared memory in potentially unsafe
 	// ways, this almost certainly has race conditions... don't do this!
 
 	for {
 		if forceticks > 0 {
-			diagramwidget.Globaldiagram.StepForceLayout(300)
-			diagramwidget.Globaldiagram.Refresh()
+			diagramwidget.StepForceLayout(diagramWidget, 300)
+			diagramWidget.Refresh()
 			forceticks--
 			fmt.Printf("forceticks=%d\n", forceticks)
 		}
@@ -39,9 +39,10 @@ func main() {
 	w.SetMaster()
 
 	diagramWidget := diagramwidget.NewDiagramWidget("Diagram1")
-	diagramwidget.Globaldiagram = diagramWidget
 
-	go forceanim()
+	scrollContainer := container.NewScroll(diagramWidget)
+
+	go forceanim(diagramWidget)
 
 	// Node 0
 	node0Label := widget.NewLabel("Node0")
@@ -81,7 +82,7 @@ func main() {
 
 	// Node 3
 	node3 := diagramwidget.NewDiagramNode(diagramWidget, widget.NewButton("Node3: Force layout step", func() {
-		diagramWidget.StepForceLayout(300)
+		diagramwidget.StepForceLayout(diagramWidget, 300)
 		diagramWidget.Refresh()
 	}), "Node3")
 	node3.Move(fyne.Position{X: 400, Y: 100})
@@ -136,8 +137,9 @@ func main() {
 	link5.AddMidpointAnchoredText("linkName", "Link 5")
 	link5.AddTargetDecoration(diagramwidget.NewArrowhead())
 
-	w.SetContent(diagramWidget)
+	w.SetContent(scrollContainer)
 
+	w.Resize(fyne.NewSize(600, 400))
 	w.ShowAndRun()
 }
 

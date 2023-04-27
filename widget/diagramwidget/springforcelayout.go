@@ -9,7 +9,7 @@ import (
 )
 
 // adjacent returns true if there is at least one edge between n1 and n2
-func (dw *DiagramWidget) adjacent(n1, n2 *DiagramNode) bool {
+func adjacent(dw *DiagramWidget, n1, n2 *DiagramNode) bool {
 	// TODO: expensive, may be worth caching?
 	for _, e := range dw.Links {
 		if ((e.sourcePad.GetPadOwner() == n1) && (e.targetPad.GetPadOwner() == n2)) || ((e.sourcePad.GetPadOwner() == n2) && (e.targetPad.GetPadOwner() == n1)) {
@@ -27,14 +27,14 @@ func calculateDistance(n1, n2 *DiagramNode) float64 {
 // calculateForce calculates the force between the given pair of nodes.
 //
 // The force is calculated at n1.
-func (dw *DiagramWidget) calculateForce(n1, n2 *DiagramNode, targetLength float64) r2.Vec2 {
+func calculateForce(dw *DiagramWidget, n1, n2 *DiagramNode, targetLength float64) r2.Vec2 {
 	// spring constant for linear spring
 	k := float64(0.01)
 	d := calculateDistance(n1, n2)
 
 	v := n2.R2Center().Add(n1.R2Center().Scale(-1)).Unit().Scale(-1)
 
-	if dw.adjacent(n1, n2) {
+	if adjacent(dw, n1, n2) {
 		// adjacent nodes act like springs, and want to be close to the given
 		// length.
 
@@ -61,7 +61,7 @@ func (dw *DiagramWidget) calculateForce(n1, n2 *DiagramNode, targetLength float6
 
 // StepForceLayout calculates one step of force directed graph layout, with
 // the target distance between adjacent nodes being targetLength.
-func (dw *DiagramWidget) StepForceLayout(targetLength float64) {
+func StepForceLayout(dw *DiagramWidget, targetLength float64) {
 	deltas := make(map[string]r2.Vec2)
 
 	// calculate all the deltas from the current state
@@ -72,7 +72,7 @@ func (dw *DiagramWidget) StepForceLayout(targetLength float64) {
 			if j == k {
 				continue
 			}
-			deltas[k] = deltas[k].Add(dw.calculateForce(nk, nj, targetLength))
+			deltas[k] = deltas[k].Add(calculateForce(dw, nk, nj, targetLength))
 		}
 	}
 

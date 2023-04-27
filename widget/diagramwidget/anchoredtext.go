@@ -18,6 +18,7 @@ import (
 // move by the same amount
 type AnchoredText struct {
 	widget.BaseWidget
+	link              *DiagramLink
 	offset            r2.Vec2
 	referencePosition fyne.Position
 	displayedText     string
@@ -66,7 +67,7 @@ func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
 	at.Refresh()
-	ForceRepaint()
+	at.link.diagramElement.GetDiagram().forceRepaint()
 }
 
 // MinSize returns a fixed minimum size for the anchored text.
