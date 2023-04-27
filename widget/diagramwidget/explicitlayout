@@ -1,8 +1,0 @@
-package diagramwidget
-
-// ExplicitLayout is an interface for layout algorithms that can be applied to a DiagramWidget.
-// The algorithm execution is initiated programmatically, i.e. is not automatically applied when
-// the contents of the DiagramWidget are changed.
-interface ExplicitLayout {
-	PerformLayout(diagramWidget *DiagramWidget)
-}
