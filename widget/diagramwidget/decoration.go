@@ -6,6 +6,10 @@ import (
 	"fyne.io/fyne/v2"
 )
 
+const (
+	defaultStrokeWidth float32 = 1
+)
+
 // Decoration is a widget intended to be used as a decoration on a Link widget
 // The graphical representation of the widget is defined along a reference axis with
 // one point on that axis designated as the reference point (generally the origin).

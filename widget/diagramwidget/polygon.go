@@ -104,16 +104,18 @@ func (p *Polygon) getRenderingData() ([]fyne.Position, fyne.Position) {
 	xMin = math.Min(xMin, 0)
 	yMin = math.Min(yMin, 0)
 	// the inverse of xMin and yMin now represent the point translation required to
-	// normalize the coordinates for rendering into a pixmap
-	normalizationVector := r2.MakeVec2(float64(-xMin), float64(-yMin))
+	// normalize the coordinates for rendering into a pixmap, ignoring the stroke width.
+	// We have to further shift coordinates by the stroke width so that the points render
+	// at the correct positions in a pixmap. We have to add the stroke width as well
+	normalizationVectorWithStrokeOfset := r2.MakeVec2(float64(-xMin)+float64(p.StrokeWidth/2), float64(-yMin)+float64(p.StrokeWidth/2))
 	renderingPoints := []fyne.Position{}
 	for _, point := range rotatedPoints {
 		pointVector := r2.MakeVec2(float64(point.X), float64(point.Y))
-		normalizedPointVector := pointVector.Add(normalizationVector)
+		normalizedPointVector := pointVector.Add(normalizationVectorWithStrokeOfset)
 		normalizedPoint := fyne.Position{X: float32(normalizedPointVector.X), Y: float32(normalizedPointVector.Y)}
 		renderingPoints = append(renderingPoints, normalizedPoint)
 	}
-	// The offset vector is the inverse of the normalization vector
+	// The offset vector is the inverse of the normalization vector without the stroke width
 	offsetVector := fyne.Position{X: float32(xMin), Y: float32(yMin)}
 	return renderingPoints, offsetVector
 }
@@ -145,10 +147,11 @@ func (p *Polygon) getRotatedPoints() []fyne.Position {
 	return rotatedPoints
 }
 
-// MinSize returns the minimum size based on nominal polygon points and base angle
+// MinSize returns the minimum size based on nominal polygon points, base angle, and stroke width
 func (p *Polygon) MinSize() fyne.Size {
-	// The origin is always one of the points regardless of whether the polygon uses that point
-	points := []r2.Vec2{{X: 0.0, Y: 0.0}}
+	// // The origin is always one of the points regardless of whether the polygon uses that point
+	// points := []r2.Vec2{{X: 0.0, Y: 0.0}}
+	points := []r2.Vec2{}
 	for _, point := range p.getRotatedPoints() {
 		points = append(points, r2.Vec2{X: float64(point.X), Y: float64(point.Y)})
 	}
@@ -227,9 +230,9 @@ func (pr *polygonRenderer) Refresh() {
 	renderingPoints, offsetVector := pr.polygon.getRenderingData()
 	// For efficiency, only get the size once
 	polygonSize := pr.polygon.MinSize()
-	width := int(polygonSize.Width)
-	height := int(polygonSize.Height)
 	stroke := pr.polygon.StrokeWidth
+	width := int(polygonSize.Width + pr.polygon.StrokeWidth)
+	height := int(polygonSize.Height + pr.polygon.StrokeWidth)
 	pr.polygon.Resize(polygonSize)
 	raw := image.NewRGBA(image.Rect(0, 0, width, height))
 	scanner := rasterx.NewScannerGV(int(polygonSize.Width), int(polygonSize.Height), raw, raw.Bounds())
@@ -243,9 +246,9 @@ func (pr *polygonRenderer) Refresh() {
 		}
 		for i, point := range renderingPoints {
 			if i == 0 {
-				filler.Start(rasterx.ToFixedP(float64(point.X+stroke/2), float64(point.Y+stroke/2)))
+				filler.Start(rasterx.ToFixedP(float64(point.X), float64(point.Y)))
 			} else {
-				filler.Line(rasterx.ToFixedP(float64(point.X+stroke/2), float64(point.Y+stroke/2)))
+				filler.Line(rasterx.ToFixedP(float64(point.X), float64(point.Y)))
 			}
 		}
 		filler.Stop(true)
@@ -258,9 +261,9 @@ func (pr *polygonRenderer) Refresh() {
 		dasher.SetStroke(fixed.Int26_6(float64(stroke)*64), 0, nil, nil, nil, 0, nil, 0)
 		for i, point := range renderingPoints {
 			if i == 0 {
-				dasher.Start(rasterx.ToFixedP(float64(point.X+stroke/2), float64(point.Y+stroke/2)))
+				dasher.Start(rasterx.ToFixedP(float64(point.X), float64(point.Y)))
 			} else {
-				dasher.Line(rasterx.ToFixedP(float64(point.X+stroke/2), float64(point.Y+stroke/2)))
+				dasher.Line(rasterx.ToFixedP(float64(point.X), float64(point.Y)))
 			}
 		}
 		dasher.Stop(true)

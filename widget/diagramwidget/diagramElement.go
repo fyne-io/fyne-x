@@ -6,10 +6,16 @@ import "fyne.io/fyne/v2"
 // elements are Node and Link widgets.
 type DiagramElement interface {
 	fyne.Widget
+	// GetDefaultConnectionPad returns the default pad for the DiagramElement
+	GetDefaultConnectionPad() ConnectionPad
+	// GetDiagram returns the DiagramWidget to which the DiagramElement belongs
 	GetDiagram() *DiagramWidget
+	// GetDiagramElementID returns the string identifier provided at the time the DiagramElement was created
 	GetDiagramElementID() string
 	handleDragged(handle *Handle, event *fyne.DragEvent)
+	// HideHandles hides the handles on the DiagramElement
 	HideHandles()
+	// ShowHandles shows the handles on the DiagramElement
 	ShowHandles()
 }
 

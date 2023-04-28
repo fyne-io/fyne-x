@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	defaultTheta       float64 = 0.5235 // 30 degrees in radians
-	defaultStrokeWidth float32 = 2
-	defaultLength      int     = 15
+	defaultTheta  float64 = 0.5235 // 30 degrees in radians
+	defaultLength int     = 15
 )
 
 // Arrowhead defines a canvas object which renders an arrow. The arrowhead is defined with reference

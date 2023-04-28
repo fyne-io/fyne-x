@@ -134,6 +134,15 @@ func (dw *DiagramWidget) GetBackgroundColor() color.Color {
 	return dw.DiagramTheme.Color(theme.ColorNameBackground, dw.ThemeVariant)
 }
 
+func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
+	var de DiagramElement
+	de = dw.Nodes[elementID]
+	if de == nil {
+		de = dw.Links[elementID]
+	}
+	return de
+}
+
 func (dw *DiagramWidget) GetForegroundColor() color.Color {
 	return dw.DiagramTheme.Color(theme.ColorNameForeground, dw.ThemeVariant)
 }

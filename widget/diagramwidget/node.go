@@ -121,6 +121,12 @@ func (dn *DiagramNode) findKeyForHandle(handle *Handle) string {
 	return ""
 }
 
+// GetDefaultConnectionPad returns the edge pad for the node
+func (dn *DiagramNode) GetDefaultConnectionPad() ConnectionPad {
+	return dn.GetEdgePad()
+}
+
+// GetEdgePad returns the edge pad for the node
 func (dn *DiagramNode) GetEdgePad() ConnectionPad {
 	return dn.edgePad
 }

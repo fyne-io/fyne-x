@@ -154,6 +154,11 @@ func (dl *DiagramLink) AddTargetDecoration(decoration Decoration) {
 	dl.Refresh()
 }
 
+// GetDefaultConnectionPad returns the midPad of the Link
+func (dl *DiagramLink) GetDefaultConnectionPad() ConnectionPad {
+	return dl.GetMidPad()
+}
+
 // GetMidPad returns the PointPad at the midpoint so that it can be used as either the Source or Target
 // pad for another Link.
 func (dl *DiagramLink) GetMidPad() ConnectionPad {
