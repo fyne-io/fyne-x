@@ -38,7 +38,7 @@ type GridWrap struct {
 // NewGridWrap creates and returns a GridWrap widget for displaying items in
 // a wrapping grid layout with scrolling and caching for performance.
 func NewGridWrap(length func() int, createItem func() fyne.CanvasObject, updateItem func(GridWrapItemID, fyne.CanvasObject)) *GridWrap {
-	gwList := &GridWrap{BaseWidget: widget.BaseWidget{}, Length: length, CreateItem: createItem, UpdateItem: updateItem}
+	gwList := &GridWrap{Length: length, CreateItem: createItem, UpdateItem: updateItem}
 	gwList.ExtendBaseWidget(gwList)
 	return gwList
 }
