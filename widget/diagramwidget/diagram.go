@@ -28,6 +28,9 @@ type linkPinPair struct {
 	pin  *LinkPoint
 }
 
+// DiagramWidget maintains a diagram consisting of DiagramNodes and DiagramLinks. The layout of
+// the nodes and links does not change when the DiagramWidget is resized: they are either positioned
+// manually (interactively) or programmatically.
 type DiagramWidget struct {
 	widget.BaseWidget
 
@@ -52,6 +55,8 @@ type DiagramWidget struct {
 	dummyBox *canvas.Rectangle
 }
 
+// NewDiagramWidget creates a DiagramWidget. The user-supplied ID can be used to map the diagram
+// to data structures within the of the application. It is expected to  be unique within the application
 func NewDiagramWidget(id string) *DiagramWidget {
 	dw := &DiagramWidget{
 		ID:                             id,
@@ -73,6 +78,7 @@ func NewDiagramWidget(id string) *DiagramWidget {
 	return dw
 }
 
+// AddLink adds a link to the diagram
 func (dw *DiagramWidget) AddLink(link *DiagramLink) {
 	dw.Links[link.id] = link
 	link.Refresh()
@@ -95,12 +101,14 @@ func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *
 	}
 }
 
+// AddNode adds a node to the diagram
 func (dw *DiagramWidget) AddNode(node *DiagramNode) {
 	dw.Nodes[node.id] = node
 	node.Refresh()
 	// TODO add logic to rezise diagram if necessary
 }
 
+// CreateRenderer creates the renderer for the diagram
 func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 	r := diagramWidgetRenderer{
 		diagramWidget: dw,
@@ -115,10 +123,12 @@ func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
 	}
 }
 
+// Cursor returns the default cursor
 func (dw *DiagramWidget) Cursor() desktop.Cursor {
 	return desktop.DefaultCursor
 }
 
+// DiagramElementTapped adds the element to the selection when the element is tapped
 func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.PointEvent) {
 	if !dw.IsSelected(de) {
 		dw.addElementToSelection(de)
@@ -126,14 +136,19 @@ func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.Poi
 	dw.forceRepaint()
 }
 
+// DragEnd is called when the drag comes to an end. It refreshes the widget
 func (dw *DiagramWidget) DragEnd() {
 	dw.Refresh()
 }
 
+// GetBackgroundColor returns the background color for the widget from the diagram's theme, which
+// may be different from the application's theme.
 func (dw *DiagramWidget) GetBackgroundColor() color.Color {
 	return dw.DiagramTheme.Color(theme.ColorNameBackground, dw.ThemeVariant)
 }
 
+// GetDiagramElement returns the diagram element with the specified ID, whether
+// it is a node or a link
 func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
 	var de DiagramElement
 	de = dw.Nodes[elementID]
@@ -143,26 +158,36 @@ func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
 	return de
 }
 
+// GetForegroundColor returns the foreground color from the diagram's theme, which may
+// be different from the application's theme
 func (dw *DiagramWidget) GetForegroundColor() color.Color {
 	return dw.DiagramTheme.Color(theme.ColorNameForeground, dw.ThemeVariant)
 }
 
+// GetHoverColor returns the hover color from the diagram's theme, which may may
+// be different from the application's  theme
 func (dw *DiagramWidget) GetHoverColor() color.Color {
 	return dw.DiagramTheme.Color(theme.ColorNameHover, dw.ThemeVariant)
 }
 
+// DiagramNodeDragged moves the indicated node and refreshes any links that may be attached
+// to it
 func (dw *DiagramWidget) DiagramNodeDragged(node *DiagramNode, event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	dw.DisplaceNode(node, delta)
 	dw.forceRepaint()
 }
 
+// DisplaceNode moves the indicated node and refreshes any links that may be attached
+// to it
 func (dw *DiagramWidget) DisplaceNode(node *DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
 	dw.forceRepaint()
 }
 
+// Dragged responds to a drag movement in the background of the diagram. It moves all nodes
+// in the diagram and refreshes all links.
 func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	for _, n := range dw.Nodes {
@@ -171,16 +196,20 @@ func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
 	dw.Refresh()
 }
 
+// IsSelected returns true if the indicated element is currently part of the selection
 func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
 	return dw.selection[de.GetDiagramElementID()] != nil
 }
 
+// MouseIn responds to the mouse moving into the diagram. It presently is a noop
 func (dw *DiagramWidget) MouseIn(event *desktop.MouseEvent) {
 }
 
+// MouseOut responds to the mouse leaving the diagram. It presently is a noop
 func (dw *DiagramWidget) MouseOut() {
 }
 
+// MouseMoved responds to mouse movements in the diagram. It presently is a noop
 func (dw *DiagramWidget) MouseMoved(event *desktop.MouseEvent) {
 }
 
@@ -210,6 +239,8 @@ func (dw *DiagramWidget) refreshDependentLinks(de DiagramElement) {
 	}
 }
 
+// Tapped  respondss to taps in the diagram background. It removes all diagram elements
+// from the selection
 func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
 	for _, de := range dw.selection {
 		dw.removeElementFromSelection(de)
@@ -226,7 +257,6 @@ func (r *diagramWidgetRenderer) Destroy() {
 }
 
 func (r *diagramWidgetRenderer) Layout(size fyne.Size) {
-	// r.diagramWidget.at.Move(fyne.Position{X: 100, Y: 100})
 }
 
 func (r *diagramWidgetRenderer) MinSize() fyne.Size {
