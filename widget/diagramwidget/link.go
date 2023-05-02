@@ -76,9 +76,9 @@ func NewDiagramLink(diagram *DiagramWidget, sourcePad, targetPad ConnectionPad, 
 	dl.midPad.Move(dl.getMidPosition())
 	dl.ExtendBaseWidget(dl)
 
-	dl.diagram.AddLink(dl)
-	dl.diagram.addLinkDependency(dl.sourcePad.GetPadOwner(), dl, dl.linkPoints[0])
-	dl.diagram.addLinkDependency(dl.targetPad.GetPadOwner(), dl, dl.linkPoints[1])
+	dl.diagram.addLink(dl)
+	dl.diagram.addLinkDependency(dl.sourcePad.GetPadOwner(), dl, dl.sourcePad)
+	dl.diagram.addLinkDependency(dl.targetPad.GetPadOwner(), dl, dl.targetPad)
 	dl.Refresh()
 	return dl
 }

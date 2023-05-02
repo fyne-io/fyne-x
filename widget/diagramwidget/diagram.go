@@ -2,6 +2,7 @@ package diagramwidget
 
 import (
 	"image/color"
+	"reflect"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -23,9 +24,9 @@ func (dw *DiagramWidget) forceRepaint() {
 // Verify that interfaces are fully implemented
 var _ fyne.Tappable = (*DiagramWidget)(nil)
 
-type linkPinPair struct {
+type linkPadPair struct {
 	link *DiagramLink
-	pin  *LinkPoint
+	pad  ConnectionPad
 }
 
 // DiagramWidget maintains a diagram consisting of DiagramNodes and DiagramLinks. The layout of
@@ -49,7 +50,7 @@ type DiagramWidget struct {
 	Nodes                          map[string]*DiagramNode
 	Links                          map[string]*DiagramLink
 	selection                      map[string]DiagramElement
-	diagramElementLinkDependencies map[string][]linkPinPair
+	diagramElementLinkDependencies map[string][]linkPadPair
 
 	// TODO Remove dummyBox when fyne rendering issue is resolved
 	dummyBox *canvas.Rectangle
@@ -68,7 +69,7 @@ func NewDiagramWidget(id string) *DiagramWidget {
 		Links:                          map[string]*DiagramLink{},
 		dummyBox:                       canvas.NewRectangle(color.Transparent),
 		selection:                      map[string]DiagramElement{},
-		diagramElementLinkDependencies: map[string][]linkPinPair{},
+		diagramElementLinkDependencies: map[string][]linkPadPair{},
 	}
 	dw.dummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
 	dw.dummyBox.Move(fyne.Position{X: 50, Y: 50})
@@ -78,31 +79,31 @@ func NewDiagramWidget(id string) *DiagramWidget {
 	return dw
 }
 
-// AddLink adds a link to the diagram
-func (dw *DiagramWidget) AddLink(link *DiagramLink) {
+// addLink adds a link to the diagram
+func (dw *DiagramWidget) addLink(link *DiagramLink) {
 	dw.Links[link.id] = link
 	link.Refresh()
 	// TODO add logic to rezise diagram if necessary
 }
 
-func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *DiagramLink, pin *LinkPoint) {
+func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *DiagramLink, pad ConnectionPad) {
 	deID := diagramElement.GetDiagramElementID()
 	currentDependencies := dw.diagramElementLinkDependencies[deID]
 	if currentDependencies == nil {
-		dw.diagramElementLinkDependencies[deID] = []linkPinPair{{link, pin}}
+		dw.diagramElementLinkDependencies[deID] = []linkPadPair{{link, pad}}
 	} else {
 		for _, pair := range currentDependencies {
-			if pair.link == link && pair.pin == pin {
+			if pair.link == link && pair.pad == pad {
 				// it's already there
 				return
 			}
 		}
-		dw.diagramElementLinkDependencies[deID] = append(currentDependencies, linkPinPair{link, pin})
+		dw.diagramElementLinkDependencies[deID] = append(currentDependencies, linkPadPair{link, pad})
 	}
 }
 
-// AddNode adds a node to the diagram
-func (dw *DiagramWidget) AddNode(node *DiagramNode) {
+// addNode adds a node to the diagram
+func (dw *DiagramWidget) addNode(node *DiagramNode) {
 	dw.Nodes[node.id] = node
 	node.Refresh()
 	// TODO add logic to rezise diagram if necessary
@@ -152,7 +153,7 @@ func (dw *DiagramWidget) GetBackgroundColor() color.Color {
 func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
 	var de DiagramElement
 	de = dw.Nodes[elementID]
-	if de == nil {
+	if reflect.ValueOf(de).IsNil() {
 		de = dw.Links[elementID]
 	}
 	return de
@@ -213,19 +214,38 @@ func (dw *DiagramWidget) MouseOut() {
 func (dw *DiagramWidget) MouseMoved(event *desktop.MouseEvent) {
 }
 
+// removeDependenciesInvolvingLink re-creates the diagram's dependencies, omitting any
+// that involve the indicated link. This is a convoluted way of removing any entries
+// involving the link.
+func (dw *DiagramWidget) removeDependenciesInvolvingLink(linkID string) {
+	newMap := map[string][]linkPadPair{}
+	for elementID, dependencies := range dw.diagramElementLinkDependencies {
+		newDependencies := []linkPadPair{}
+		for _, pair := range dependencies {
+			if pair.link.id != linkID {
+				newDependencies = append(newDependencies, pair)
+			}
+		}
+		if len(newDependencies) > 0 {
+			newMap[elementID] = newDependencies
+		}
+	}
+	dw.diagramElementLinkDependencies = newMap
+}
+
 func (dw *DiagramWidget) removeElementFromSelection(de DiagramElement) {
 	delete(dw.selection, de.GetDiagramElementID())
 	de.HideHandles()
 }
 
-func (dw *DiagramWidget) removeLinkDependency(diagramElement DiagramElement, link *DiagramLink, pin *LinkPoint) {
+func (dw *DiagramWidget) removeLinkDependency(diagramElement DiagramElement, link *DiagramLink, pad ConnectionPad) {
 	deID := diagramElement.GetDiagramElementID()
 	currentDependencies := dw.diagramElementLinkDependencies[deID]
 	if currentDependencies == nil {
 		return
 	}
 	for i, pair := range currentDependencies {
-		if pair.link == link && pair.pin == pin {
+		if pair.link == link && pair.pad == pad {
 			dw.diagramElementLinkDependencies[deID] = append(currentDependencies[:i], currentDependencies[i+1:]...)
 			return
 		}
@@ -237,6 +257,25 @@ func (dw *DiagramWidget) refreshDependentLinks(de DiagramElement) {
 	for _, pair := range dependencies {
 		pair.link.Refresh()
 	}
+}
+
+// RemoveElement removes the element from the diagram. It also removes any linkss to the element
+func (dw *DiagramWidget) RemoveElement(elementID string) {
+	element := dw.GetDiagramElement(elementID)
+	// We make a copy of the dependencies because the array can get modified during the iteration
+	currentDependencies := append([]linkPadPair(nil), dw.diagramElementLinkDependencies[elementID]...)
+	for _, pair := range currentDependencies {
+		dw.RemoveElement(pair.link.id)
+	}
+	delete(dw.diagramElementLinkDependencies, elementID)
+	switch element.(type) {
+	case *DiagramNode:
+		delete(dw.Nodes, elementID)
+	case *DiagramLink:
+		delete(dw.Links, elementID)
+		dw.removeDependenciesInvolvingLink(elementID)
+	}
+	dw.Refresh()
 }
 
 // Tapped  respondss to taps in the diagram background. It removes all diagram elements

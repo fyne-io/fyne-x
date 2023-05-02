@@ -71,7 +71,7 @@ func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string
 		newHandle.Hide()
 	}
 	dn.ExtendBaseWidget(dn)
-	dn.diagram.AddNode(dn)
+	dn.diagram.addNode(dn)
 	dn.Refresh()
 	return dn
 }
