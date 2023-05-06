@@ -95,7 +95,7 @@ func createGridWrap(items int) *GridWrap {
 			return icon
 		},
 		func(id GridWrapItemID, item fyne.CanvasObject) {
-			item.(*widget.Icon).Resource = data[id]
+			item.(*widget.Icon).SetResource(data[id])
 		},
 	)
 	list.Resize(fyne.NewSize(200, 400))
