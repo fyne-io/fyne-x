@@ -64,7 +64,9 @@ type responsiveConfig map[responsiveBreakpoint]float32
 // newResponsiveConf return a new responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
-//      Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
+//	Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 func newResponsiveConf(ratios ...float32) responsiveConfig {
 	responsive := responsiveConfig{}
@@ -124,8 +126,7 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 	// objects in a line
 	line := []fyne.CanvasObject{}
 
-	// cast windowSize.Width to responsiveBreakpoint (uint16)
-	ww := responsiveBreakpoint(window.Size().Width)
+	windowSize := window.Size()
 
 	// For each object, place it at the right position (pos) and resize it.
 	for _, o := range objects {
@@ -134,25 +135,14 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		}
 
 		// get tht configuration
-		ro, ok := o.(*responsiveWidget)
+		ro, ok := o.(ResponsiveCanvasObject)
 		if !ok {
 			log.Fatal("A non responsive object has been packed inside a ResponsibleLayout. This is impossible.")
 		}
-		conf := ro.responsiveConfig
 
 		line = append(line, o) // add the container to the line
-		size := o.MinSize()    // get some informations
 
-		// adapt object witdh from the configuration
-		if ww <= SMALL {
-			size.Width = conf[SMALL] * containerSize.Width
-		} else if ww <= MEDIUM {
-			size.Width = conf[MEDIUM] * containerSize.Width
-		} else if ww <= LARGE {
-			size.Width = conf[LARGE] * containerSize.Width
-		} else {
-			size.Width = conf[XLARGE] * containerSize.Width
-		}
+		size := ro.ComputeWindowResize(windowSize, containerSize)
 
 		// place and resize the element
 		o.Resize(size)
@@ -232,12 +222,13 @@ func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
 // configure the rule, each object could be encapsulated by a "Responsive" object.
 //
 // Example:
-//      container := NewResponsiveLayout(
-//          Responsive(label, 1, .5, .25),  // 100% for small, 50% for medium, 25% for large
-//          Responsive(button, 1, .5, .25), // ...
-//          label2,                         // this will be placed and resized with default behaviors
-//                                          // => 1, 1, 1
-//      )
+//
+//	container := NewResponsiveLayout(
+//	    Responsive(label, 1, .5, .25),  // 100% for small, 50% for medium, 25% for large
+//	    Responsive(button, 1, .5, .25), // ...
+//	    label2,                         // this will be placed and resized with default behaviors
+//	                                    // => 1, 1, 1
+//	)
 func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	r := &ResponsiveLayout{}
 
@@ -252,6 +243,13 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	return container.New(r, objects...)
 }
 
+type ResponsiveCanvasObject interface {
+	fyne.CanvasObject
+	// ComputeWindowResize calculates, resizes and returns the object size
+	// based on the window resizing to a new width. Returns 0 if not visible
+	ComputeWindowResize(windowSize, containerSize fyne.Size) fyne.Size
+}
+
 type responsiveWidget struct {
 	widget.BaseWidget
 
@@ -264,13 +262,39 @@ var _ fyne.Widget = (*responsiveWidget)(nil)
 // Responsive register the object with a responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
-//      Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
+//	Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
-func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
+func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) ResponsiveCanvasObject {
 	ro := &responsiveWidget{render: object, responsiveConfig: newResponsiveConf(breakpointRatio...)}
 	ro.ExtendBaseWidget(ro)
 	return ro
+}
+
+func (ro *responsiveWidget) ComputeWindowResize(windowSize, containerSize fyne.Size) fyne.Size {
+	if !ro.Visible() {
+		return fyne.Size{0, 0}
+	}
+
+	conf := ro.responsiveConfig
+	size := ro.MinSize() // get some informations
+
+	// cast windowSize.Width to responsiveBreakpoint (uint16)
+	windowWidth := responsiveBreakpoint(windowSize.Width)
+	// adapt object witdh from the configuration
+	if windowWidth <= SMALL {
+		size.Width = conf[SMALL] * containerSize.Width
+	} else if windowWidth <= MEDIUM {
+		size.Width = conf[MEDIUM] * containerSize.Width
+	} else if windowWidth <= LARGE {
+		size.Width = conf[LARGE] * containerSize.Width
+	} else {
+		size.Width = conf[XLARGE] * containerSize.Width
+	}
+
+	return size
 }
 
 func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
