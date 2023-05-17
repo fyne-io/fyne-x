@@ -9,10 +9,10 @@ import (
 )
 
 // adjacent returns true if there is at least one edge between n1 and n2
-func adjacent(dw *DiagramWidget, n1, n2 *DiagramNode) bool {
+func adjacent(dw *DiagramWidget, n1, n2 DiagramNode) bool {
 	// TODO: expensive, may be worth caching?
 	for _, e := range dw.Links {
-		if ((e.sourcePad.GetPadOwner() == n1) && (e.targetPad.GetPadOwner() == n2)) || ((e.sourcePad.GetPadOwner() == n2) && (e.targetPad.GetPadOwner() == n1)) {
+		if ((e.GetSourcePad().GetPadOwner() == n1) && (e.GetTargetPad().GetPadOwner() == n2)) || ((e.GetSourcePad().GetPadOwner() == n2) && (e.GetTargetPad().GetPadOwner() == n1)) {
 			return true
 		}
 	}
@@ -20,14 +20,14 @@ func adjacent(dw *DiagramWidget, n1, n2 *DiagramNode) bool {
 	return false
 }
 
-func calculateDistance(n1, n2 *DiagramNode) float64 {
+func calculateDistance(n1, n2 DiagramNode) float64 {
 	return r2.MakeLineFromEndpoints(n1.R2Center(), n2.R2Center()).Length()
 }
 
 // calculateForce calculates the force between the given pair of nodes.
 //
 // The force is calculated at n1.
-func calculateForce(dw *DiagramWidget, n1, n2 *DiagramNode, targetLength float64) r2.Vec2 {
+func calculateForce(dw *DiagramWidget, n1, n2 DiagramNode, targetLength float64) r2.Vec2 {
 	// spring constant for linear spring
 	k := float64(0.01)
 	d := calculateDistance(n1, n2)

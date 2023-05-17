@@ -22,7 +22,7 @@ const (
 // to match the angle of the link's line segment with which it is oriented, indicated by the baseAngle.
 type Arrowhead struct {
 	widget.BaseWidget
-	link *DiagramLink
+	link *BaseDiagramLink
 	// baseAngle is used to define direction in which the arrowhead points
 	// Base fyne.Position
 	baseAngle float64
@@ -115,7 +115,7 @@ func (a *Arrowhead) setBaseAngle(angle float64) {
 }
 
 // setLink sets the DiagramLink on which this arrowhead appears
-func (a *Arrowhead) setLink(link *DiagramLink) {
+func (a *Arrowhead) setLink(link *BaseDiagramLink) {
 	a.link = link
 }
 

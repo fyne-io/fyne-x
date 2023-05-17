@@ -10,7 +10,7 @@ type LinkPoint struct {
 	widget.BaseWidget
 }
 
-func NewLinkPoint(link *DiagramLink) *LinkPoint {
+func NewLinkPoint(link *BaseDiagramLink) *LinkPoint {
 	lp := &LinkPoint{}
 	lp.BaseWidget.ExtendBaseWidget(lp)
 	return lp

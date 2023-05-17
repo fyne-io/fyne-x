@@ -37,7 +37,7 @@ func (h *Handle) CreateRenderer() fyne.WidgetRenderer {
 	}
 	hr.rect.FillColor = color.Transparent
 	hr.Refresh()
-	h.de.GetDiagram().forceRepaint()
+	h.de.GetDiagram().ForceRepaint()
 	return hr
 }
 
@@ -103,5 +103,5 @@ func (hr *handleRenderer) Refresh() {
 	hr.rect.StrokeColor = hr.handle.getStrokeColor()
 	hr.rect.FillColor = color.Transparent
 	hr.rect.StrokeWidth = hr.handle.getStrokeWidth()
-	hr.handle.de.GetDiagram().forceRepaint()
+	hr.handle.de.GetDiagram().ForceRepaint()
 }

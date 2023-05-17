@@ -11,11 +11,11 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// forceRepaint is a workaround for a Fyne bug (Issue #2205) in which moving a canvas object does not
+// ForceRepaint is a workaround for a Fyne bug (Issue #2205) in which moving a canvas object does not
 // trigger repainting. When the issue is resolved, this function and all references to it should be
 // removed. The DummyBox on the GlobalDiagram should also be removed.
 // The conditionals here are required during initialization.
-func (dw *DiagramWidget) forceRepaint() {
+func (dw *DiagramWidget) ForceRepaint() {
 	if dw != nil && dw.dummyBox != nil {
 		dw.dummyBox.Refresh()
 	}
@@ -25,7 +25,7 @@ func (dw *DiagramWidget) forceRepaint() {
 var _ fyne.Tappable = (*DiagramWidget)(nil)
 
 type linkPadPair struct {
-	link *DiagramLink
+	link *BaseDiagramLink
 	pad  ConnectionPad
 }
 
@@ -47,8 +47,8 @@ type DiagramWidget struct {
 	// DesiredSize specifies the size of the displayed diagram. Defaults to 800 x 600
 	DesiredSize fyne.Size
 
-	Nodes                          map[string]*DiagramNode
-	Links                          map[string]*DiagramLink
+	Nodes                          map[string]DiagramNode
+	Links                          map[string]DiagramLink
 	selection                      map[string]DiagramElement
 	diagramElementLinkDependencies map[string][]linkPadPair
 
@@ -65,8 +65,8 @@ func NewDiagramWidget(id string) *DiagramWidget {
 		ThemeVariant:                   fyne.CurrentApp().Settings().ThemeVariant(),
 		DesiredSize:                    fyne.Size{Width: 800, Height: 600},
 		Offset:                         fyne.Position{X: 0, Y: 0},
-		Nodes:                          map[string]*DiagramNode{},
-		Links:                          map[string]*DiagramLink{},
+		Nodes:                          map[string]DiagramNode{},
+		Links:                          map[string]DiagramLink{},
 		dummyBox:                       canvas.NewRectangle(color.Transparent),
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPadPair{},
@@ -80,13 +80,13 @@ func NewDiagramWidget(id string) *DiagramWidget {
 }
 
 // addLink adds a link to the diagram
-func (dw *DiagramWidget) addLink(link *DiagramLink) {
-	dw.Links[link.id] = link
+func (dw *DiagramWidget) addLink(link DiagramLink) {
+	dw.Links[link.GetDiagramElementID()] = link
 	link.Refresh()
 	// TODO add logic to rezise diagram if necessary
 }
 
-func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *DiagramLink, pad ConnectionPad) {
+func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *BaseDiagramLink, pad ConnectionPad) {
 	deID := diagramElement.GetDiagramElementID()
 	currentDependencies := dw.diagramElementLinkDependencies[deID]
 	if currentDependencies == nil {
@@ -103,8 +103,8 @@ func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *
 }
 
 // addNode adds a node to the diagram
-func (dw *DiagramWidget) addNode(node *DiagramNode) {
-	dw.Nodes[node.id] = node
+func (dw *DiagramWidget) addNode(node DiagramNode) {
+	dw.Nodes[node.GetDiagramElementID()] = node
 	node.Refresh()
 	// TODO add logic to rezise diagram if necessary
 }
@@ -134,7 +134,7 @@ func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.Poi
 	if !dw.IsSelected(de) {
 		dw.addElementToSelection(de)
 	}
-	dw.forceRepaint()
+	dw.ForceRepaint()
 }
 
 // DragEnd is called when the drag comes to an end. It refreshes the widget
@@ -153,7 +153,7 @@ func (dw *DiagramWidget) GetBackgroundColor() color.Color {
 func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
 	var de DiagramElement
 	de = dw.Nodes[elementID]
-	if reflect.ValueOf(de).IsNil() {
+	if de == nil || reflect.ValueOf(de).IsNil() {
 		de = dw.Links[elementID]
 	}
 	return de
@@ -173,18 +173,18 @@ func (dw *DiagramWidget) GetHoverColor() color.Color {
 
 // DiagramNodeDragged moves the indicated node and refreshes any links that may be attached
 // to it
-func (dw *DiagramWidget) DiagramNodeDragged(node *DiagramNode, event *fyne.DragEvent) {
+func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	dw.DisplaceNode(node, delta)
-	dw.forceRepaint()
+	dw.ForceRepaint()
 }
 
 // DisplaceNode moves the indicated node and refreshes any links that may be attached
 // to it
-func (dw *DiagramWidget) DisplaceNode(node *DiagramNode, delta fyne.Position) {
+func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
-	dw.forceRepaint()
+	dw.ForceRepaint()
 }
 
 // Dragged responds to a drag movement in the background of the diagram. It moves all nodes
@@ -238,7 +238,7 @@ func (dw *DiagramWidget) removeElementFromSelection(de DiagramElement) {
 	de.HideHandles()
 }
 
-func (dw *DiagramWidget) removeLinkDependency(diagramElement DiagramElement, link *DiagramLink, pad ConnectionPad) {
+func (dw *DiagramWidget) removeLinkDependency(diagramElement DiagramElement, link *BaseDiagramLink, pad ConnectionPad) {
 	deID := diagramElement.GetDiagramElementID()
 	currentDependencies := dw.diagramElementLinkDependencies[deID]
 	if currentDependencies == nil {
@@ -269,9 +269,9 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 	}
 	delete(dw.diagramElementLinkDependencies, elementID)
 	switch element.(type) {
-	case *DiagramNode:
+	case *BaseDiagramNode:
 		delete(dw.Nodes, elementID)
-	case *DiagramLink:
+	case *BaseDiagramLink:
 		delete(dw.Links, elementID)
 		dw.removeDependenciesInvolvingLink(elementID)
 	}
@@ -284,7 +284,7 @@ func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
 	for _, de := range dw.selection {
 		dw.removeElementFromSelection(de)
 	}
-	dw.forceRepaint()
+	dw.ForceRepaint()
 }
 
 // diagramWidgetRenderer

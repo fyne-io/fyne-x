@@ -237,8 +237,8 @@ func (rpr *rectanglePadRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (rpr *rectanglePadRenderer) Refresh() {
-	rpr.rect.StrokeColor = rpr.rp.padOwner.GetDiagram().GetForegroundColor()
+	rpr.rect.StrokeColor = rpr.rp.padOwner.GetForegroundColor()
 	rpr.rect.FillColor = color.Transparent
 	rpr.rect.StrokeWidth = padLineWidth
-	rpr.rp.connectionPad.padOwner.GetDiagram().forceRepaint()
+	rpr.rp.connectionPad.padOwner.GetDiagram().ForceRepaint()
 }

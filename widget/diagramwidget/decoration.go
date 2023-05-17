@@ -24,7 +24,7 @@ const (
 // so that it can adjust the position of the next decoration appropriately.
 type Decoration interface {
 	fyne.Widget
-	setLink(link *DiagramLink)
+	setLink(link *BaseDiagramLink)
 	// setBaseAngle sets the angle of the reference axis
 	setBaseAngle(angle float64) // Angle in radians
 	SetFillColor(color color.Color)

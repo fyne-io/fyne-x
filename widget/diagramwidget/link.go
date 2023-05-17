@@ -8,14 +8,20 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/widget"
 )
 
 // Validate Hoverable Implementation
-var _ desktop.Hoverable = (*DiagramLink)(nil)
-var _ DiagramElement = (*DiagramLink)(nil)
+var _ desktop.Hoverable = (*BaseDiagramLink)(nil)
+var _ DiagramElement = (*BaseDiagramLink)(nil)
 
-// DiagramLink is a directed graphic connection between two DiagramElements that are referred to as the Source
+type DiagramLink interface {
+	DiagramElement
+	getBaseDiagramLink() *BaseDiagramLink
+	GetSourcePad() ConnectionPad
+	GetTargetPad() ConnectionPad
+}
+
+// BaseDiagramLink is a directed graphic connection between two DiagramElements that are referred to as the Source
 // and Target. The link consists of one or more line segments. By default a single line segment connects the
 // Source and Target. The Link connects to ConnectionPads on the DiagramElements.
 // There are three key points on a Link: the Source connection point, the Target connection point, and a MidPoint.
@@ -31,8 +37,7 @@ var _ DiagramElement = (*DiagramLink)(nil)
 // can be used to retrieve the AnchoredText widget so that the displayed text value (among other things) can be set programatically.
 // By default, there is a single ConnectionPad (a PointPad) associated with a Link and located at the MidPoint. Thus a
 // Link can connect to another Link using this ConnectionPad.
-type DiagramLink struct {
-	widget.BaseWidget
+type BaseDiagramLink struct {
 	diagramElement
 	linkPoints           []*LinkPoint
 	linkSegments         []*LinkSegment
@@ -55,38 +60,43 @@ type DiagramLink struct {
 // It can be used to retrieve the DiagramLink from the Diagram. The ID is intended to be used to facilitate mapping the
 // DiagramLink to the information it represents in the application. The DiagramLink uses the DiagramWidget's ForegroundColor
 // as the default color for the line segments.
-func NewDiagramLink(diagram *DiagramWidget, sourcePad, targetPad ConnectionPad, linkID string) *DiagramLink {
-	dl := &DiagramLink{
-		linkPoints:           []*LinkPoint{},
-		linkSegments:         []*LinkSegment{},
-		LinkColor:            diagram.GetForegroundColor(),
-		strokeWidth:          2,
-		sourcePad:            sourcePad,
-		targetPad:            targetPad,
-		sourceAnchoredText:   make(map[string]*AnchoredText),
-		midpointAnchoredText: make(map[string]*AnchoredText),
-		targetAnchoredText:   make(map[string]*AnchoredText),
-		showHandles:          false,
-	}
-	dl.diagramElement.initialize(diagram, linkID)
-	dl.linkPoints = append(dl.linkPoints, NewLinkPoint(dl))
-	dl.linkPoints = append(dl.linkPoints, NewLinkPoint(dl))
-	dl.linkSegments = append(dl.linkSegments, NewLinkSegment(dl, dl.linkPoints[0].Position(), dl.linkPoints[1].Position()))
-	dl.midPad = NewPointPad(dl)
-	dl.midPad.Move(dl.getMidPosition())
-	dl.ExtendBaseWidget(dl)
+func NewDiagramLink(diagram *DiagramWidget, sourcePad, targetPad ConnectionPad, linkID string) *BaseDiagramLink {
+	bdl := &BaseDiagramLink{}
+	InitializeBaseDiagramLink(bdl, diagram, sourcePad, targetPad, linkID)
+	return bdl
+}
 
-	dl.diagram.addLink(dl)
-	dl.diagram.addLinkDependency(dl.sourcePad.GetPadOwner(), dl, dl.sourcePad)
-	dl.diagram.addLinkDependency(dl.targetPad.GetPadOwner(), dl, dl.targetPad)
-	dl.Refresh()
-	return dl
+// InitializeBaseDiagramLink initializes the BaseDiagramLink. It must be called by any extensions to BaseDiagramLink
+func InitializeBaseDiagramLink(diagramLink DiagramLink, diagram *DiagramWidget, sourcePad, targetPad ConnectionPad, linkID string) {
+	bdl := diagramLink.getBaseDiagramLink()
+	bdl.linkPoints = []*LinkPoint{}
+	bdl.linkSegments = []*LinkSegment{}
+	bdl.LinkColor = diagram.GetForegroundColor()
+	bdl.strokeWidth = 2
+	bdl.sourcePad = sourcePad
+	bdl.targetPad = targetPad
+	bdl.sourceAnchoredText = make(map[string]*AnchoredText)
+	bdl.midpointAnchoredText = make(map[string]*AnchoredText)
+	bdl.targetAnchoredText = make(map[string]*AnchoredText)
+	bdl.showHandles = false
+	bdl.diagramElement.initialize(diagram, linkID)
+	bdl.linkPoints = append(bdl.linkPoints, NewLinkPoint(bdl))
+	bdl.linkPoints = append(bdl.linkPoints, NewLinkPoint(bdl))
+	bdl.linkSegments = append(bdl.linkSegments, NewLinkSegment(bdl, bdl.linkPoints[0].Position(), bdl.linkPoints[1].Position()))
+	bdl.midPad = NewPointPad(bdl)
+	bdl.midPad.Move(bdl.getMidPosition())
+	bdl.ExtendBaseWidget(diagramLink)
+
+	bdl.diagram.addLink(diagramLink)
+	bdl.diagram.addLinkDependency(bdl.sourcePad.GetPadOwner(), bdl, bdl.sourcePad)
+	bdl.diagram.addLinkDependency(bdl.targetPad.GetPadOwner(), bdl, bdl.targetPad)
+	diagramLink.Refresh()
 }
 
 // CreateRenderer creates the WidgetRenderer for a DiagramLink
-func (dl *DiagramLink) CreateRenderer() fyne.WidgetRenderer {
+func (bdl *BaseDiagramLink) CreateRenderer() fyne.WidgetRenderer {
 	dlr := diagramLinkRenderer{
-		link: dl,
+		link: bdl,
 	}
 
 	(&dlr).Refresh()
@@ -97,123 +107,151 @@ func (dl *DiagramLink) CreateRenderer() fyne.WidgetRenderer {
 // AddSourceAnchoredText creates a new AnchoredText widget and adds it to the DiagramLink at the Source
 // position. It uses the supplied key to index the widget so that it can be retrieved later.
 // Multiple AnchoredText widgets can be added.
-func (dl *DiagramLink) AddSourceAnchoredText(key string, displayedText string) {
+func (bdl *BaseDiagramLink) AddSourceAnchoredText(key string, displayedText string) *AnchoredText {
 	at := NewAnchoredText(displayedText)
-	at.link = dl
-	dl.sourceAnchoredText[key] = at
-	at.SetReferencePosition(dl.getSourcePosition())
-	at.Move(dl.getSourcePosition())
-	dl.Refresh()
+	at.link = bdl
+	bdl.sourceAnchoredText[key] = at
+	at.SetReferencePosition(bdl.getSourcePosition())
+	at.Move(bdl.getSourcePosition())
+	bdl.Refresh()
+	return at
 }
 
 // AddSourceDecoration adds the supplied Decoration widget at the Source position. Multiple
 // calls to this function will stack the decorations along the line segment at the Source position.
-func (dl *DiagramLink) AddSourceDecoration(decoration Decoration) {
-	decoration.setLink(dl)
-	dl.SourceDecorations = append(dl.SourceDecorations, decoration)
-	dl.Refresh()
+func (bdl *BaseDiagramLink) AddSourceDecoration(decoration Decoration) {
+	decoration.setLink(bdl)
+	bdl.SourceDecorations = append(bdl.SourceDecorations, decoration)
+	bdl.Refresh()
 }
 
 // AddMidpointAnchoredText creates a new AnchoredText widget and adds it to the DiagramLink at the Midpoint
 // position. It uses the supplied key to index the widget so that it can be retrieved later.
 // Multiple AnchoredText widgets can be added.
-func (dl *DiagramLink) AddMidpointAnchoredText(key string, displayedText string) {
+func (bdl *BaseDiagramLink) AddMidpointAnchoredText(key string, displayedText string) *AnchoredText {
 	at := NewAnchoredText(displayedText)
-	at.link = dl
-	dl.midpointAnchoredText[key] = at
-	at.SetReferencePosition(dl.getMidPosition())
-	at.Move(dl.getMidPosition())
-	dl.Refresh()
+	at.link = bdl
+	bdl.midpointAnchoredText[key] = at
+	at.SetReferencePosition(bdl.getMidPosition())
+	at.Move(bdl.getMidPosition())
+	bdl.Refresh()
+	return at
 }
 
 // AddMidpointDecoration adds the supplied Decoration widget at the Midpoint position. Multiple
 // calls to this function will stack the decorations along the line segment at the Midpoint position.
-func (dl *DiagramLink) AddMidpointDecoration(decoration Decoration) {
-	decoration.setLink(dl)
-	dl.MidpointDecorations = append(dl.MidpointDecorations, decoration)
-	dl.Refresh()
+func (bdl *BaseDiagramLink) AddMidpointDecoration(decoration Decoration) {
+	decoration.setLink(bdl)
+	bdl.MidpointDecorations = append(bdl.MidpointDecorations, decoration)
+	bdl.Refresh()
 }
 
 // AddTargetAnchoredText creates a new AnchoredText widget and adds it to the DiagramLink at the Target
 // position. It uses the supplied key to index the widget so that it can be retrieved later.
 // Multiple AnchoredText widgets can be added.
-func (dl *DiagramLink) AddTargetAnchoredText(key string, displayedText string) {
+func (bdl *BaseDiagramLink) AddTargetAnchoredText(key string, displayedText string) *AnchoredText {
 	at := NewAnchoredText(displayedText)
-	at.link = dl
-	dl.targetAnchoredText[key] = at
-	at.SetReferencePosition(dl.getTargetPosition())
-	at.Move(dl.getTargetPosition())
-	dl.Refresh()
+	at.link = bdl
+	bdl.targetAnchoredText[key] = at
+	at.SetReferencePosition(bdl.getTargetPosition())
+	at.Move(bdl.getTargetPosition())
+	bdl.Refresh()
+	return at
 }
 
 // AddTargetDecoration adds the supplied Decoration widget at the Target position. Multiple
 // calls to this function will stack the decorations along the line segment at the Target position.
-func (dl *DiagramLink) AddTargetDecoration(decoration Decoration) {
-	decoration.setLink(dl)
-	dl.TargetDecorations = append(dl.TargetDecorations, decoration)
-	dl.Refresh()
+func (bdl *BaseDiagramLink) AddTargetDecoration(decoration Decoration) {
+	decoration.setLink(bdl)
+	bdl.TargetDecorations = append(bdl.TargetDecorations, decoration)
+	bdl.Refresh()
+}
+
+// getBaseDiagramLink returns a pointer to the BaseDiagramLink
+func (bdl *BaseDiagramLink) getBaseDiagramLink() *BaseDiagramLink {
+	return bdl
 }
 
 // GetDefaultConnectionPad returns the midPad of the Link
-func (dl *DiagramLink) GetDefaultConnectionPad() ConnectionPad {
-	return dl.GetMidPad()
+func (bdl *BaseDiagramLink) GetDefaultConnectionPad() ConnectionPad {
+	return bdl.GetMidPad()
 }
 
 // GetMidPad returns the PointPad at the midpoint so that it can be used as either the Source or Target
 // pad for another Link.
-func (dl *DiagramLink) GetMidPad() ConnectionPad {
-	return dl.midPad
+func (bdl *BaseDiagramLink) GetMidPad() ConnectionPad {
+	return bdl.midPad
 }
 
-func (dl *DiagramLink) getMidPosition() fyne.Position {
+func (bdl *BaseDiagramLink) getMidPosition() fyne.Position {
 	// TODO update when additional points are introduced
-	sourcePoint := dl.linkPoints[0].Position()
-	targetPoint := dl.linkPoints[len(dl.linkPoints)-1].Position()
+	sourcePoint := bdl.linkPoints[0].Position()
+	targetPoint := bdl.linkPoints[len(bdl.linkPoints)-1].Position()
 	midPoint := fyne.NewPos((sourcePoint.X+targetPoint.X)/2, (sourcePoint.Y+targetPoint.Y)/2)
 	return midPoint
 }
 
-func (dl *DiagramLink) getSourcePosition() fyne.Position {
-	return dl.linkPoints[0].Position()
+func (bdl *BaseDiagramLink) GetMidpointAnchoredText(key string) *AnchoredText {
+	return bdl.midpointAnchoredText[key]
 }
 
-func (dl *DiagramLink) getTargetPosition() fyne.Position {
-	return dl.linkPoints[len(dl.linkPoints)-1].Position()
+func (bdl *BaseDiagramLink) GetSourceAnchoredText(key string) *AnchoredText {
+	return bdl.sourceAnchoredText[key]
 }
 
-func (dl *DiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent) {
+func (bdl *BaseDiagramLink) GetTargetAnchoredText(key string) *AnchoredText {
+	return bdl.targetAnchoredText[key]
+}
+
+func (bdl *BaseDiagramLink) GetSourcePad() ConnectionPad {
+	return bdl.sourcePad
+}
+
+func (bdl *BaseDiagramLink) getSourcePosition() fyne.Position {
+	return bdl.linkPoints[0].Position()
+}
+
+func (bdl *BaseDiagramLink) GetTargetPad() ConnectionPad {
+	return bdl.targetPad
+}
+
+func (bdl *BaseDiagramLink) getTargetPosition() fyne.Position {
+	return bdl.linkPoints[len(bdl.linkPoints)-1].Position()
+}
+
+func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent) {
 	// TODO implement this
 }
 
 // HideHandles prevents the handles from being displayed
-func (dl *DiagramLink) HideHandles() {
-	dl.showHandles = false
-	dl.Refresh()
+func (bdl *BaseDiagramLink) HideHandles() {
+	bdl.showHandles = false
+	bdl.Refresh()
 }
 
 // MouseIn responds to the mouse entering the bounding rectangle of the Link
-func (dl *DiagramLink) MouseIn(event *desktop.MouseEvent) {
+func (bdl *BaseDiagramLink) MouseIn(event *desktop.MouseEvent) {
 	// TODO implement this
 }
 
 // MouseMoved responds to the mouse moving while within the bounding rectangle of the Link
-func (dl *DiagramLink) MouseMoved(event *desktop.MouseEvent) {
+func (bdl *BaseDiagramLink) MouseMoved(event *desktop.MouseEvent) {
 	// TODO implement this
 }
 
 // MouseOut responds to the mouse leaving the bounding rectangle of the Link
-func (dl *DiagramLink) MouseOut() {
+func (bdl *BaseDiagramLink) MouseOut() {
 }
 
 // ShowHandles causes the handles of the Link to be displayed
-func (dl *DiagramLink) ShowHandles() {
-	dl.showHandles = true
-	dl.Refresh()
+func (bdl *BaseDiagramLink) ShowHandles() {
+	bdl.showHandles = true
+	bdl.Refresh()
 }
 
 // diagramLinkRenderer
 type diagramLinkRenderer struct {
-	link *DiagramLink
+	link *BaseDiagramLink
 }
 
 func (dlr *diagramLinkRenderer) Destroy() {
@@ -274,6 +312,7 @@ func (dlr *diagramLinkRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (dlr *diagramLinkRenderer) Refresh() {
+	dlr.link.Resize(dlr.MinSize())
 	padBasedSourceReferencePoint := dlr.link.sourcePad.GetCenter()
 	padBasedTargetReferencePoint := dlr.link.targetPad.GetCenter()
 	padBasedSourcePosition := dlr.link.sourcePad.getConnectionPoint(padBasedTargetReferencePoint)
@@ -365,5 +404,5 @@ func (dlr *diagramLinkRenderer) Refresh() {
 		decoration.Refresh()
 	}
 	dlr.link.diagram.refreshDependentLinks(dlr.link)
-	dlr.link.GetDiagram().forceRepaint()
+	dlr.link.GetDiagram().ForceRepaint()
 }

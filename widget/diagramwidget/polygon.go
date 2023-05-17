@@ -29,7 +29,7 @@ var _ Decoration = (*Polygon)(nil)
 // By default, stroke color and fill color are color.Black
 type Polygon struct {
 	widget.BaseWidget
-	link *DiagramLink
+	link *BaseDiagramLink
 	// baseAngle is used to define the rotation of the polygon from the nominal position
 	// Base fyne.Position
 	baseAngle float64
@@ -181,7 +181,7 @@ func (p *Polygon) SetFillColor(fillColor color.Color) {
 }
 
 // setLink sets the Link with which the polygon is associated
-func (p *Polygon) setLink(link *DiagramLink) {
+func (p *Polygon) setLink(link *BaseDiagramLink) {
 	p.link = link
 }
 

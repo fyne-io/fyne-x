@@ -4,7 +4,7 @@ import (
 	"image/color"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -18,11 +18,12 @@ import (
 // move by the same amount
 type AnchoredText struct {
 	widget.BaseWidget
-	link              *DiagramLink
-	offset            r2.Vec2
-	referencePosition fyne.Position
-	displayedText     string
-	ForegroundColor   color.Color
+	link                 *BaseDiagramLink
+	offset               r2.Vec2
+	referencePosition    fyne.Position
+	displayedTextBinding binding.String
+	ForegroundColor      color.Color
+	textEntry            *widget.Entry
 }
 
 // NewAnchoredText creates an textual annotation for a link. After it is created, one of the
@@ -30,11 +31,16 @@ type AnchoredText struct {
 // anchored text with the appropriate reference point on the link.
 func NewAnchoredText(text string) *AnchoredText {
 	at := &AnchoredText{
-		displayedText:     text,
 		offset:            r2.MakeVec2(0, 0),
 		ForegroundColor:   theme.ForegroundColor(),
 		referencePosition: fyne.Position{X: 0, Y: 0},
 	}
+	at.displayedTextBinding = binding.NewString()
+	at.displayedTextBinding.Set(text)
+	at.textEntry = widget.NewEntryWithData(at.displayedTextBinding)
+	at.textEntry.Wrapping = fyne.TextWrapOff
+	at.textEntry.Validator = nil
+	at.textEntry.Enable()
 	at.ExtendBaseWidget(at)
 	return at
 }
@@ -42,10 +48,8 @@ func NewAnchoredText(text string) *AnchoredText {
 // CreateRenderer is the required method for a widget extension
 func (at *AnchoredText) CreateRenderer() fyne.WidgetRenderer {
 	atr := &anchoredTextRenderer{
-		widget:     at,
-		textObject: canvas.NewText(at.displayedText, color.Black),
+		widget: at,
 	}
-
 	atr.Refresh()
 
 	return atr
@@ -67,12 +71,23 @@ func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
 	at.Refresh()
-	at.link.diagramElement.GetDiagram().forceRepaint()
+	at.link.diagramElement.GetDiagram().ForceRepaint()
 }
 
-// MinSize returns a fixed minimum size for the anchored text.
+// GetDisplayedTextBinding returns the binding for the displayed text
+func (at *AnchoredText) GetDisplayedTextBinding() binding.String {
+	return at.displayedTextBinding
+}
+
+// GetTextEntry returns the entry widget
+func (at *AnchoredText) GetTextEntry() *widget.Entry {
+	return at.textEntry
+}
+
+// MinSize returns the size of the entry widget plus a one-pixel border
 func (at *AnchoredText) MinSize() fyne.Size {
-	minSize := fyne.Size{Height: 25, Width: 50}
+	textEntryMinSize := at.textEntry.MinSize()
+	minSize := fyne.NewSize(textEntryMinSize.Width+10, textEntryMinSize.Height+10)
 	return minSize
 }
 
@@ -118,8 +133,7 @@ func (at *AnchoredText) SetReferencePosition(position fyne.Position) {
 
 // anchoredTextRenderer
 type anchoredTextRenderer struct {
-	widget     *AnchoredText
-	textObject *canvas.Text
+	widget *AnchoredText
 }
 
 func (atr *anchoredTextRenderer) Destroy() {
@@ -127,20 +141,22 @@ func (atr *anchoredTextRenderer) Destroy() {
 }
 
 func (atr *anchoredTextRenderer) Layout(size fyne.Size) {
-	atr.widget.Resize(atr.textObject.MinSize())
 }
 
 func (atr *anchoredTextRenderer) MinSize() fyne.Size {
-	return atr.textObject.MinSize()
+	return atr.widget.textEntry.MinSize()
 }
 
 func (atr *anchoredTextRenderer) Objects() []fyne.CanvasObject {
 	canvasObjects := []fyne.CanvasObject{
-		atr.textObject,
+		atr.widget.textEntry,
 	}
 	return canvasObjects
 }
 
 func (atr *anchoredTextRenderer) Refresh() {
-	// atr.widget.textObject.Color = atr.widget.ForegroundColor
+	atr.widget.Resize(atr.widget.MinSize())
+	atr.widget.textEntry.Resize(atr.widget.textEntry.MinSize())
+	atr.widget.textEntry.Move(fyne.NewPos(5, 5))
+	atr.widget.textEntry.Refresh()
 }

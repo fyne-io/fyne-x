@@ -10,12 +10,12 @@ import (
 
 type LinkSegment struct {
 	widget.BaseWidget
-	link *DiagramLink
+	link *BaseDiagramLink
 	p1   fyne.Position
 	p2   fyne.Position
 }
 
-func NewLinkSegment(link *DiagramLink, p1 fyne.Position, p2 fyne.Position) *LinkSegment {
+func NewLinkSegment(link *BaseDiagramLink, p1 fyne.Position, p2 fyne.Position) *LinkSegment {
 	ls := &LinkSegment{
 		link: link,
 		p1:   p1,
@@ -68,5 +68,5 @@ func (lsr *linkSegmentRenderer) Refresh() {
 	lsr.line.Position2 = lsr.ls.p2
 	lsr.line.StrokeColor = lsr.ls.link.LinkColor
 	lsr.line.StrokeWidth = lsr.ls.link.strokeWidth
-	lsr.ls.link.GetDiagram().forceRepaint()
+	lsr.ls.link.GetDiagram().ForceRepaint()
 }
