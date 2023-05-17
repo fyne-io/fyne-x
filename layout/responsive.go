@@ -250,6 +250,8 @@ type ResponsiveCanvasObject interface {
 	// ComputeWindowResize calculates, resizes and returns the object size
 	// based on the window resizing to a new width. Returns 0 if not visible
 	ComputeWindowResize(windowSize, containerSize fyne.Size) fyne.Size
+	// Configure whether the element should be hidden at each breakpoint
+	Hidable(hiddenAtBreakpoint ...bool)
 }
 
 type responsiveWidget struct {
@@ -317,6 +319,7 @@ func (ro *responsiveWidget) hideOnResize(windowSize fyne.Size) {
 }
 
 func (ro *responsiveWidget) ComputeWindowResize(windowSize, containerSize fyne.Size) fyne.Size {
+	ro.hideOnResize(windowSize)
 	if !ro.Visible() {
 		return fyne.Size{0, 0}
 	}

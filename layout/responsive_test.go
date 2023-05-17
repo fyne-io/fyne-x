@@ -63,6 +63,40 @@ func TestResponsive_Responsive(t *testing.T) {
 	assert.Equal(t, w/2-padding*2, size2.Width)
 }
 
+// Test is a basic responsive layout is correctly configured. This test 2 widgets
+// with 100% for small size and 50% for medium size or taller.
+func TestResponsive_HidableResponsive(t *testing.T) {
+	padding := theme.Padding()
+
+	// build
+	label1 := Responsive(widget.NewLabel("Hello World"), 1, .5)
+	label2 := Responsive(widget.NewLabel("Hello World"), 1, .5)
+	label2.Hidable(true, false)
+
+	win := test.NewWindow(
+		NewResponsiveLayout(label1, label2),
+	)
+	win.SetPadded(true)
+	defer win.Close()
+
+	// First, we are at w < SMALL so the labels should be sized to 100% of the layout
+	w, h := float32(SMALL), float32(300)
+	win.Resize(fyne.NewSize(w, h))
+	size1 := label1.Size()
+	size2 := label2.Size()
+	assert.Equal(t, w-padding*2, size1.Width)
+	assert.Equal(t, float32(0), size2.Width)
+
+	// Then resize to w > SMALL so the labels should be sized to 50% of the layout
+	w = float32(MEDIUM)
+	win.Resize(fyne.NewSize(w, h))
+	size1 = label1.Size()
+	size2 = label2.Size()
+	// remove 2 * padding as there is 2 objects in a line
+	assert.Equal(t, w/2-padding*2, size1.Width)
+	assert.Equal(t, w/2-padding*2, size2.Width)
+}
+
 // Check if a widget that overflows the container goes to the next line.
 func TestResponsive_GoToNextLine(t *testing.T) {
 	w, h := float32(200), float32(300)
