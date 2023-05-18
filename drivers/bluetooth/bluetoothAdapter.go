@@ -1,6 +1,6 @@
 //go:build android
 
-package bluetooth_android
+package bluetooth
 
 /*
 #include <jni.h>
@@ -91,9 +91,8 @@ char* getBluetoothName(uintptr_t env, jobject bluetoothAdapter, char** errorMsg)
 }
 
 void freeBluetoothAdapter(uintptr_t env, jobject bluetoothAdapter, char** errorMsg) {
-    JNIEnv* envPtr = (JNIEnv*)env;
-
     if (bluetoothAdapter != NULL) {
+        JNIEnv* envPtr = (JNIEnv*)env;
         // Get BluetoothAdapter class
         jclass bluetoothAdapterClass = (*envPtr)->GetObjectClass(envPtr, bluetoothAdapter);
 
@@ -122,32 +121,47 @@ import (
 	"unsafe"
 )
 
+// BluetoothAdapter has references android.bluetooth.BluetoothAdapter in java
 type BluetoothAdapter struct {
 	self C.jobject
 	name string
 	stop chan struct{}
 }
 
-func NewBluetoothDefaultAdapter(env uintptr) (*BluetoothAdapter, error) {
-	var errMsgC *C.char
+// StopServer send signal to server to end
+func (b *BluetoothAdapter) StopServer() {
+	go func() {
+		b.stop <- struct{}{}
+	}()
+}
 
-	adapter := C.getBluetoothAdapter(C.uintptr_t(env), &errMsgC)
-	if errMsgC != nil {
-		err := errors.New(C.GoString(errMsgC))
-		C.free(unsafe.Pointer(errMsgC))
-		return nil, err
+// NewBluetoothDefaultAdapter get Bluetooth adapter, WARNING: error can means only path of fail put defer before error handling
+func NewBluetoothDefaultAdapter() (b *BluetoothAdapter, e error) {
+	if runOnJVM == nil {
+		return nil, errors.New("you must on android call SetVMFunc before")
 	}
-	result := &BluetoothAdapter{self: adapter}
-	nameC := C.getBluetoothName(C.uintptr_t(env), adapter, &errMsgC)
-	if errMsgC != nil {
-		err := errors.New(C.GoString(errMsgC))
-		C.free(unsafe.Pointer(errMsgC))
-		fmt.Println(err)
-		return result, nil
-	}
-	result.name = C.GoString(nameC)
-	C.free(unsafe.Pointer(nameC))
-	return result, nil
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		adapter := C.getBluetoothAdapter(C.uintptr_t(env), &errMsgC)
+		if errMsgC != nil {
+			err := errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			e = err
+			return nil
+		}
+		b = &BluetoothAdapter{self: adapter}
+		nameC := C.getBluetoothName(C.uintptr_t(env), adapter, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.name = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	e = errors.Join(e, err)
+	return
 }
 
 // GetName returns name of device
@@ -156,39 +170,48 @@ func (b *BluetoothAdapter) GetName() string {
 }
 
 // Close clean bluetooth adapter from memory
-func (b *BluetoothAdapter) Close(env uintptr) {
-	var errMsgC *C.char
-	C.freeBluetoothAdapter(C.uintptr_t(env), b.self, &errMsgC)
-	if errMsgC != nil {
-		err := errors.New(C.GoString(errMsgC))
-		C.free(unsafe.Pointer(errMsgC))
-		fmt.Println(err)
+func (b *BluetoothAdapter) Close() {
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		C.freeBluetoothAdapter(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			err := errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return
 	}
 }
 
-// Server creates server and listen to client lim
-func (b *BluetoothAdapter) Server(env uintptr, howMany uint64, fn func(*BluetoothSocket)) error {
-	socket, err := b.GetBluetoothServerSocket(env)
+// Server creates server and listen to clients
+func (b *BluetoothAdapter) Server(fn Handle) error {
+	socket, err := b.GetBluetoothServerSocket()
+	defer fmt.Println(socket.Close())
 	if err != nil {
 		return err
 	}
-	defer func(socket *BluetoothServerSocket, env uintptr) {
-		err := socket.Close(env)
-		if err != nil {
-			fmt.Println(err)
-		}
-	}(socket, env)
-	for i := uint64(0); i < howMany; i++ {
+	for {
 		select {
 		case <-b.stop:
 			return nil
 		default:
 		}
-		con, err0 := socket.Accept(env)
+		con, err0 := socket.Accept()
 		if err0 != nil {
+			fmt.Println(con.Close())
 			return err0
 		}
-		go fn(con)
+		go func() {
+			defer fmt.Println(con.Close())
+			readWriter, er := con.GetReadWriter()
+			defer fmt.Println(readWriter.Close())
+			if er != nil {
+				return
+			}
+			fn(readWriter, con)
+		}()
 	}
-	return nil
 }

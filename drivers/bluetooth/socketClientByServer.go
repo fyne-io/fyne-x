@@ -1,6 +1,6 @@
 //go:build android
 
-package bluetooth_android
+package bluetooth
 
 /*
 #include <jni>
@@ -197,51 +197,63 @@ char* getClientAddress(JNIEnv* env, jobject clientSocket, char** errorMsg) {
 import "C"
 import (
 	"errors"
-	"fmt"
 	"unsafe"
 )
 
-// Accept accepting client and return conection in BluetoothSocket
-func (b *BluetoothServerSocket) Accept(env uintptr) (*BluetoothSocket, error) {
+// Accept accepting client and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
+func (b *BluetoothServerSocket) Accept() (bs *BluetoothSocket, e error) {
 	var errMsgC *C.char
-	sock := C.acceptBluetoothClient(C.uintptr_t(env), b.self, &errMsgC)
-	if errMsgC != nil {
-		err := errors.New(C.GoString(errMsgC))
-		C.free(unsafe.Pointer(errMsgC))
-		return nil, err
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+		sock := C.acceptBluetoothClient(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+		}
+		bs = &BluetoothSocket{self: sock}
+		return nil
+	})
+	var e1, e2 error
+
+	if bs != nil {
+		e1 = bs.FetchName()
+		e2 = bs.FetchAddress()
 	}
-	socket := &BluetoothSocket{self: sock}
-	socket.FetchName(env)
-	socket.FetchAddress(env)
-	return socket, nil
+	return bs, errors.Join(err, e, e1, e2)
 }
 
 // FetchName it is usefully if GetName return empty string, it try to set internal address
-func (b *BluetoothSocket) FetchName(env uintptr) {
-	var errMsgC *C.char
-	nameC := C.getClientName(C.uintptr_t(env), b.self, &errMsgC)
-	if errMsgC != nil {
-		err := errors.New(C.GoString(errMsgC))
-		C.free(unsafe.Pointer(errMsgC))
-		fmt.Println(err)
-		return
-	}
-	b.name = C.GoString(nameC)
-	C.free(unsafe.Pointer(nameC))
+func (b *BluetoothSocket) FetchName() (e error) {
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+
+		var errMsgC *C.char
+		nameC := C.getClientName(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.name = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	return errors.Join(err, e)
 }
 
 // FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
-func (b *BluetoothSocket) FetchAddress(env uintptr) {
-	var errMsgC *C.char
-	nameC := C.getClientAddress(C.uintptr_t(env), b.self, &errMsgC)
-	if errMsgC != nil {
-		err := errors.New(C.GoString(errMsgC))
-		C.free(unsafe.Pointer(errMsgC))
-		fmt.Println(err)
-		return
-	}
-	b.address = C.GoString(nameC)
-	C.free(unsafe.Pointer(nameC))
+func (b *BluetoothSocket) FetchAddress() (e error) {
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		nameC := C.getClientAddress(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.address = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	return errors.Join(err, e)
 }
 
 // GetName returns address of client
