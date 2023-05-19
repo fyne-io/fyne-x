@@ -2,11 +2,18 @@
 
 package bluetooth
 
-var runOnJVM func(func(vm, env, ctx uintptr) error) error = nil
+import (
+	"errors"
+	"fyne.io/fyne/v2/driver"
+)
 
-func SetVMFunc(fn func(func(vm, env, ctx uintptr) error) error) {
-	if fn == nil {
-		panic("you must set to concrete func provide by frame work, for example ")
-	}
-	runOnJVM = fn
+var runOnJVM = originForm
+
+func originForm(fn func(vm, env, ctx uintptr) error) error {
+	return driver.RunNative(func(context interface{}) error {
+		if androidContext, ok := context.(driver.AndroidContext); ok {
+			return fn(androidContext.VM, androidContext.Env, androidContext.Ctx)
+		}
+		return errors.New("no context android")
+	})
 }

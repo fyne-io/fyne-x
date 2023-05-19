@@ -121,22 +121,22 @@ import (
 	"unsafe"
 )
 
-// BluetoothAdapter has references android.bluetooth.BluetoothAdapter in java
-type BluetoothAdapter struct {
+// Adapter has references android.bluetooth.BluetoothAdapter in java
+type Adapter struct {
 	self C.jobject
 	name string
 	stop chan struct{}
 }
 
 // StopServer send signal to server to end
-func (b *BluetoothAdapter) StopServer() {
+func (b *Adapter) StopServer() {
 	go func() {
 		b.stop <- struct{}{}
 	}()
 }
 
 // NewBluetoothDefaultAdapter get Bluetooth adapter, WARNING: error can means only path of fail put defer before error handling
-func NewBluetoothDefaultAdapter() (b *BluetoothAdapter, e error) {
+func NewBluetoothDefaultAdapter() (b *Adapter, e error) {
 	if runOnJVM == nil {
 		return nil, errors.New("you must on android call SetVMFunc before")
 	}
@@ -149,7 +149,7 @@ func NewBluetoothDefaultAdapter() (b *BluetoothAdapter, e error) {
 			e = err
 			return nil
 		}
-		b = &BluetoothAdapter{self: adapter}
+		b = &Adapter{self: adapter}
 		nameC := C.getBluetoothName(C.uintptr_t(env), adapter, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
@@ -165,12 +165,12 @@ func NewBluetoothDefaultAdapter() (b *BluetoothAdapter, e error) {
 }
 
 // GetName returns name of device
-func (b *BluetoothAdapter) GetName() string {
+func (b *Adapter) GetName() string {
 	return b.name
 }
 
 // Close clean bluetooth adapter from memory
-func (b *BluetoothAdapter) Close() {
+func (b *Adapter) Close() {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		C.freeBluetoothAdapter(C.uintptr_t(env), b.self, &errMsgC)
@@ -187,7 +187,7 @@ func (b *BluetoothAdapter) Close() {
 }
 
 // Server creates server and listen to clients
-func (b *BluetoothAdapter) Server(fn Handle) error {
+func (b *Adapter) Server(fn Handle) error {
 	socket, err := b.GetBluetoothServerSocket()
 	defer fmt.Println(socket.Close())
 	if err != nil {

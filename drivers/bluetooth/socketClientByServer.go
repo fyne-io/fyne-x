@@ -201,7 +201,7 @@ import (
 )
 
 // Accept accepting client and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
-func (b *BluetoothServerSocket) Accept() (bs *BluetoothSocket, e error) {
+func (b *ServerSocket) Accept() (bs *Socket, e error) {
 	var errMsgC *C.char
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		sock := C.acceptBluetoothClient(C.uintptr_t(env), b.self, &errMsgC)
@@ -209,7 +209,7 @@ func (b *BluetoothServerSocket) Accept() (bs *BluetoothSocket, e error) {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 		}
-		bs = &BluetoothSocket{self: sock}
+		bs = &Socket{self: sock}
 		return nil
 	})
 	var e1, e2 error
@@ -222,7 +222,7 @@ func (b *BluetoothServerSocket) Accept() (bs *BluetoothSocket, e error) {
 }
 
 // FetchName it is usefully if GetName return empty string, it try to set internal address
-func (b *BluetoothSocket) FetchName() (e error) {
+func (b *Socket) FetchName() (e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 
 		var errMsgC *C.char
@@ -240,7 +240,7 @@ func (b *BluetoothSocket) FetchName() (e error) {
 }
 
 // FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
-func (b *BluetoothSocket) FetchAddress() (e error) {
+func (b *Socket) FetchAddress() (e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		nameC := C.getClientAddress(C.uintptr_t(env), b.self, &errMsgC)
@@ -257,11 +257,11 @@ func (b *BluetoothSocket) FetchAddress() (e error) {
 }
 
 // GetName returns address of client
-func (b *BluetoothSocket) GetName() string {
+func (b *Socket) GetName() string {
 	return b.name
 }
 
 // GetAddress returns address of client
-func (b *BluetoothSocket) GetAddress() string {
+func (b *Socket) GetAddress() string {
 	return b.address
 }

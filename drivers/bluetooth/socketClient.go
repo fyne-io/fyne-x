@@ -7,7 +7,7 @@ package bluetooth
 */
 import "C"
 
-type BluetoothSocket struct {
+type Socket struct {
 	self          C.jobject
 	name, address string
 }

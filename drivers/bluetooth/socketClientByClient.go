@@ -83,7 +83,7 @@ import (
 )
 
 // ConnectAsClientToServer take address of server and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
-func (b *BluetoothServerSocket) ConnectAsClientToServer(address string) (bs *BluetoothSocket, e error) {
+func (b *ServerSocket) ConnectAsClientToServer(address string) (bs *Socket, e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		caddress := C.CString(address)
@@ -94,7 +94,7 @@ func (b *BluetoothServerSocket) ConnectAsClientToServer(address string) (bs *Blu
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		bs = &BluetoothSocket{self: sock}
+		bs = &Socket{self: sock}
 		return nil
 	})
 	var e1, e2 error

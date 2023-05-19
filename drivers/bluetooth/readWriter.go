@@ -195,14 +195,14 @@ import (
 	"unsafe"
 )
 
-type ReadWriterBluetooth struct {
+type ReadWriter struct {
 	in, out C.jobject
 }
 
-// GetReadWriter returns *ReadWriterBluetooth to communicate , WARNING: error can means only path of fail put defer before error handling
-func (b *BluetoothSocket) GetReadWriter() (rw *ReadWriterBluetooth, e error) {
+// GetReadWriter returns *ReadWriter to communicate , WARNING: error can means only path of fail put defer before error handling
+func (b *Socket) GetReadWriter() (rw *ReadWriter, e error) {
 	var errMsgC *C.char
-	rw = &ReadWriterBluetooth{}
+	rw = &ReadWriter{}
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		inputStream := C.getBluetoothInputStream(env, b.self, &errMsgC)
 		if errMsgC != nil {
@@ -225,7 +225,7 @@ func (b *BluetoothSocket) GetReadWriter() (rw *ReadWriterBluetooth, e error) {
 
 }
 
-func (r *ReadWriterBluetooth) Read(p []byte) (n int, err error) {
+func (r *ReadWriter) Read(p []byte) (n int, err error) {
 	if p == nil || len(p) == 0 {
 		return -1, errors.New("empty buffer")
 	}
@@ -252,7 +252,7 @@ func (r *ReadWriterBluetooth) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (r *ReadWriterBluetooth) Write(p []byte) (n int, err error) {
+func (r *ReadWriter) Write(p []byte) (n int, err error) {
 	if p == nil || len(p) == 0 {
 		return 0, errors.New("empty buffer")
 	}
@@ -269,11 +269,11 @@ func (r *ReadWriterBluetooth) Write(p []byte) (n int, err error) {
 	return n, errors.Join(er, err)
 }
 
-func (r *ReadWriterBluetooth) Close() error {
+func (r *ReadWriter) Close() error {
 	return errors.Join(r.close(r.in), r.close(r.out))
 }
 
-func (r *ReadWriterBluetooth) close(stream C.jobject) (e error) {
+func (r *ReadWriter) close(stream C.jobject) (e error) {
 	var errMsgC *C.char
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		C.closeBluetoothServerSocket(C.uintptr_t(env), stream, &errMsgC)

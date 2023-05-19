@@ -132,13 +132,13 @@ import (
 	"unsafe"
 )
 
-type BluetoothServerSocket struct {
+type ServerSocket struct {
 	self    C.jobject
 	address string
 }
 
 // GetBluetoothServerSocket returns Socket which is listening on bluetooth
-func (b *BluetoothAdapter) GetBluetoothServerSocket() (bs *BluetoothServerSocket, e error) {
+func (b *Adapter) GetBluetoothServerSocket() (bs *ServerSocket, e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		socket := C.createBluetoothServer(C.uintptr_t(env), b.self, &errMsgC)
@@ -148,7 +148,7 @@ func (b *BluetoothAdapter) GetBluetoothServerSocket() (bs *BluetoothServerSocket
 			bs, e = nil, err
 			return nil
 		}
-		bs = &BluetoothServerSocket{self: socket}
+		bs = &ServerSocket{self: socket}
 		return nil
 	})
 	e = errors.Join(e, err, bs.FetchAddress())
@@ -156,7 +156,7 @@ func (b *BluetoothAdapter) GetBluetoothServerSocket() (bs *BluetoothServerSocket
 }
 
 // FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
-func (b *BluetoothServerSocket) FetchAddress() (e error) {
+func (b *ServerSocket) FetchAddress() (e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		nameC := C.getAddress(C.uintptr_t(env), b.self, &errMsgC)
@@ -173,6 +173,6 @@ func (b *BluetoothServerSocket) FetchAddress() (e error) {
 }
 
 // GetAddress returns address of server
-func (b *BluetoothServerSocket) GetAddress() string {
+func (b *ServerSocket) GetAddress() string {
 	return b.address
 }

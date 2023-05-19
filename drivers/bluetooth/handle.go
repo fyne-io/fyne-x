@@ -1,3 +1,3 @@
 package bluetooth
 
-type Handle func(readWriter *ReadWriterBluetooth, socketInfo *BluetoothSocket)
+type Handle func(readWriter *ReadWriter, socketInfo *Socket)

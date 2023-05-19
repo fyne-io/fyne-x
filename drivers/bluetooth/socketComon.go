@@ -40,7 +40,7 @@ import (
 	"unsafe"
 )
 
-func (b *BluetoothServerSocket) Close() error {
+func (b *ServerSocket) Close() error {
 	var errMsgC *C.char
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		C.closeBluetoothServerSocket(C.uintptr_t(env), b.self, &errMsgC)
@@ -55,7 +55,7 @@ func (b *BluetoothServerSocket) Close() error {
 	return nil
 }
 
-func (b *BluetoothSocket) Close() error {
+func (b *Socket) Close() error {
 	var errMsgC *C.char
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		C.closeBluetoothServerSocket(C.uintptr_t(env), b.self, &errMsgC)
