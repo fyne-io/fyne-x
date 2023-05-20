@@ -1,0 +1,1046 @@
+//go:build android
+
+package bluetooth
+
+/*
+#include <jni.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+static inline void copyToError(char* errorMsg, char** error){
+    *error = (char*)malloc((strlen(errorMsg) + 1) * sizeof(char));
+    strcpy(*error, errorMsg);
+}
+
+jobject createBluetoothServer(uintptr_t env, jobject bluetoothAdapter, char** errorMsg) {
+    JNIEnv *envPtr = (JNIEnv*)env;
+
+    // Find class BluetoothServerSocket
+    jclass serverSocketClass = (*envPtr)->FindClass(envPtr, "android/bluetooth/BluetoothServerSocket");
+    if (serverSocketClass == NULL) {
+        copyToError( "Failed to find class BluetoothServerSocket", errorMsg);
+        return NULL;
+    }
+
+    // Get method listenUsingRfcommWithServiceRecord
+    jmethodID listenMethod = (*envPtr)->GetMethodID(envPtr, serverSocketClass, "listenUsingRfcommWithServiceRecord", "(Ljava/lang/String;Ljava/util/UUID;)Landroid/bluetooth/BluetoothServerSocket;");
+    if (listenMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        copyToError("Failed to get method listenUsingRfcommWithServiceRecord", errorMsg);
+        return NULL;
+    }
+
+    // Create UUID object
+    jclass uuidClass = (*envPtr)->FindClass(envPtr, "java/util/UUID");
+    if (uuidClass == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        copyToError("Failed to find UUID class", errorMsg);
+        return NULL;
+    }
+
+	// create UUID object
+    jmethodID uuidConstructor = (*envPtr)->GetMethodID(envPtr, uuidClass, "<init>", "(JJ)V");
+    if (uuidClass == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, uuidClass);
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        copyToError("Failed to find uuid constructor", errorMsg);
+        return NULL;
+    }
+    jobject uuidObj = (*envPtr)->NewObject(envPtr, uuidClass, uuidConstructor, (jlong) 0, (jlong) 0);
+    if (uuidObj == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, uuidClass);
+        copyToError("Failed to create UUID object", errorMsg);
+        return NULL;
+    }
+
+    // Call listenUsingRfcommWithServiceRecord method
+    jobject serverSocket = (*envPtr)->CallObjectMethod(envPtr, bluetoothAdapter, listenMethod, NULL, uuidObj);
+    if (serverSocket == NULL) {
+        copyToError( "Failed to call listenUsingRfcommWithServiceRecord method", errorMsg);
+    }
+
+	// free memory
+    (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+    (*envPtr)->DeleteLocalRef(envPtr, uuidClass);
+    (*envPtr)->DeleteLocalRef(envPtr, uuidObj);
+    return serverSocket;
+}
+
+char* getAddress(uintptr_t env, jobject serverSocket, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get BluetoothServerSocket class
+    jclass serverSocketClass = (*envPtr)->GetObjectClass(envPtr, serverSocket);
+    if (serverSocketClass == NULL) {
+        copyToError( "Failed get serverSocket class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getRemoteDevice method
+    jmethodID getRemoteDeviceMethod = (*envPtr)->GetMethodID(envPtr, serverSocketClass, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
+    if (getRemoteDeviceMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        copyToError("Failed to get getRemoteDevice method", errorMsg);
+        return NULL;
+    }
+
+    // Call the getRemoteDevice method
+    jobject bluetoothDevice = (*envPtr)->CallObjectMethod(envPtr, serverSocket, getRemoteDeviceMethod);
+    if (bluetoothDevice == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        copyToError( "Failed to call the getRemoteDevice method", errorMsg);
+        return NULL;
+    }
+
+    // Get the getAddress method
+    jmethodID getAddressMethod = (*envPtr)->GetMethodID(envPtr, (*envPtr)->GetObjectClass(envPtr, bluetoothDevice), "getAddress", "()Ljava/lang/String;");
+    if (getAddressMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
+        copyToError("Failed to get getAddress method", errorMsg);
+        return NULL;
+    }
+
+    // Call the getAddress method
+    jstring addressString = (jstring)(*envPtr)->CallObjectMethod(envPtr, bluetoothDevice, getAddressMethod);
+    if (addressString == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
+        copyToError( "Address string is NULL", errorMsg);
+        return NULL;
+    }
+
+    // Convert jstring to char*
+    const char* addressChars = (*envPtr)->GetStringUTFChars(envPtr, addressString, NULL);
+    char* address = (char*)malloc((strlen(addressChars) + 1) * sizeof(char));
+    strcpy(address, addressChars);
+
+    // Release memory
+    (*envPtr)->ReleaseStringUTFChars(envPtr, addressString, addressChars);
+    (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
+    (*envPtr)->DeleteLocalRef(envPtr, addressString);
+
+    return address;
+}
+
+void closeBluetoothServerSocket(uintptr_t env, jobject serverSocket, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get the BluetoothServerSocket class
+    jclass serverSocketClass = (*envPtr)->GetObjectClass(envPtr, serverSocket);
+
+    // Get the close method
+    jmethodID closeMethod = (*envPtr)->GetMethodID(envPtr, serverSocketClass, "close", "()V");
+
+    // If the close method is available, invoke it
+    if (closeMethod != NULL) {
+        (*envPtr)->CallVoidMethod(envPtr, serverSocket, closeMethod);
+    } else {
+        copyToError("Failed to find close method", errorMsg);
+    }
+
+    // Release memory
+    (*envPtr)->DeleteLocalRef(envPtr, serverSocket);
+    (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+}
+
+
+char* getClientName(uintptr_t env, jobject clientSocket, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+    // Get the BluetoothSocket class
+    jclass socketClass = (*envPtr)->GetObjectClass(envPtr, clientSocket);
+    if (socketClass == NULL) {
+        copyToError( "Failed to get getRemoteDevice method", errorMsg);
+        return NULL;
+    }
+
+    // Get the getRemoteDevice method
+    jmethodID remoteDeviceMethod = (*envPtr)->GetMethodID(envPtr, socketClass, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
+    if (remoteDeviceMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        copyToError("Failed to get getRemoteDevice method", errorMsg);
+        return NULL;
+    }
+
+    jobject remoteDevice = (*envPtr)->CallObjectMethod(envPtr, clientSocket, remoteDeviceMethod);
+    if (remoteDevice == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        copyToError( "Failed to get remote device", errorMsg);
+        return NULL;
+    }
+
+    // Get the BluetoothDevice class
+    jclass deviceClass = (*envPtr)->GetObjectClass(envPtr, remoteDevice);
+    if (remoteDevice == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError( "Failed to get the BluetoothDevice class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getName method
+    jmethodID getNameMethod = (*envPtr)->GetMethodID(envPtr, deviceClass, "getName", "()Ljava/lang/String;");
+    if (getNameMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError( "Failed to get getName method", errorMsg);
+        return NULL;
+    }
+
+    jstring nameString = (*envPtr)->CallObjectMethod(envPtr, remoteDevice, getNameMethod);
+    if (nameString == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError( "Failed to get name string", errorMsg);
+        return NULL;
+    }
+
+    // Convert the Java string to C string
+    const char* name = (*envPtr)->GetStringUTFChars(envPtr, nameString, NULL);
+    if (name == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(env, deviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        (*envPtr)->ReleaseStringUTFChars(envPtr, nameString, name);
+        copyToError( "Failed to convert name string", errorMsg);
+        return NULL;
+    }
+
+    // Allocate memory for the result
+    char* result = (char*)malloc((strlen(name) + 1) * sizeof(char));
+    // Copy the name to the result
+    strcpy(result, name);
+
+    // Clean up references
+    (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+    (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+    (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+    (*envPtr)->ReleaseStringUTFChars(envPtr, nameString, name);
+
+	return result;
+}
+
+jobject acceptBluetoothClient(uintptr_t env, jobject serverSocket, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get the accept method from BluetoothServerSocket
+    jclass serverSocketClass = (*envPtr)->GetObjectClass(envPtr, serverSocket);
+    if (serverSocketClass == NULL) {
+        copyToError( "Failed to get socket class", errorMsg);
+        return NULL;
+    }
+    jmethodID acceptMethod = (*envPtr)->GetMethodID(envPtr, serverSocketClass, "accept", "()Landroid/bluetooth/BluetoothSocket;");
+    if (acceptMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+        copyToError( "Failed to get accept method", errorMsg);
+        return NULL;
+    }
+
+    // Call the accept method
+    jobject clientSocket = (*envPtr)->CallObjectMethod(envPtr, serverSocket, acceptMethod);
+    if (clientSocket == NULL) {
+        copyToError("Failed to accept client", errorMsg);
+    }
+    (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
+
+    return clientSocket;
+}
+
+char* getClientAddress(uintptr_t env, jobject clientSocket, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+    // Get the BluetoothSocket class
+    jclass socketClass = (*envPtr)->GetObjectClass(envPtr, clientSocket);
+    if (socketClass == NULL) {
+        copyToError( "Failed to get socket class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getRemoteDevice method
+    jmethodID remoteDeviceMethod = (*envPtr)->GetMethodID(envPtr, socketClass, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
+    if (remoteDeviceMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        copyToError( "Failed to get getRemoteDevice method", errorMsg);
+        return NULL;
+    }
+
+    jobject remoteDevice = (*envPtr)->CallObjectMethod(envPtr, clientSocket, remoteDeviceMethod);
+    if (remoteDevice == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError("Failed to get remote device", errorMsg);
+        return NULL;
+    }
+
+    // Get the BluetoothDevice class
+    jclass deviceClass = (*envPtr)->GetObjectClass(envPtr, remoteDevice);
+    if (deviceClass == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError( "Failed to get the BluetoothDevice class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getAddress method
+    jmethodID getAddressMethod = (*envPtr)->GetMethodID(envPtr, deviceClass, "getAddress", "()Ljava/lang/String;");
+    if (getAddressMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError( "Failed to get getAddress method", errorMsg);
+        return NULL;
+    }
+
+    jstring addressString = (*envPtr)->CallObjectMethod(envPtr, remoteDevice, getAddressMethod);
+    if (addressString == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, remoteDevice);
+        copyToError("Failed to get address string", errorMsg);
+        return NULL;
+    }
+
+    // Convert the Java string to C string
+    const char* address = (*envPtr)->GetStringUTFChars(envPtr, addressString, NULL);
+    if (address == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+        (*envPtr)->ReleaseStringUTFChars(envPtr, addressString, address);
+        copyToError("Failed to convert address string", errorMsg);
+        return NULL;
+    }
+
+    // Allocate memory for the result
+    char* result = (char*)malloc((strlen(address) + 1) * sizeof(char));
+
+    // Copy the address
+
+    strcpy(result, address);
+
+    // Release the Java string and local references
+    (*envPtr)->ReleaseStringUTFChars(envPtr, addressString, address);
+    (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+    (*envPtr)->DeleteLocalRef(envPtr, deviceClass);
+
+    return result;
+}
+
+jobject connectToBluetoothServer(uintptr_t env, jobject bluetoothAdapter, const char* serverAddress, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*) env;
+
+    // Get the BluetoothDevice class
+    jclass bluetoothDeviceClass = (*envPtr)->FindClass(envPtr, "android/bluetooth/BluetoothDevice");
+    if (bluetoothDeviceClass == NULL) {
+        copyToError("Failed to find BluetoothDevice class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getRemoteDevice method from BluetoothAdapter
+    jclass bluetoothAdapterClass = (*envPtr)->GetObjectClass(envPtr, bluetoothAdapter);
+    if (bluetoothAdapterClass == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDeviceClass);
+        copyToError("Failed to get BluetoothAdapter class", errorMsg);
+        return NULL;
+    }
+
+    jmethodID getRemoteDeviceMethod = (*envPtr)->GetMethodID(envPtr, bluetoothAdapterClass, "getRemoteDevice", "(Ljava/lang/String;)Landroid/bluetooth/BluetoothDevice;");
+    if (getRemoteDeviceMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDeviceClass);
+        copyToError("Failed to get getRemoteDevice method", errorMsg);
+        return NULL;
+    }
+
+    // Get the BluetoothDevice object
+    jstring serverAddressString = (*envPtr)->NewStringUTF(envPtr, serverAddress);
+    jobject bluetoothDevice = (*envPtr)->CallObjectMethod(envPtr, bluetoothAdapter, getRemoteDeviceMethod, serverAddressString);
+    if (bluetoothDevice == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDeviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, serverAddressString);
+        copyToError("Failed to get the BluetoothDevice object", errorMsg);
+        return NULL;
+    }
+
+    // Get the createRfcommSocket method from BluetoothDevice
+    jmethodID createRfcommSocketMethod = (*envPtr)->GetMethodID(envPtr, bluetoothDeviceClass, "createRfcommSocket", "(I)Landroid/bluetooth/BluetoothSocket;");
+    if (createRfcommSocketMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDeviceClass);
+        (*envPtr)->DeleteLocalRef(envPtr, serverAddressString);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
+        copyToError("Failed to get createRfcommSocket method", errorMsg);
+        return NULL;
+    }
+
+    // Create the BluetoothSocket object
+    jobject bluetoothSocket = (*envPtr)->CallObjectMethod(envPtr, bluetoothDevice, createRfcommSocketMethod, 1);
+    if (bluetoothSocket == NULL) {
+        copyToError("Failed: bluetoothSocket == NULL", errorMsg);
+    }
+
+    // Clean up local references
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothDeviceClass);
+    (*envPtr)->DeleteLocalRef(envPtr, serverAddressString);
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
+
+    return bluetoothSocket;
+}
+
+
+
+jobject getBluetoothOutputStream(uintptr_t env, jobject clientSocket, char** errorMsg) {
+    JNIEnv *envPtr = (JNIEnv*)env;
+    // Get the BluetoothSocket class
+    jclass socketClass = (*envPtr)->GetObjectClass(envPtr, clientSocket);
+    if (socketClass == NULL) {
+        copyToError( "Failed to get the BluetoothSocket class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getOutputStream method
+    jmethodID getOutputStreamMethod = (*envPtr)->GetMethodID(envPtr, socketClass, "getOutputStream", "()Ljava/io/OutputStream;");
+    if (getOutputStreamMethod == NULL) {
+        copyToError( "Failed to get getOutputStream method", errorMsg);
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        return NULL;
+    }
+
+    // Call the getOutputStream method
+    jobject outputStream = (*envPtr)->CallObjectMethod(envPtr, clientSocket, getOutputStreamMethod);
+    if (outputStream == NULL) {
+        copyToError( "Failed to get OutputStream",  errorMsg);
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+    }
+
+    // Release local references
+    (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+
+    return outputStream;
+}
+
+jobject getBluetoothInputStream(uintptr_t env, jobject clientSocket, char** errorMsg) {
+    JNIEnv *envPtr = (JNIEnv*)env;
+    // Get the BluetoothSocket class
+    jclass socketClass = (*envPtr)->GetObjectClass(envPtr, clientSocket);
+    if (socketClass == NULL) {
+        copyToError( "Failed to get the BluetoothSocket class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getInputStream method
+    jmethodID getInputStreamMethod = (*envPtr)->GetMethodID(envPtr, socketClass, "getInputStream", "()Ljava/io/InputStream;");
+    if (getInputStreamMethod == NULL) {
+        copyToError( "Failed to get getInputStream method", envPtr);
+        (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+        return NULL;
+    }
+
+    // Call the getInputStream method
+    jobject inputStream = (*envPtr)->CallObjectMethod(envPtr, clientSocket, getInputStreamMethod);
+    if (inputStream == NULL) {
+        copyToError( "Failed to get InputStream", errorMsg);
+    }
+
+    // Release local references
+    (*envPtr)->DeleteLocalRef(envPtr, socketClass);
+
+    return inputStream;
+}
+
+void closeStream0(uintptr_t env, jobject stream, char** errorMsg) {
+	if (stream == NULL){
+	    return;
+	    copyToError("empty (null) stream is not able delete", errorMsg);
+	}
+    JNIEnv *envPtr = (JNIEnv*)env;
+	//get stream class
+    jclass streamClass = (*envPtr)->GetObjectClass(envPtr, stream);
+    if (streamClass == NULL) {
+        copyToError( "Failed to get the streamClass class", errorMsg);
+        return;
+    }
+
+    jmethodID closeMethod = (*envPtr)->GetMethodID(envPtr, streamClass, "close", "()V");
+    if (closeMethod != NULL) {
+        (*envPtr)->CallVoidMethod(envPtr, stream, closeMethod);
+    } else {
+        copyToError("Failed to close output stream", errorMsg);
+    }
+    (*envPtr)->DeleteLocalRef(env, streamClass);
+    (*envPtr)->DeleteLocalRef(env, stream);
+}
+
+char* readFromInputStream(uintptr_t env, jobject inputStream, int size, int* count, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get the InputStream class
+    jclass inputStreamClass = (*envPtr)->GetObjectClass(envPtr, inputStream);
+    if (inputStreamClass == NULL) {
+        copyToError( "Failed to get the InputStream class", errorMsg);
+        return NULL;
+    }
+
+    // Get the read method from InputStream
+    jmethodID readMethod = (*envPtr)->GetMethodID(envPtr, inputStreamClass, "read", "([B)I");
+    if (readMethod == NULL) {
+        *count = -1;
+        (*envPtr)->DeleteLocalRef(envPtr, inputStreamClass);
+        copyToError("Failed to get read method", errorMsg);
+        return NULL;
+    }
+
+    // Create a byte array for reading data
+    jbyteArray byteArray = (*envPtr)->NewByteArray(envPtr, size);
+    if (byteArray == NULL) {
+        *count = -1;
+        (*envPtr)->DeleteLocalRef(envPtr, inputStreamClass);
+        copyToError( "Failed to create byte array", errorMsg);
+        return NULL;
+    }
+
+    // Call the read method
+    jint bytesRead = (*envPtr)->CallIntMethod(envPtr, inputStream, readMethod, byteArray);
+    if (bytesRead < 0) {
+        *count = -1;
+        (*envPtr)->DeleteLocalRef(envPtr, inputStreamClass);
+        (*envPtr)->DeleteLocalRef(envPtr, byteArray);
+        copyToError("Failed to read from input stream", errorMsg);
+        return NULL;
+    }
+
+    // Copy the bytes from the byte array to a new buffer
+    jbyte* byteBuffer = (*envPtr)->GetByteArrayElements(envPtr, byteArray, NULL);
+    if (byteArray == NULL) {
+        *count = -1;
+        (*envPtr)->DeleteLocalRef(envPtr, inputStreamClass);
+        (*envPtr)->DeleteLocalRef(envPtr, byteArray);
+        copyToError( "Failed to get byte array address", errorMsg);
+        return NULL;
+    }
+    char* buffer = (char*)malloc(bytesRead * sizeof(char));
+    memcpy(buffer, byteBuffer, bytesRead);
+
+    // Release memory
+    (*envPtr)->DeleteLocalRef(envPtr, inputStreamClass);
+    (*envPtr)->DeleteLocalRef(envPtr, byteArray);
+    (*envPtr)->ReleaseByteArrayElements(envPtr, byteArray, byteBuffer, 0);
+
+    // Set the count
+    *count = bytesRead;
+
+    return buffer;
+}
+
+void writeToOutputStream(uintptr_t env, jobject outputStream, const char* buffer, int size, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get the OutputStream class
+    jclass outputStreamClass = (*envPtr)->GetObjectClass(envPtr, outputStream);
+    if (outputStreamClass == NULL) {
+        copyToError( "Failed to get the OutputStream class", errorMsg);
+        return;
+    }
+
+    // Get the write method from OutputStream
+    jmethodID writeMethod = (*envPtr)->GetMethodID(envPtr, outputStreamClass, "write", "([B)V");
+    if (writeMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, outputStreamClass);
+        copyToError("Failed to get write method", errorMsg);
+        return;
+    }
+
+    // Create a byte array from the buffer
+    jbyteArray byteArray = (*envPtr)->NewByteArray(envPtr, size);
+    if (byteArray == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, outputStreamClass);
+        copyToError("Failed to create byte array", errorMsg);
+        return;
+    }
+    (*envPtr)->SetByteArrayRegion(envPtr, byteArray, 0, size, (jbyte*)buffer);
+
+    // Call the write method
+    (*envPtr)->CallVoidMethod(envPtr, outputStream, writeMethod, byteArray);
+
+    // Release memory
+    (*envPtr)->DeleteLocalRef(envPtr, outputStreamClass);
+    (*envPtr)->DeleteLocalRef(envPtr, byteArray);
+    return;
+}
+
+jobject getBluetoothAdapter(uintptr_t env, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get the BluetoothAdapter class
+    jclass bluetoothAdapterClass = (*envPtr)->FindClass(envPtr, "android/bluetooth/BluetoothAdapter");
+    if (bluetoothAdapterClass == NULL) {
+        copyToError("Failed to find BluetoothAdapter class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getDefaultAdapter static method
+    jmethodID getDefaultAdapterMethod = (*envPtr)->GetStaticMethodID(envPtr, bluetoothAdapterClass, "getDefaultAdapter", "()Landroid/bluetooth/BluetoothAdapter;");
+    if (getDefaultAdapterMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        copyToError("Failed to find getDefaultAdapter method", errorMsg);
+        return NULL;
+    }
+
+    // Get the BluetoothAdapter object
+    jobject bluetoothAdapter = (*envPtr)->CallStaticObjectMethod(envPtr, bluetoothAdapterClass, getDefaultAdapterMethod);
+    if (bluetoothAdapter == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        copyToError("Failed to invoke getDefaultAdapter method", errorMsg);
+        return NULL;
+    }
+
+    // Release memory
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+    return bluetoothAdapter;
+}
+
+char* getBluetoothName(uintptr_t env, jobject bluetoothAdapter, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+
+    // Get BluetoothAdapter class
+    jclass bluetoothAdapterClass = (*envPtr)->GetObjectClass(envPtr, bluetoothAdapter);
+    if (bluetoothAdapterClass == NULL) {
+        copyToError("Failed to find BluetoothAdapter class", errorMsg);
+        return NULL;
+    }
+
+    // Get the getName method
+    jmethodID getNameMethod = (*envPtr)->GetMethodID(envPtr, bluetoothAdapterClass, "getName", "()Ljava/lang/String;");
+    // If the method is not available, return NULL
+    if (getNameMethod == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        copyToError("Failed to get getName method", errorMsg);
+        return NULL;
+    }
+
+    // Call the getName method
+    jstring bluetoothName = (jstring)(*envPtr)->CallObjectMethod(envPtr, bluetoothAdapter, getNameMethod);
+    if (bluetoothName == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        copyToError("Bluetooth name is NULL", errorMsg);
+        return NULL;
+    }
+
+    // Convert jstring to char*
+    const char* nameChars = (*envPtr)->GetStringUTFChars(envPtr, bluetoothName, NULL);
+    if (bluetoothName == NULL) {
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        copyToError("Failed convert jstring to char*", errorMsg);
+        return NULL;
+    }
+    size_t length = strlen(nameChars);
+    char* heapString = (char*)malloc((length + 1) * sizeof(char));
+    strcpy(heapString, nameChars);
+
+    // Release memory
+    (*envPtr)->ReleaseStringUTFChars(envPtr, bluetoothName, nameChars);
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothName);
+
+    return heapString;
+}
+
+void freeBluetoothAdapter(uintptr_t env, jobject bluetoothAdapter, char** errorMsg) {
+    if (bluetoothAdapter != NULL) {
+        JNIEnv* envPtr = (JNIEnv*)env;
+        // Get BluetoothAdapter class
+        jclass bluetoothAdapterClass = (*envPtr)->GetObjectClass(envPtr, bluetoothAdapter);
+
+        // Get the close method
+        jmethodID closeMethod = (*envPtr)->GetMethodID(envPtr, bluetoothAdapterClass, "close", "()V");
+
+        // If the method is not available, set error and return
+        if (closeMethod == NULL) {
+            copyToError( "Failed to get close method", errorMsg);
+            return;
+        }
+
+        // Call the close method
+        (*envPtr)->CallVoidMethod(envPtr, bluetoothAdapter, closeMethod);
+
+        // Delete local references
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapter);
+    }
+}
+*/
+import "C"
+import (
+	"errors"
+	"fmt"
+	"fyne.io/fyne/v2/driver"
+	"unsafe"
+)
+
+// Adapter has references android.bluetooth.BluetoothAdapter in java
+type Adapter struct {
+	self C.jobject
+	name string
+	stop chan struct{}
+}
+
+type ReadWriter struct {
+	in, out C.jobject
+}
+
+type Socket struct {
+	self          C.jobject
+	name, address string
+}
+
+type ServerSocket struct {
+	self    C.jobject
+	address string
+}
+
+type Handle func(readWriter *ReadWriter, socketInfo *Socket)
+
+func runOnFyneJVM(fn func(vm, env, ctx uintptr) error) error {
+	return driver.RunNative(func(context interface{}) error {
+		if androidContext, ok := context.(driver.AndroidContext); ok {
+			return fn(androidContext.VM, androidContext.Env, androidContext.Ctx)
+		}
+		return errors.New("no context android")
+	})
+}
+
+// NewBluetoothDefaultAdapter get Bluetooth adapter, WARNING: error can means only path of fail put defer before error handling
+func NewBluetoothDefaultAdapter() (b *Adapter, e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		adapter := C.getBluetoothAdapter(C.uintptr_t(env), &errMsgC)
+		if errMsgC != nil {
+			err := errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			e = err
+			return nil
+		}
+		b = &Adapter{self: adapter}
+		nameC := C.getBluetoothName(C.uintptr_t(env), adapter, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.name = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	e = errors.Join(e, err)
+	return
+}
+
+// StopServer send signal to server to end
+func (b *Adapter) StopServer() {
+	go func() {
+		b.stop <- struct{}{}
+	}()
+}
+
+// GetName returns name of device
+func (b *Adapter) GetName() string {
+	return b.name
+}
+
+// Close clean bluetooth adapter from memory
+func (b *Adapter) Close() {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		C.freeBluetoothAdapter(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			err := errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return
+	}
+}
+
+// Server creates server and listen to clients
+func (b *Adapter) Server(fn Handle) error {
+	socket, err := b.GetBluetoothServerSocket()
+	defer fmt.Println(socket.Close())
+	if err != nil {
+		return err
+	}
+	for {
+		select {
+		case <-b.stop:
+			return nil
+		default:
+		}
+		con, err0 := socket.Accept()
+		if err0 != nil {
+			fmt.Println(con.Close())
+			return err0
+		}
+		go func() {
+			defer fmt.Println(con.Close())
+			readWriter, er := con.GetReadWriter()
+			defer fmt.Println(readWriter.Close())
+			if er != nil {
+				return
+			}
+			fn(readWriter, con)
+		}()
+	}
+}
+
+// GetBluetoothServerSocket returns Socket which is listening on bluetooth
+func (b *Adapter) GetBluetoothServerSocket() (bs *ServerSocket, e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		socket := C.createBluetoothServer(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			err := errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			bs, e = nil, err
+			return nil
+		}
+		bs = &ServerSocket{self: socket}
+		return nil
+	})
+	e = errors.Join(e, err, bs.FetchAddress())
+	return
+}
+
+// FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
+func (b *ServerSocket) FetchAddress() (e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		nameC := C.getAddress(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.address = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	return errors.Join(e, err)
+}
+
+// GetAddress returns address of server
+func (b *ServerSocket) GetAddress() string {
+	return b.address
+}
+
+func (b *ServerSocket) Close() error {
+	var errMsgC *C.char
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		C.closeBluetoothServerSocket(C.uintptr_t(env), b.self, &errMsgC)
+		return nil
+	})
+
+	if errMsgC != nil {
+		err = errors.Join(errors.New(C.GoString(errMsgC)), err)
+		C.free(unsafe.Pointer(errMsgC))
+		return err
+	}
+	return nil
+}
+
+// Accept accepting client and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
+func (b *ServerSocket) Accept() (bs *Socket, e error) {
+	var errMsgC *C.char
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		sock := C.acceptBluetoothClient(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+		}
+		bs = &Socket{self: sock}
+		return nil
+	})
+	var e1, e2 error
+
+	if bs != nil {
+		e1 = bs.FetchName()
+		e2 = bs.FetchAddress()
+	}
+	return bs, errors.Join(err, e, e1, e2)
+}
+
+// ConnectAsClientToServer take address of server and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
+func (b *ServerSocket) ConnectAsClientToServer(address string) (bs *Socket, e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		caddress := C.CString(address)
+		defer C.free(unsafe.Pointer(caddress))
+		sock := C.connectToBluetoothServer(C.uintptr_t(env), b.self, caddress, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		bs = &Socket{self: sock}
+		return nil
+	})
+	var e1, e2 error
+	if bs != nil {
+		e1 = bs.FetchAddress()
+		e2 = bs.FetchName()
+	}
+	return bs, errors.Join(err, e, e1, e2)
+}
+
+// FetchName it is usefully if GetName return empty string, it try to set internal address
+func (b *Socket) FetchName() (e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+
+		var errMsgC *C.char
+		nameC := C.getClientName(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.name = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	return errors.Join(err, e)
+}
+
+// FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
+func (b *Socket) FetchAddress() (e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		nameC := C.getClientAddress(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		b.address = C.GoString(nameC)
+		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	return errors.Join(err, e)
+}
+
+// GetName returns address of client
+func (b *Socket) GetName() string {
+	return b.name
+}
+
+// GetAddress returns address of client
+func (b *Socket) GetAddress() string {
+	return b.address
+}
+
+func (b *Socket) Close() error {
+	var errMsgC *C.char
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		C.closeBluetoothServerSocket(C.uintptr_t(env), b.self, &errMsgC)
+		return nil
+	})
+
+	if errMsgC != nil {
+		err = errors.Join(errors.New(C.GoString(errMsgC)), err)
+		C.free(unsafe.Pointer(errMsgC))
+		return err
+	}
+	return nil
+}
+
+// GetReadWriter returns *ReadWriter to communicate , WARNING: error can means only path of fail put defer before error handling
+func (b *Socket) GetReadWriter() (rw *ReadWriter, e error) {
+	var errMsgC *C.char
+	rw = &ReadWriter{}
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		inputStream := C.getBluetoothInputStream(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		outputStream := C.getBluetoothOutputStream(C.uintptr_t(env), b.self, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			_ = rw.close(inputStream)
+			return nil
+		}
+		rw.in = inputStream
+		rw.out = outputStream
+		return nil
+	})
+	return rw, errors.Join(err, e)
+
+}
+
+func (r *ReadWriter) Read(p []byte) (n int, err error) {
+	if p == nil || len(p) == 0 {
+		return -1, errors.New("empty buffer")
+	}
+	er := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		var result C.int
+		dataC := C.readFromInputStream(C.uintptr_t(env), r.in, C.int(cap(p)), &result, &errMsgC)
+		if errMsgC != nil {
+			err = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			n = -1
+			return nil
+		}
+		n = int(result)
+		if n < 1 {
+			return nil
+		}
+		dataGo := C.GoBytes(unsafe.Pointer(dataC), C.int(n))
+		copy(p, dataGo)
+		C.free(unsafe.Pointer(dataC))
+		return nil
+	})
+	err = errors.Join(er, err)
+	return
+}
+
+func (r *ReadWriter) Write(p []byte) (n int, err error) {
+	if p == nil || len(p) == 0 {
+		return 0, errors.New("empty buffer")
+	}
+	er := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		C.writeToOutputStream(C.uintptr_t(env), r.in, (*C.char)(unsafe.Pointer(&p[0])), C.int(cap(p)), &errMsgC)
+		if errMsgC != nil {
+			err = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+		}
+		n = len(p)
+		return nil
+	})
+	return n, errors.Join(er, err)
+}
+
+func (r *ReadWriter) Close() error {
+	return errors.Join(r.close(r.in), r.close(r.out))
+}
+
+func (r *ReadWriter) close(stream C.jobject) (e error) {
+	var errMsgC *C.char
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		C.closeStream0(C.uintptr_t(env), stream, &errMsgC)
+		return nil
+	})
+	if errMsgC != nil {
+		e = errors.New(C.GoString(errMsgC))
+		C.free(unsafe.Pointer(errMsgC))
+	}
+	return errors.Join(err, e)
+}
