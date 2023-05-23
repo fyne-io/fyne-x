@@ -8,17 +8,27 @@ import (
 // LinkPoint identifies the point at which a link end is connected to another diagram element's connection pad
 type LinkPoint struct {
 	widget.BaseWidget
+	link DiagramLink
 }
 
-func NewLinkPoint(link *BaseDiagramLink) *LinkPoint {
+func NewLinkPoint(link DiagramLink) *LinkPoint {
 	lp := &LinkPoint{}
 	lp.BaseWidget.ExtendBaseWidget(lp)
+	lp.link = link
 	return lp
 }
 
 func (lp *LinkPoint) CreateRenderer() fyne.WidgetRenderer {
 	lpr := &linkPointRenderer{}
 	return lpr
+}
+
+func (lp *LinkPoint) GetLink() DiagramLink {
+	return lp.link
+}
+
+func (lp *LinkPoint) IsConnectionAllowed(connectionPad ConnectionPad) bool {
+	return lp.link.IsConnectionAllowed(lp, connectionPad)
 }
 
 // linkPointRenderer

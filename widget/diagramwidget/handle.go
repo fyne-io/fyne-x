@@ -5,13 +5,11 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/widget"
 )
 
-// Validate implementation of Draggable and Hoverable
+// Validate implementation of Draggable
 var _ fyne.Draggable = (*Handle)(nil)
-var _ desktop.Hoverable = (*Handle)(nil)
 
 var defaultHandleSize float32 = 10.0
 
@@ -46,7 +44,7 @@ func (h *Handle) Dragged(event *fyne.DragEvent) {
 }
 
 func (h *Handle) DragEnd() {
-
+	h.de.handleDragEnd(h)
 }
 
 func (h *Handle) getStrokeColor() color.Color {
@@ -55,17 +53,6 @@ func (h *Handle) getStrokeColor() color.Color {
 
 func (h *Handle) getStrokeWidth() float32 {
 	return 1.0
-}
-
-func (h *Handle) MouseIn(*desktop.MouseEvent) {
-}
-
-// MouseMoved is a hook that is called if the mouse pointer moved over the element.
-func (h *Handle) MouseMoved(*desktop.MouseEvent) {
-}
-
-// MouseOut is a hook that is called if the mouse pointer leaves the element.
-func (h *Handle) MouseOut() {
 }
 
 func (h *Handle) Move(position fyne.Position) {
@@ -83,13 +70,13 @@ func (hr *handleRenderer) Destroy() {
 
 }
 
-func (hr *handleRenderer) MinSize() fyne.Size {
-	return fyne.Size{Height: hr.handle.handleSize, Width: hr.handle.handleSize}
-}
-
 func (hr *handleRenderer) Layout(size fyne.Size) {
 	hr.rect.Resize(hr.MinSize())
 	hr.handle.Resize(hr.MinSize())
+}
+
+func (hr *handleRenderer) MinSize() fyne.Size {
+	return fyne.Size{Height: hr.handle.handleSize, Width: hr.handle.handleSize}
 }
 
 func (hr *handleRenderer) Objects() []fyne.CanvasObject {

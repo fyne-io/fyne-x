@@ -20,19 +20,19 @@ func TestDependencies(t *testing.T) {
 	node2.Move(fyne.NewPos(200, 100))
 	assert.Equal(t, 0, len(diagram.diagramElementLinkDependencies))
 	linkID := "Link1"
-	link := NewDiagramLink(diagram, node1.edgePad, node2.edgePad, linkID)
+	link := NewDiagramLink(diagram, node1.pads["default"], node2.pads["default"], linkID)
 	assert.NotNil(t, link)
 	assert.Equal(t, 2, len(diagram.diagramElementLinkDependencies))
 
 	node1Dependencies := diagram.diagramElementLinkDependencies[node1ID]
 	assert.Equal(t, 1, len(node1Dependencies))
 	assert.Equal(t, link, node1Dependencies[0].link)
-	assert.Equal(t, node1.edgePad, node1Dependencies[0].pad)
+	assert.Equal(t, node1.pads["default"], node1Dependencies[0].pad)
 
 	node2Dependencies := diagram.diagramElementLinkDependencies[node2ID]
 	assert.Equal(t, 1, len(node2Dependencies))
 	assert.Equal(t, link, node2Dependencies[0].link)
-	assert.Equal(t, node2.edgePad, node2Dependencies[0].pad)
+	assert.Equal(t, node2.pads["default"], node2Dependencies[0].pad)
 
 	// Now test the dependency management when a node is deleted
 	diagram.RemoveElement(node2ID)

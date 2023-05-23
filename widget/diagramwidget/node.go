@@ -2,7 +2,6 @@ package diagramwidget
 
 import (
 	"image/color"
-	"log"
 
 	"fyne.io/x/fyne/widget/diagramwidget/geometry/r2"
 
@@ -15,17 +14,18 @@ import (
 type DiagramNode interface {
 	DiagramElement
 	getBaseDiagramNode() *BaseDiagramNode
-	MouseIn(event *desktop.MouseEvent)
-	MouseOut()
-	MouseMoved(event *desktop.MouseEvent)
+	// MouseIn(event *desktop.MouseEvent)
+	// MouseOut()
+	// MouseMoved(event *desktop.MouseEvent)
 	R2Center() r2.Vec2
 }
 
 // Validate that BaseDiagramNode implements DiagramElement and Tappable
 var _ DiagramElement = (*BaseDiagramNode)(nil)
 var _ fyne.Tappable = (*BaseDiagramNode)(nil)
-var _ desktop.Hoverable = (*BaseDiagramNode)(nil)
-var _ desktop.Hoverable = (DiagramNode)(nil)
+
+// var _ desktop.Hoverable = (*BaseDiagramNode)(nil)
+// var _ desktop.Hoverable = (DiagramNode)(nil)
 var _ fyne.Widget = (*BaseDiagramNode)(nil)
 var _ fyne.Widget = (DiagramNode)(nil)
 
@@ -55,7 +55,6 @@ type BaseDiagramNode struct {
 	// HandleStrokeWidth is the stroke width of the node handle, defaults
 	// to 3.
 	HandleStroke float32
-	edgePad      *RectanglePad
 	// MovedCallback, if present, is invoked when the node is moved
 	MovedCallback func()
 }
@@ -79,8 +78,8 @@ func InitializeBaseDiagramNode(diagramNode DiagramNode, diagram *DiagramWidget, 
 	bdn.BoxStrokeWidth = 1
 	bdn.HandleStroke = 3
 	bdn.diagramElement.initialize(diagram, nodeID)
-	bdn.edgePad = NewRectanglePad(bdn)
-	bdn.edgePad.Hide()
+	bdn.pads["default"] = NewRectanglePad(bdn)
+	bdn.pads["default"].Hide()
 	for _, handleKey := range []string{"upperLeft", "upperMiddle", "upperRight", "leftMiddle", "rightMiddle", "lowerLeft", "lowerMiddle", "lowerRight"} {
 		newHandle := NewHandle(bdn)
 		bdn.handles[handleKey] = newHandle
@@ -147,7 +146,7 @@ func (bdn *BaseDiagramNode) GetDefaultConnectionPad() ConnectionPad {
 
 // GetEdgePad returns the edge pad for the node
 func (bdn *BaseDiagramNode) GetEdgePad() ConnectionPad {
-	return bdn.edgePad
+	return bdn.pads["default"]
 }
 
 func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent) {
@@ -204,6 +203,10 @@ func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent)
 	bdn.GetDiagram().ForceRepaint()
 }
 
+func (bdn *BaseDiagramNode) handleDragEnd(handle *Handle) {
+
+}
+
 func (bdn *BaseDiagramNode) innerPos() fyne.Position {
 	return fyne.Position{
 		X: float32(bdn.Padding),
@@ -211,22 +214,29 @@ func (bdn *BaseDiagramNode) innerPos() fyne.Position {
 	}
 }
 
-func (bdn *BaseDiagramNode) MouseIn(event *desktop.MouseEvent) {
-	log.Print("Node MouseIn")
-	bdn.handleColor = bdn.diagram.DiagramTheme.Color(theme.ColorNameFocus, bdn.diagram.ThemeVariant)
-	bdn.Refresh()
-	bdn.GetDiagram().ForceRepaint()
-}
+// func (bdn *BaseDiagramNode) MouseIn(event *desktop.MouseEvent) {
+// 	log.Print("Node MouseIn")
+// 	// conTrans := bdn.GetDiagram().connectionTransaction
+// 	// for _, pad := range bdn.pads {
+// 	// 	if conTrans != nil && conTrans.link.IsConnectionAllowed(conTrans.linkPoint, pad) {
+// 	// 		pad.Show()
+// 	// 	} else {
+// 	// 		pad.Hide()
+// 	// 	}
+// 	// }
+// 	// bdn.Refresh()
+// 	// bdn.diagram.ForceRepaint()
+// }
 
-func (bdn *BaseDiagramNode) MouseOut() {
-	log.Print("Node MouseIn")
-	bdn.handleColor = bdn.foregroundColor
-	bdn.Refresh()
-	bdn.GetDiagram().ForceRepaint()
-}
+// func (bdn *BaseDiagramNode) MouseOut() {
+// 	log.Print("Node MouseOut")
+// 	// for _, pad := range bdn.pads {
+// 	// 	pad.Hide()
+// 	// }
+// }
 
-func (bdn *BaseDiagramNode) MouseMoved(event *desktop.MouseEvent) {
-}
+// func (bdn *BaseDiagramNode) MouseMoved(event *desktop.MouseEvent) {
+// }
 
 func (bdn *BaseDiagramNode) Move(position fyne.Position) {
 	bdn.BaseWidget.Move(position)
@@ -296,8 +306,10 @@ func (dnr *diagramNodeRenderer) Layout(size fyne.Size) {
 func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
 	obj := make([]fyne.CanvasObject, 0)
 	obj = append(obj, dnr.box)
-	obj = append(obj, dnr.node.edgePad)
 	obj = append(obj, dnr.node.innerObject)
+	for _, pad := range dnr.node.pads {
+		obj = append(obj, pad)
+	}
 	for _, handle := range dnr.node.handles {
 		obj = append(obj, handle)
 	}
@@ -307,9 +319,9 @@ func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
 func (dnr *diagramNodeRenderer) Refresh() {
 	nodeSize := dnr.MinSize()
 	dnr.node.Resize(nodeSize)
-	dnr.node.edgePad.Resize(nodeSize)
-	dnr.node.edgePad.Move(fyne.NewPos(0, 0))
-	dnr.node.edgePad.Refresh()
+	dnr.node.pads["default"].Resize(nodeSize)
+	dnr.node.pads["default"].Move(fyne.NewPos(0, 0))
+	dnr.node.pads["default"].Refresh()
 
 	if dnr.node.innerObject != nil {
 		dnr.node.innerObject.Move(dnr.node.innerPos())
@@ -348,7 +360,9 @@ func (dnr *diagramNodeRenderer) Refresh() {
 	dnr.box.FillColor = color.Transparent
 	dnr.box.StrokeColor = dnr.node.diagram.GetForegroundColor()
 
-	dnr.node.edgePad.Refresh()
+	for _, pad := range dnr.node.pads {
+		pad.Refresh()
+	}
 	dnr.node.diagram.refreshDependentLinks(dnr.node)
 	dnr.node.GetDiagram().ForceRepaint()
 }

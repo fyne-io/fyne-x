@@ -14,6 +14,8 @@ type DiagramElement interface {
 	fyne.Widget
 	// GetBackgroundColor returns the background color for the widget
 	GetBackgroundColor() color.Color
+	// GetConnectionPads() returns all of the connection pads on the element
+	GetConnectionPads() map[string]ConnectionPad
 	// GetForegroundColor returns the foreground color for the widget
 	GetForegroundColor() color.Color
 	// GetDefaultConnectionPad returns the default pad for the DiagramElement
@@ -28,6 +30,8 @@ type DiagramElement interface {
 	GetHandleColor() color.Color
 	// handleDragged responds to drag events
 	handleDragged(handle *Handle, event *fyne.DragEvent)
+	// handleDragEnd responds to the end of a drag
+	handleDragEnd(handle *Handle)
 	// HideHandles hides the handles on the DiagramElement
 	HideHandles()
 	// ShowHandles shows the handles on the DiagramElement
@@ -46,6 +50,7 @@ type diagramElement struct {
 	handleColor     color.Color
 	id              string
 	handles         map[string]*Handle
+	pads            map[string]ConnectionPad
 }
 
 func (de *diagramElement) GetDiagram() *DiagramWidget {
@@ -58,6 +63,10 @@ func (de *diagramElement) GetDiagramElementID() string {
 
 func (de *diagramElement) GetBackgroundColor() color.Color {
 	return de.backgroundColor
+}
+
+func (de *diagramElement) GetConnectionPads() map[string]ConnectionPad {
+	return de.pads
 }
 
 func (de *diagramElement) GetForegroundColor() color.Color {
@@ -83,6 +92,7 @@ func (de *diagramElement) initialize(diagram *DiagramWidget, id string) {
 	de.id = id
 	de.handles = make(map[string]*Handle)
 	de.handleColor = de.diagram.DiagramTheme.Color(theme.ColorNameForeground, de.diagram.ThemeVariant)
+	de.pads = make(map[string]ConnectionPad)
 }
 
 func (de *diagramElement) SetBackgroundColor(backgroundColor color.Color) {

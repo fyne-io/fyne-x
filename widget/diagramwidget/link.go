@@ -2,6 +2,7 @@ package diagramwidget
 
 import (
 	"image/color"
+	"log"
 	"math"
 
 	"fyne.io/x/fyne/widget/diagramwidget/geometry/r2"
@@ -10,7 +11,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
-// Validate Hoverable Implementation
+var _ fyne.Tappable = (*BaseDiagramLink)(nil)
 var _ desktop.Hoverable = (*BaseDiagramLink)(nil)
 var _ DiagramElement = (*BaseDiagramLink)(nil)
 
@@ -19,6 +20,7 @@ type DiagramLink interface {
 	getBaseDiagramLink() *BaseDiagramLink
 	GetSourcePad() ConnectionPad
 	GetTargetPad() ConnectionPad
+	IsConnectionAllowed(*LinkPoint, ConnectionPad) bool
 }
 
 // BaseDiagramLink is a directed graphic connection between two DiagramElements that are referred to as the Source
@@ -44,7 +46,6 @@ type BaseDiagramLink struct {
 	LinkColor            color.Color
 	strokeWidth          float32
 	sourcePad            ConnectionPad
-	midPad               *PointPad
 	targetPad            ConnectionPad
 	SourceDecorations    []Decoration
 	sourceAnchoredText   map[string]*AnchoredText
@@ -52,7 +53,6 @@ type BaseDiagramLink struct {
 	targetAnchoredText   map[string]*AnchoredText
 	MidpointDecorations  []Decoration
 	midpointAnchoredText map[string]*AnchoredText
-	showHandles          bool
 }
 
 // NewDiagramLink creates a DiagramLink widget connecting the two indicated ConnectionPads. It adds itself to the
@@ -78,14 +78,19 @@ func InitializeBaseDiagramLink(diagramLink DiagramLink, diagram *DiagramWidget, 
 	bdl.sourceAnchoredText = make(map[string]*AnchoredText)
 	bdl.midpointAnchoredText = make(map[string]*AnchoredText)
 	bdl.targetAnchoredText = make(map[string]*AnchoredText)
-	bdl.showHandles = false
 	bdl.diagramElement.initialize(diagram, linkID)
 	bdl.linkPoints = append(bdl.linkPoints, NewLinkPoint(bdl))
 	bdl.linkPoints = append(bdl.linkPoints, NewLinkPoint(bdl))
 	bdl.linkSegments = append(bdl.linkSegments, NewLinkSegment(bdl, bdl.linkPoints[0].Position(), bdl.linkPoints[1].Position()))
-	bdl.midPad = NewPointPad(bdl)
-	bdl.midPad.Move(bdl.getMidPosition())
+	bdl.pads["default"] = NewPointPad(bdl)
+	bdl.pads["default"].Move(bdl.getMidPosition())
+	bdl.pads["default"].Hide()
 	bdl.ExtendBaseWidget(diagramLink)
+	for _, handleKey := range []string{"source", "target"} {
+		newHandle := NewHandle(bdl)
+		bdl.handles[handleKey] = newHandle
+		newHandle.Hide()
+	}
 
 	bdl.diagram.addLink(diagramLink)
 	bdl.diagram.addLinkDependency(bdl.sourcePad.GetPadOwner(), bdl, bdl.sourcePad)
@@ -174,13 +179,23 @@ func (bdl *BaseDiagramLink) getBaseDiagramLink() *BaseDiagramLink {
 
 // GetDefaultConnectionPad returns the midPad of the Link
 func (bdl *BaseDiagramLink) GetDefaultConnectionPad() ConnectionPad {
-	return bdl.GetMidPad()
+	return bdl.pads["default"]
+}
+
+// getHandleKey returns the key for the given handle
+func (bdl *BaseDiagramLink) getHandleKey(handle *Handle) string {
+	for key, h := range bdl.handles {
+		if h == handle {
+			return key
+		}
+	}
+	return ""
 }
 
 // GetMidPad returns the PointPad at the midpoint so that it can be used as either the Source or Target
 // pad for another Link.
 func (bdl *BaseDiagramLink) GetMidPad() ConnectionPad {
-	return bdl.midPad
+	return bdl.pads["default"]
 }
 
 func (bdl *BaseDiagramLink) getMidPosition() fyne.Position {
@@ -220,17 +235,92 @@ func (bdl *BaseDiagramLink) getTargetPosition() fyne.Position {
 }
 
 func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent) {
-	// TODO implement this
+	handleKey := bdl.getHandleKey(handle)
+	var linkPoint *LinkPoint
+	var pad ConnectionPad
+	switch handleKey {
+	case "source":
+		linkPoint = bdl.linkPoints[0]
+		pad = bdl.sourcePad
+		bdl.sourcePad = nil
+	case "target":
+		linkPoint = bdl.linkPoints[len(bdl.linkPoints)-1]
+		pad = bdl.targetPad
+		bdl.targetPad = nil
+	}
+	if linkPoint == nil {
+		return
+	}
+	connTrans := bdl.diagram.connectionTransaction
+	if connTrans == nil {
+		connTrans = NewConnectionTransaction(linkPoint, bdl, pad, linkPoint.Position())
+		bdl.diagram.connectionTransaction = connTrans
+		// TODO remove this after fyne Issue #3906 has been resolved
+		bdl.diagram.showAllPads()
+
+	} else if connTrans.linkPoint != linkPoint {
+		// The existing transaction is for a different linkPoint
+		return
+	}
+	currentPosition := linkPoint.Position()
+	newPosition := fyne.NewPos(currentPosition.X+event.Dragged.DX, currentPosition.Y+event.Dragged.DY)
+	linkPoint.Move(newPosition)
+	bdl.Refresh()
 }
 
-// HideHandles prevents the handles from being displayed
-func (bdl *BaseDiagramLink) HideHandles() {
-	bdl.showHandles = false
-	bdl.Refresh()
+func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
+	connTrans := bdl.diagram.connectionTransaction
+	handleKey := bdl.getHandleKey(handle)
+	if connTrans != nil {
+		if connTrans.pendingPad != nil {
+			// We have a new pad for connection
+			bdl.diagram.removeLinkDependency(connTrans.initialPad.GetPadOwner(), bdl, connTrans.initialPad)
+			bdl.diagram.addLinkDependency(connTrans.pendingPad.GetPadOwner(), bdl, connTrans.pendingPad)
+			bdl.pads[handleKey] = connTrans.pendingPad
+			switch handleKey {
+			case "source":
+				bdl.sourcePad = connTrans.pendingPad
+			case "target":
+				bdl.targetPad = connTrans.pendingPad
+			}
+		} else {
+			// We revert to the original pad.
+			bdl.pads[handleKey] = connTrans.initialPad
+			switch handleKey {
+			case "source":
+				bdl.sourcePad = connTrans.initialPad
+			case "target":
+				bdl.targetPad = connTrans.initialPad
+			}
+		}
+		bdl.diagram.connectionTransaction = nil
+		bdl.diagram.hideAllPads()
+		bdl.Refresh()
+	}
+}
+
+func (bdl *BaseDiagramLink) IsConnectionAllowed(linkPoint *LinkPoint, pad ConnectionPad) bool {
+	pointIndex := -1
+	for i, lp := range bdl.linkPoints {
+		if lp == linkPoint {
+			pointIndex = i
+		}
+	}
+	if pointIndex == -1 {
+		// the point doesn't belong to this link
+		return false
+	}
+	if pointIndex != 0 && pointIndex != len(bdl.linkPoints)-1 {
+		// the point is not the source or target point
+		return false
+	}
+	// By default, we accept any connection. Subclasses can override
+	return true
 }
 
 // MouseIn responds to the mouse entering the bounding rectangle of the Link
 func (bdl *BaseDiagramLink) MouseIn(event *desktop.MouseEvent) {
+	log.Print("Entered Link")
 	// TODO implement this
 }
 
@@ -241,12 +331,12 @@ func (bdl *BaseDiagramLink) MouseMoved(event *desktop.MouseEvent) {
 
 // MouseOut responds to the mouse leaving the bounding rectangle of the Link
 func (bdl *BaseDiagramLink) MouseOut() {
+	log.Printf("Left Link")
 }
 
-// ShowHandles causes the handles of the Link to be displayed
-func (bdl *BaseDiagramLink) ShowHandles() {
-	bdl.showHandles = true
-	bdl.Refresh()
+// Tapped handles tap events
+func (bdl *BaseDiagramLink) Tapped(event *fyne.PointEvent) {
+	log.Print("Link tapped")
 }
 
 // diagramLinkRenderer
@@ -307,23 +397,59 @@ func (dlr *diagramLinkRenderer) Objects() []fyne.CanvasObject {
 	for _, targetAnchoredText := range dlr.link.targetAnchoredText {
 		obj = append(obj, targetAnchoredText)
 	}
-	obj = append(obj, dlr.link.midPad)
+	for _, pad := range dlr.link.pads {
+		obj = append(obj, pad)
+	}
+	for _, handle := range dlr.link.handles {
+		obj = append(obj, handle)
+	}
 	return obj
 }
 
 func (dlr *diagramLinkRenderer) Refresh() {
-	dlr.link.Resize(dlr.MinSize())
-	padBasedSourceReferencePoint := dlr.link.sourcePad.GetCenter()
-	padBasedTargetReferencePoint := dlr.link.targetPad.GetCenter()
-	padBasedSourcePosition := dlr.link.sourcePad.getConnectionPoint(padBasedTargetReferencePoint)
-	padBasedTargetPosition := dlr.link.targetPad.getConnectionPoint(padBasedSourceReferencePoint)
+	// The pads to which the link is connected can be nil during a connection transaction, in which case we leave the end points
+	// at their present location. Note that the initial computations are done in diagram coordinates,
+	// then link coordinates
+	var sourceDiagramCoordinateReferencePoint fyne.Position
+	var targetDiagramCoordinateReferencePoint fyne.Position
+	var sourceDiagramCoordinatePosition fyne.Position
+	var targetDiagramCoordinatePosition fyne.Position
+	currentSourceDiagramCoordinatePosition := dlr.link.getSourcePosition().Add(dlr.link.Position())
+	currentTargetDiagramCoordinatePosition := dlr.link.getTargetPosition().Add(dlr.link.Position())
+	if dlr.link.sourcePad != nil {
+		sourceDiagramCoordinateReferencePoint = dlr.link.sourcePad.GetCenterInDiagramCoordinates()
+	} else {
+		// we have to translate the source position back to diagram coordinates
+		sourceDiagramCoordinateReferencePoint = currentSourceDiagramCoordinatePosition
+	}
+	if dlr.link.targetPad != nil {
+		targetDiagramCoordinateReferencePoint = dlr.link.targetPad.GetCenterInDiagramCoordinates()
+	} else {
+		// we have to translate the target position back to diagram coordinates
+		targetDiagramCoordinateReferencePoint = currentTargetDiagramCoordinatePosition
+	}
+	if dlr.link.sourcePad != nil {
+		sourceDiagramCoordinatePosition = dlr.link.sourcePad.getConnectionPointInDiagramCoordinates(targetDiagramCoordinateReferencePoint)
+	} else {
+		sourceDiagramCoordinatePosition = currentSourceDiagramCoordinatePosition
+	}
+	if dlr.link.targetPad != nil {
+		targetDiagramCoordinatePosition = dlr.link.targetPad.getConnectionPointInDiagramCoordinates(sourceDiagramCoordinateReferencePoint)
+	} else {
+		targetDiagramCoordinatePosition = currentTargetDiagramCoordinatePosition
+	}
 	// The Position of the link is the upper left hand corner of a bounding box surrounding the source and target positions
-	linkPosition := fyne.NewPos(float32(math.Min(float64(padBasedSourcePosition.X), float64(padBasedTargetPosition.X))),
-		float32(math.Min(float64(padBasedSourcePosition.Y), float64(padBasedTargetPosition.Y))))
+	linkPosition := fyne.NewPos(float32(math.Min(float64(sourceDiagramCoordinatePosition.X), float64(targetDiagramCoordinatePosition.X))),
+		float32(math.Min(float64(sourceDiagramCoordinatePosition.Y), float64(targetDiagramCoordinatePosition.Y))))
 	dlr.link.Move(linkPosition)
 
-	dlr.link.linkPoints[0].Move(padBasedSourcePosition.Subtract(linkPosition))
-	dlr.link.linkPoints[len(dlr.link.linkPoints)-1].Move(padBasedTargetPosition.Subtract(linkPosition))
+	// Now we put the source and target positions back into link coordinates by subtracting the linkPosition
+	dlr.link.linkPoints[0].Move(sourceDiagramCoordinatePosition.Subtract(linkPosition))
+	dlr.link.linkPoints[len(dlr.link.linkPoints)-1].Move(targetDiagramCoordinatePosition.Subtract(linkPosition))
+	// TODO adjust the position of the other points based on the change in link position
+	// Now resize the link - note that MinSize is derived from the point positions
+	dlr.link.Resize(dlr.MinSize())
+
 	// Position segments only after all points have been positioned
 	for i := 0; i < len(dlr.link.linkPoints)-1; i++ {
 		linkSegment := dlr.link.linkSegments[i]
@@ -359,7 +485,10 @@ func (dlr *diagramLinkRenderer) Refresh() {
 		decoration.setBaseAngle(sourceAngle)
 		midOffset = midOffset + float64(decoration.GetReferenceLength())
 	}
-	dlr.link.midPad.Move(dlr.link.getMidPosition())
+	defaultPadPosition := dlr.link.getMidPosition().AddXY(-pointPadSize/2, -pointPadSize/2)
+	dlr.link.pads["default"].Move(defaultPadPosition)
+	dlr.link.pads["default"].Resize(fyne.NewSize(pointPadSize, pointPadSize))
+	dlr.link.pads["default"].Refresh()
 
 	targetOffset := 0.0
 	for _, decoration := range dlr.link.TargetDecorations {
@@ -403,6 +532,37 @@ func (dlr *diagramLinkRenderer) Refresh() {
 		decoration.SetFillColor(dlr.link.diagram.GetBackgroundColor())
 		decoration.Refresh()
 	}
+
+	// calculate the handle positions
+	for key, handle := range dlr.link.handles {
+		switch key {
+		case "source":
+			handle.Move(dlr.link.linkPoints[0].Position())
+		case "target":
+			handle.Move(dlr.link.linkPoints[len(dlr.link.linkPoints)-1].Position())
+		}
+		handle.Resize(fyne.NewSize(handle.handleSize, handle.handleSize))
+		handle.Refresh()
+	}
+
 	dlr.link.diagram.refreshDependentLinks(dlr.link)
 	dlr.link.GetDiagram().ForceRepaint()
+}
+
+type connectionTransaction struct {
+	linkPoint       *LinkPoint
+	link            DiagramLink
+	initialPad      ConnectionPad
+	initialPosition fyne.Position
+	pendingPad      ConnectionPad
+}
+
+func NewConnectionTransaction(linkPoint *LinkPoint, link DiagramLink, initialPad ConnectionPad, initialPosition fyne.Position) *connectionTransaction {
+	ct := &connectionTransaction{
+		linkPoint:       linkPoint,
+		link:            link,
+		initialPad:      initialPad,
+		initialPosition: initialPosition,
+	}
+	return ct
 }

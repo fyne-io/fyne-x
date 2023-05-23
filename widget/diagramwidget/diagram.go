@@ -24,6 +24,9 @@ func (dw *DiagramWidget) ForceRepaint() {
 // Verify that interfaces are fully implemented
 var _ fyne.Tappable = (*DiagramWidget)(nil)
 
+// Default values
+var defaultPadColor = color.RGBA{121, 237, 119, 255}
+
 type linkPadPair struct {
 	link *BaseDiagramLink
 	pad  ConnectionPad
@@ -51,6 +54,8 @@ type DiagramWidget struct {
 	Links                          map[string]DiagramLink
 	selection                      map[string]DiagramElement
 	diagramElementLinkDependencies map[string][]linkPadPair
+	connectionTransaction          *connectionTransaction
+	padColor                       color.Color
 
 	// TODO Remove dummyBox when fyne rendering issue is resolved
 	dummyBox *canvas.Rectangle
@@ -70,6 +75,7 @@ func NewDiagramWidget(id string) *DiagramWidget {
 		dummyBox:                       canvas.NewRectangle(color.Transparent),
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPadPair{},
+		padColor:                       defaultPadColor,
 	}
 	dw.dummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
 	dw.dummyBox.Move(fyne.Position{X: 50, Y: 50})
@@ -197,6 +203,22 @@ func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
 	dw.Refresh()
 }
 
+// hideAllPads is a work-around for fyne Issue #3906 in which a child's Hoverable interface
+// (i.e. the pad) masks the parent's Tappable interface. This function (and all references to
+// it) should be removed when this issue has been resolved
+func (dw *DiagramWidget) hideAllPads() {
+	for _, node := range dw.Nodes {
+		for _, pad := range node.GetConnectionPads() {
+			pad.Hide()
+		}
+	}
+	for _, link := range dw.Links {
+		for _, pad := range link.GetConnectionPads() {
+			pad.Hide()
+		}
+	}
+}
+
 // IsSelected returns true if the indicated element is currently part of the selection
 func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
 	return dw.selection[de.GetDiagramElementID()] != nil
@@ -276,6 +298,22 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 		dw.removeDependenciesInvolvingLink(elementID)
 	}
 	dw.Refresh()
+}
+
+// showAllPads is a work-around for fyne Issue #3906 in which a child's Hoverable interface
+// (i.e. the pad) masks the parent's Tappable interface. This function (and all references to
+// it) should be removed when this issue has been resolved
+func (dw *DiagramWidget) showAllPads() {
+	for _, node := range dw.Nodes {
+		for _, pad := range node.GetConnectionPads() {
+			pad.Show()
+		}
+	}
+	for _, link := range dw.Links {
+		for _, pad := range link.GetConnectionPads() {
+			pad.Show()
+		}
+	}
 }
 
 // Tapped  respondss to taps in the diagram background. It removes all diagram elements
