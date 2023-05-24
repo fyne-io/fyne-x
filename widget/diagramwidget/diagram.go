@@ -50,12 +50,14 @@ type DiagramWidget struct {
 	// DesiredSize specifies the size of the displayed diagram. Defaults to 800 x 600
 	DesiredSize fyne.Size
 
-	Nodes                          map[string]DiagramNode
-	Links                          map[string]DiagramLink
-	selection                      map[string]DiagramElement
-	diagramElementLinkDependencies map[string][]linkPadPair
-	connectionTransaction          *connectionTransaction
-	padColor                       color.Color
+	Nodes                                         map[string]DiagramNode
+	Links                                         map[string]DiagramLink
+	primarySelection                              DiagramElement
+	selection                                     map[string]DiagramElement
+	diagramElementLinkDependencies                map[string][]linkPadPair
+	connectionTransaction                         *connectionTransaction
+	padColor                                      color.Color
+	PrimaryDiagramElementSelectionChangedCallback func(string)
 
 	// TODO Remove dummyBox when fyne rendering issue is resolved
 	dummyBox *canvas.Rectangle
@@ -125,6 +127,12 @@ func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 
 func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
 	if !dw.IsSelected(de) {
+		if dw.primarySelection == nil {
+			dw.primarySelection = de
+			if dw.PrimaryDiagramElementSelectionChangedCallback != nil {
+				dw.PrimaryDiagramElementSelectionChangedCallback(de.GetDiagramElementID())
+			}
+		}
 		dw.selection[de.GetDiagramElementID()] = de
 		de.ShowHandles()
 	}
@@ -256,8 +264,16 @@ func (dw *DiagramWidget) removeDependenciesInvolvingLink(linkID string) {
 }
 
 func (dw *DiagramWidget) removeElementFromSelection(de DiagramElement) {
-	delete(dw.selection, de.GetDiagramElementID())
-	de.HideHandles()
+	if dw.IsSelected(de) {
+		delete(dw.selection, de.GetDiagramElementID())
+		if dw.primarySelection == de {
+			dw.primarySelection = nil
+			if dw.PrimaryDiagramElementSelectionChangedCallback != nil {
+				dw.PrimaryDiagramElementSelectionChangedCallback("")
+			}
+		}
+		de.HideHandles()
+	}
 }
 
 func (dw *DiagramWidget) removeLinkDependency(diagramElement DiagramElement, link *BaseDiagramLink, pad ConnectionPad) {
