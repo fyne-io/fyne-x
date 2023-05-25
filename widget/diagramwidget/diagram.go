@@ -50,13 +50,16 @@ type DiagramWidget struct {
 	// DesiredSize specifies the size of the displayed diagram. Defaults to 800 x 600
 	DesiredSize fyne.Size
 
-	Nodes                                         map[string]DiagramNode
-	Links                                         map[string]DiagramLink
-	primarySelection                              DiagramElement
-	selection                                     map[string]DiagramElement
-	diagramElementLinkDependencies                map[string][]linkPadPair
-	connectionTransaction                         *connectionTransaction
-	padColor                                      color.Color
+	Nodes                          map[string]DiagramNode
+	Links                          map[string]DiagramLink
+	primarySelection               DiagramElement
+	selection                      map[string]DiagramElement
+	diagramElementLinkDependencies map[string][]linkPadPair
+	connectionTransaction          *connectionTransaction
+	padColor                       color.Color
+	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
+	// "source" or "target". The first pad is the old pad, the second one is the new pad
+	LinkConnectionChangedCallback                 func(DiagramLink, string, ConnectionPad, ConnectionPad)
 	PrimaryDiagramElementSelectionChangedCallback func(string)
 
 	// TODO Remove dummyBox when fyne rendering issue is resolved
@@ -85,6 +88,19 @@ func NewDiagramWidget(id string) *DiagramWidget {
 	dw.ExtendBaseWidget(dw)
 
 	return dw
+}
+
+func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
+	if !dw.IsSelected(de) {
+		if dw.primarySelection == nil {
+			dw.primarySelection = de
+			if dw.PrimaryDiagramElementSelectionChangedCallback != nil {
+				dw.PrimaryDiagramElementSelectionChangedCallback(de.GetDiagramElementID())
+			}
+		}
+		dw.selection[de.GetDiagramElementID()] = de
+		de.ShowHandles()
+	}
 }
 
 // addLink adds a link to the diagram
@@ -125,17 +141,13 @@ func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 	return &r
 }
 
-func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
-	if !dw.IsSelected(de) {
-		if dw.primarySelection == nil {
-			dw.primarySelection = de
-			if dw.PrimaryDiagramElementSelectionChangedCallback != nil {
-				dw.PrimaryDiagramElementSelectionChangedCallback(de.GetDiagramElementID())
-			}
-		}
-		dw.selection[de.GetDiagramElementID()] = de
-		de.ShowHandles()
+// ClearSelectionNoCallback clears the selection. It does not invoke the PrimaryDiagramElementSelectionChangedCallback
+func (dw *DiagramWidget) ClearSelectionNoCallback() {
+	dw.primarySelection = nil
+	for _, element := range dw.selection {
+		element.HideHandles()
 	}
+	dw.selection = map[string]DiagramElement{}
 }
 
 // Cursor returns the default cursor
@@ -209,6 +221,18 @@ func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
 		dw.DisplaceNode(n, delta)
 	}
 	dw.Refresh()
+}
+
+// GetDiagramElements returns a map of all of the diagram's DiagramElements
+func (dw *DiagramWidget) GetDiagramElements() map[string]DiagramElement {
+	diagramElements := map[string]DiagramElement{}
+	for key, node := range dw.Nodes {
+		diagramElements[key] = node
+	}
+	for key, link := range dw.Links {
+		diagramElements[key] = link
+	}
+	return diagramElements
 }
 
 // hideAllPads is a work-around for fyne Issue #3906 in which a child's Hoverable interface
@@ -314,6 +338,18 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 		dw.removeDependenciesInvolvingLink(elementID)
 	}
 	dw.Refresh()
+}
+
+// SelectDiagramElementNoCallback makes the indicated element the PrimarySelection. It does not invoke the
+// PrimaryDiagramElementSelectionChangedCallback
+func (dw *DiagramWidget) SelectDiagramElementNoCallback(id string) {
+	dw.ClearSelectionNoCallback()
+	element := dw.GetDiagramElement(id)
+	if element != nil {
+		dw.primarySelection = element
+		dw.selection[id] = element
+		element.ShowHandles()
+	}
 }
 
 // showAllPads is a work-around for fyne Issue #3906 in which a child's Hoverable interface

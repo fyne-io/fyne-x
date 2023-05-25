@@ -283,6 +283,9 @@ func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
 			case "target":
 				bdl.targetPad = connTrans.pendingPad
 			}
+			if bdl.diagram.LinkConnectionChangedCallback != nil {
+				bdl.diagram.LinkConnectionChangedCallback(bdl, handleKey, connTrans.initialPad, connTrans.pendingPad)
+			}
 		} else {
 			// We revert to the original pad.
 			bdl.pads[handleKey] = connTrans.initialPad
