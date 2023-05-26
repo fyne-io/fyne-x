@@ -59,8 +59,16 @@ type DiagramWidget struct {
 	padColor                       color.Color
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
 	// "source" or "target". The first pad is the old pad, the second one is the new pad
-	LinkConnectionChangedCallback                 func(DiagramLink, string, ConnectionPad, ConnectionPad)
+	LinkConnectionChangedCallback func(DiagramLink, string, ConnectionPad, ConnectionPad)
+	// OnTappedCallback is called when the diagram background is tapped. If present, it overrides the default
+	// diagram behavior for Tapped()
+	OnTapped func(*DiagramWidget, *fyne.PointEvent)
+	// PrimaryDiagramElementSelectionChangedCallback is called when the primary element selection changes
 	PrimaryDiagramElementSelectionChangedCallback func(string)
+	// ElementTappedExtendsSelection determines the behavior when one or more elements are already selected and
+	// an element that is not currently selected is tapped. When true, the new element is added to the selection.
+	// When false, the selection is cleared and the new element is made the only selected element.
+	ElementTappedExtendsSelection bool
 
 	// TODO Remove dummyBox when fyne rendering issue is resolved
 	dummyBox *canvas.Rectangle
@@ -141,6 +149,13 @@ func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 	return &r
 }
 
+// ClearSelection clears the selection and invokes the PrimaryDiagramElementSelectionChangedCallback
+func (dw *DiagramWidget) ClearSelection() {
+	for _, de := range dw.selection {
+		dw.removeElementFromSelection(de)
+	}
+}
+
 // ClearSelectionNoCallback clears the selection. It does not invoke the PrimaryDiagramElementSelectionChangedCallback
 func (dw *DiagramWidget) ClearSelectionNoCallback() {
 	dw.primarySelection = nil
@@ -157,6 +172,9 @@ func (dw *DiagramWidget) Cursor() desktop.Cursor {
 
 // DiagramElementTapped adds the element to the selection when the element is tapped
 func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.PointEvent) {
+	if !dw.ElementTappedExtendsSelection {
+		dw.ClearSelectionNoCallback()
+	}
 	if !dw.IsSelected(de) {
 		dw.addElementToSelection(de)
 	}
@@ -371,8 +389,10 @@ func (dw *DiagramWidget) showAllPads() {
 // Tapped  respondss to taps in the diagram background. It removes all diagram elements
 // from the selection
 func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
-	for _, de := range dw.selection {
-		dw.removeElementFromSelection(de)
+	if dw.OnTapped != nil {
+		dw.OnTapped(dw, event)
+	} else {
+		dw.ClearSelection()
 	}
 	dw.ForceRepaint()
 }
