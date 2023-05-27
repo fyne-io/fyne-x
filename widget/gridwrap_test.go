@@ -101,3 +101,12 @@ func createGridWrap(items int) *GridWrap {
 	list.Resize(fyne.NewSize(200, 400))
 	return list
 }
+
+func TestGridWrap_IndexIsInt(t *testing.T) {
+	gw := &GridWrap{}
+
+	// Both of these should be allowed to match widget.List behaviour.
+	// It allows the same update item function to be shared between both widgets if necessary.
+	gw.UpdateItem = func(id GridWrapItemID, item fyne.CanvasObject) {}
+	gw.UpdateItem = func(id int, item fyne.CanvasObject) {}
+}
