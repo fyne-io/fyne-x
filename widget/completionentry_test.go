@@ -40,17 +40,19 @@ func TestCompletionEntry_Custom(t *testing.T) {
 	}
 	entry.CustomUpdate = func(id widget.ListItemID, o fyne.CanvasObject) {
 		o.(*widget.Check).Text = entryData[id]
-		o.Refresh()
+		// o.Refresh() // no need to refresh, completionEntryListItem is refreshed after CustomUpdate
 	}
 	win := test.NewWindow(entry)
 	win.Resize(fyne.NewSize(500, 300))
 	defer win.Close()
 
 	entry.SetText("init")
-	scroll := test.WidgetRenderer(entry.navigableList).Objects()[0].(fyne.Widget)
+	scroll := test.WidgetRenderer(entry.list).Objects()[0].(fyne.Widget)
 	list := test.WidgetRenderer(scroll).Objects()[0].(*fyne.Container).Objects[1].(fyne.Widget)
 	item1 := test.WidgetRenderer(list).Objects()[1]
-	assert.Equal(t, "bar", item1.(*widget.Check).Text) // ensure the item is a Check not Label
+
+	// custom items are "budled" in completionEntryListItem
+	assert.Equal(t, "bar", item1.(*completionEntryListItem).co.(*widget.Check).Text) // ensure the item is a Check not Label
 }
 
 // Show the completion menu
@@ -61,7 +63,7 @@ func TestCompletionEntry_ShowMenu(t *testing.T) {
 	defer win.Close()
 
 	entry.SetText("init")
-	assert.True(t, entry.popupMenu.Visible())
+	assert.True(t, entry.popup.Visible())
 }
 
 // Navigate in menu and select an entry.
@@ -75,12 +77,13 @@ func TestCompletionEntry_Navigate(t *testing.T) {
 
 	// navigate to "bar" and press enter, the entry should contain
 	// "bar" in value
-	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
+	// Note: only one keypress because first item is already selected
+	//       on list show
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
 
 	assert.Equal(t, "bar", entry.Text)
-	assert.False(t, entry.popupMenu.Visible())
+	assert.False(t, entry.popup.Visible())
 }
 
 // Ensure the cursor is set to the end of entry after completion.
@@ -118,7 +121,7 @@ func TestCompletionEntry_Escape(t *testing.T) {
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyEscape})
 
-	assert.False(t, entry.popupMenu.Visible())
+	assert.False(t, entry.popup.Visible())
 }
 
 // Hide the menu on rune pressed.
@@ -141,7 +144,7 @@ func TestCompletionEntry_Rune(t *testing.T) {
 	win.Canvas().Focused().TypedRune('z')
 	assert.Equal(t, "foobarxyz", entry.Text)
 
-	assert.True(t, entry.popupMenu.Visible())
+	assert.True(t, entry.popup.Visible())
 }
 
 // Hide the menu on rune pressed.
@@ -159,11 +162,11 @@ func TestCompletionEntry_Rotation(t *testing.T) {
 		win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
 	}
 
-	assert.Equal(t, 0, entry.navigableList.selected)
+	assert.Equal(t, 0, entry.selected)
 
 	// Do the same in reverse order, here, onlh one time to go on the last item
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyUp})
-	assert.Equal(t, len(entry.Options)-1, entry.navigableList.selected)
+	assert.Equal(t, len(entry.Options)-1, entry.selected)
 }
 
 // Test if completion is hidden when there is no options.
@@ -179,7 +182,7 @@ func TestCompletionEntry_WithEmptyOptions(t *testing.T) {
 	}
 
 	entry.SetText("foo")
-	assert.Nil(t, entry.popupMenu) // popupMenu should not being created
+	assert.Nil(t, entry.popup) // popup should not being created
 }
 
 // Test sumbission with opened completion.
@@ -193,11 +196,17 @@ func TestCompletionEntry_OnSubmit(t *testing.T) {
 	entry.OnSubmitted = func(s string) {
 		submitted = true
 		entry.HideCompletion()
-		assert.True(t, entry.popupMenu.Hidden)
+		assert.True(t, entry.popup.Hidden)
 	}
 	entry.OnChanged = func(s string) {
 		entry.ShowCompletion()
 	}
+
+	entry.SetText("foo")
+	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
+	assert.False(t, submitted)
+
+	entry.SubmitOnCompleted = true
 
 	entry.SetText("foo")
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
@@ -225,7 +234,7 @@ func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
 	assert.False(t, submitted)
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn}) // OnSubmitted should NOT be called
 	assert.False(t, submitted)
-	assert.False(t, entry.popupMenu.Visible())
+	assert.False(t, entry.popup.Visible())
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn}) // OnSubmitted should be called
 	assert.True(t, submitted)
 }
