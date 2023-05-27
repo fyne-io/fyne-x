@@ -17,7 +17,7 @@ import (
 var _ fyne.Widget = (*GridWrap)(nil)
 
 // GridWrapItemID is the ID of an individual item in the GridWrap widget.
-type GridWrapItemID int
+type GridWrapItemID = int
 
 // GridWrap is a widget with an API very similar to widget.List,
 // that lays out items in a scrollable wrapping grid similar to container.NewGridWrap.
