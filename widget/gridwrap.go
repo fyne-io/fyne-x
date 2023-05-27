@@ -65,11 +65,10 @@ func NewGridWrapWithData(data binding.DataList, createItem func() fyne.CanvasObj
 func (l *GridWrap) CreateRenderer() fyne.WidgetRenderer {
 	l.ExtendBaseWidget(l)
 
-	if f := l.CreateItem; f != nil {
-		if l.itemMin.IsZero() {
-			l.itemMin = f().MinSize()
-		}
+	if f := l.CreateItem; f != nil && l.itemMin.IsZero() {
+		l.itemMin = f().MinSize()
 	}
+
 	layout := &fyne.Container{Layout: newGridWrapLayout(l)}
 	l.scroller = container.NewVScroll(layout)
 	layout.Resize(layout.MinSize())
@@ -208,11 +207,11 @@ func newGridWrapLayout(list *GridWrap) fyne.Layout {
 	return l
 }
 
-func (l *gridWrapLayout) Layout([]fyne.CanvasObject, fyne.Size) {
+func (l *gridWrapLayout) Layout(_ []fyne.CanvasObject, _ fyne.Size) {
 	l.updateList(true)
 }
 
-func (l *gridWrapLayout) MinSize([]fyne.CanvasObject) fyne.Size {
+func (l *gridWrapLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
 	if lenF := l.list.Length; lenF != nil {
 		cols := l.list.getColCount()
 		rows := float32(math.Ceil(float64(lenF()) / float64(cols)))
