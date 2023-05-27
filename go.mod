@@ -1,4 +1,4 @@
-module fyne.io/x/fyne
+module github.com/matwachich/fyne-x
 
 go 1.14
 
