@@ -69,8 +69,8 @@ func TestResponsive_HidableResponsive(t *testing.T) {
 	padding := theme.Padding()
 
 	// build
-	label1 := Responsive(widget.NewLabel("Hello World"), 1, .5)
-	label2 := Responsive(widget.NewLabel("Hello World"), 1, .5)
+	label1 := HidableResponsive(widget.NewLabel("Hello World"), 1, .5)
+	label2 := HidableResponsive(widget.NewLabel("Hello World"), 1, .5)
 	label2.Hidable(true, false)
 
 	win := test.NewWindow(

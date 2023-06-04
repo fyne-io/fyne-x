@@ -134,22 +134,18 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 	// For each object, place it at the right position (pos) and resize it.
 	for _, o := range objects {
 		// get tht configuration
-		ro, ok := o.(ResponsiveCanvasObject)
+		ro, ok := o.(ResponsiveWidget)
 		if !ok {
 			log.Fatal("A non responsive object has been packed inside a ResponsibleLayout. This is impossible.")
 		}
 
-		size := ro.ComputeWindowResize(windowSize, containerSize)
+		ro.HandleResize(pos, windowSize, containerSize)
 		if !ro.Visible() {
 			continue
 		}
 
+		size := ro.Size()
 		line = append(line, o) // add the container to the line
-
-		// place and resize the element
-		o.Resize(size)
-		o.Move(pos)
-
 		// next element X position
 		pos = pos.Add(fyne.NewPos(size.Width+theme.Padding(), 0))
 
@@ -245,11 +241,15 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	return container.New(r, objects...)
 }
 
-type ResponsiveCanvasObject interface {
-	fyne.CanvasObject
+type ResponsiveWidget interface {
+	fyne.Widget
 	// ComputeWindowResize calculates, resizes and returns the object size
 	// based on the window resizing to a new width. Returns 0 if not visible
-	ComputeWindowResize(windowSize, containerSize fyne.Size) fyne.Size
+	HandleResize(newPos fyne.Position, windowSize, containerSize fyne.Size)
+}
+
+type HidableResponsiveWidget interface {
+	ResponsiveWidget
 	// Configure whether the element should be hidden at each breakpoint
 	Hidable(hiddenAtBreakpoint ...bool)
 }
@@ -272,7 +272,7 @@ var _ fyne.Widget = (*responsiveWidget)(nil)
 //
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
-func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) ResponsiveCanvasObject {
+func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) ResponsiveWidget {
 	ro := &responsiveWidget{
 		render:           object,
 		responsiveConfig: newResponsiveConf(breakpointRatio...),
@@ -280,6 +280,10 @@ func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) Responsive
 	}
 	ro.ExtendBaseWidget(ro)
 	return ro
+}
+
+func HidableResponsive(object fyne.CanvasObject, breakpointRatio ...float32) HidableResponsiveWidget {
+	return Responsive(object, breakpointRatio...).(HidableResponsiveWidget)
 }
 
 func (ro *responsiveWidget) Hidable(hiddenAtBreakpoint ...bool) {
@@ -318,10 +322,15 @@ func (ro *responsiveWidget) hideOnResize(windowSize fyne.Size) {
 	}
 }
 
-func (ro *responsiveWidget) ComputeWindowResize(windowSize, containerSize fyne.Size) fyne.Size {
+func (ro *responsiveWidget) HandleResize(
+	newPos fyne.Position,
+	windowSize, containerSize fyne.Size) {
+
+	ro.Move(newPos)
+
 	ro.hideOnResize(windowSize)
 	if !ro.Visible() {
-		return fyne.Size{0, 0}
+		return
 	}
 
 	conf := ro.responsiveConfig
@@ -336,8 +345,7 @@ func (ro *responsiveWidget) ComputeWindowResize(windowSize, containerSize fyne.S
 			break
 		}
 	}
-
-	return size
+	ro.Resize(size)
 }
 
 func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
