@@ -530,10 +530,8 @@ char* readFromInputStream(uintptr_t env, jobject inputStream, int size, int* cou
     (*envPtr)->DeleteLocalRef(envPtr, inputStreamClass);
     (*envPtr)->DeleteLocalRef(envPtr, byteArray);
     (*envPtr)->ReleaseByteArrayElements(envPtr, byteArray, byteBuffer, 0);
-
     // Set the count
-    *count = bytesRead;
-
+    *count = (int)bytesRead;
     return buffer;
 }
 
@@ -677,33 +675,30 @@ void freeBluetoothAdapter(uintptr_t env, jobject bluetoothAdapter, char** errorM
 import "C"
 import (
 	"errors"
-	"fmt"
 	"fyne.io/fyne/v2/driver"
 	"unsafe"
 )
 
-// Adapter has references android.bluetooth.BluetoothAdapter in java
-type Adapter struct {
-	self C.jobject
-	name string
-	stop chan struct{}
+// adapterAndroid has references android.bluetooth.BluetoothAdapter in java on android
+type adapterAndroid struct {
+	javaAdapter C.jobject
+	stop        chan struct{}
 }
 
-type ReadWriter struct {
+// readWriterAndroid has java input and output stream on android
+type readWriterAndroid struct {
 	in, out C.jobject
 }
 
-type Socket struct {
-	self          C.jobject
-	name, address string
+// socketAndroid is representing bluetooth socket on android
+type socketAndroid struct {
+	javaSocket C.jobject
 }
 
-type ServerSocket struct {
-	self    C.jobject
-	address string
+// serverSocketAndroid is representing bluetooth server socket on android
+type serverSocketAndroid struct {
+	javaServerSocket C.jobject
 }
-
-type Handle func(readWriter *ReadWriter, socketInfo *Socket)
 
 func runOnFyneJVM(fn func(vm, env, ctx uintptr) error) error {
 	return driver.RunNative(func(context interface{}) error {
@@ -715,7 +710,7 @@ func runOnFyneJVM(fn func(vm, env, ctx uintptr) error) error {
 }
 
 // NewBluetoothDefaultAdapter get Bluetooth adapter, WARNING: error can means only path of fail put defer before error handling
-func NewBluetoothDefaultAdapter() (b *Adapter, e error) {
+func NewBluetoothDefaultAdapter() (b Adapter, e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		adapter := C.getBluetoothAdapter(C.uintptr_t(env), &errMsgC)
@@ -725,251 +720,192 @@ func NewBluetoothDefaultAdapter() (b *Adapter, e error) {
 			e = err
 			return nil
 		}
-		b = &Adapter{self: adapter}
-		nameC := C.getBluetoothName(C.uintptr_t(env), adapter, &errMsgC)
+		b = &adapterAndroid{javaAdapter: adapter, stop: make(chan struct{})}
+		return nil
+	})
+	return b, errors.Join(e, err)
+}
+
+func (a *adapterAndroid) FetchAddress() (str string, e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		nameC := C.getBluetoothName(C.uintptr_t(env), a.javaAdapter, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		b.name = C.GoString(nameC)
+		str = C.GoString(nameC)
 		C.free(unsafe.Pointer(nameC))
 		return nil
 	})
-	e = errors.Join(e, err)
-	return
+	return str, errors.Join(e, err)
 }
 
 // StopServer send signal to server to end
-func (b *Adapter) StopServer() {
+func (a *adapterAndroid) StopServer() {
 	go func() {
-		b.stop <- struct{}{}
+		a.stop <- struct{}{}
 	}()
 }
 
-// GetName returns name of device
-func (b *Adapter) GetName() string {
-	return b.name
-}
-
 // Close clean bluetooth adapter from memory
-func (b *Adapter) Close() {
+func (a *adapterAndroid) Close() (e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
-		C.freeBluetoothAdapter(C.uintptr_t(env), b.self, &errMsgC)
+		C.freeBluetoothAdapter(C.uintptr_t(env), a.javaAdapter, &errMsgC)
 		if errMsgC != nil {
-			err := errors.New(C.GoString(errMsgC))
+			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
-			return err
 		}
 		return nil
 	})
-	if err != nil {
-		return
-	}
+	return errors.Join(e, err)
 }
 
-// Server creates server and listen to clients
-func (b *Adapter) Server(fn Handle) error {
-	socket, err := b.GetBluetoothServerSocket()
-	defer fmt.Println(socket.Close())
-	if err != nil {
-		return err
-	}
-	for {
-		select {
-		case <-b.stop:
-			return nil
-		default:
-		}
-		con, err0 := socket.Accept()
-		if err0 != nil {
-			fmt.Println(con.Close())
-			return err0
-		}
-		go func() {
-			defer fmt.Println(con.Close())
-			readWriter, er := con.GetReadWriter()
-			defer fmt.Println(readWriter.Close())
-			if er != nil {
-				return
-			}
-			fn(readWriter, con)
-		}()
-	}
-}
-
-// GetBluetoothServerSocket returns Socket which is listening on bluetooth
-func (b *Adapter) GetBluetoothServerSocket() (bs *ServerSocket, e error) {
+// GetBluetoothServerSocket returns ServerSocket which is listening on bluetooth
+func (a *adapterAndroid) GetBluetoothServerSocket() (bs ServerSocket, e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
-		socket := C.createBluetoothServer(C.uintptr_t(env), b.self, &errMsgC)
+		socket := C.createBluetoothServer(C.uintptr_t(env), a.javaAdapter, &errMsgC)
 		if errMsgC != nil {
 			err := errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			bs, e = nil, err
 			return nil
 		}
-		bs = &ServerSocket{self: socket}
+		bs = &serverSocketAndroid{javaServerSocket: socket}
 		return nil
 	})
-	e = errors.Join(e, err, bs.FetchAddress())
-	return
+	return bs, errors.Join(e, err)
 }
 
-// FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
-func (b *ServerSocket) FetchAddress() (e error) {
+// FetchAddress it is usefully if GetAddress return empty string,
+// it try to set internal address
+func (b *serverSocketAndroid) FetchAddress() (res string, e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
-		nameC := C.getAddress(C.uintptr_t(env), b.self, &errMsgC)
+		nameC := C.getAddress(C.uintptr_t(env), b.javaServerSocket, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		b.address = C.GoString(nameC)
+		res = C.GoString(nameC)
 		C.free(unsafe.Pointer(nameC))
+		return nil
+	})
+	return res, errors.Join(e, err)
+}
+
+func (b *serverSocketAndroid) Close() (e error) {
+	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		C.closeBluetoothServerSocket(C.uintptr_t(env), b.javaServerSocket, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+		}
 		return nil
 	})
 	return errors.Join(e, err)
 }
 
-// GetAddress returns address of server
-func (b *ServerSocket) GetAddress() string {
-	return b.address
-}
-
-func (b *ServerSocket) Close() error {
+// Accept accepting client and return conection in BluetoothSocket
+func (b *serverSocketAndroid) Accept() (bs Socket, e error) {
 	var errMsgC *C.char
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
-		C.closeBluetoothServerSocket(C.uintptr_t(env), b.self, &errMsgC)
-		return nil
-	})
-
-	if errMsgC != nil {
-		err = errors.Join(errors.New(C.GoString(errMsgC)), err)
-		C.free(unsafe.Pointer(errMsgC))
-		return err
-	}
-	return nil
-}
-
-// Accept accepting client and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
-func (b *ServerSocket) Accept() (bs *Socket, e error) {
-	var errMsgC *C.char
-	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
-		sock := C.acceptBluetoothClient(C.uintptr_t(env), b.self, &errMsgC)
+		sock := C.acceptBluetoothClient(C.uintptr_t(env), b.javaServerSocket, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 		}
-		bs = &Socket{self: sock}
+		bs = &socketAndroid{javaSocket: sock}
 		return nil
 	})
-	var e1, e2 error
-
-	if bs != nil {
-		e1 = bs.FetchName()
-		e2 = bs.FetchAddress()
-	}
-	return bs, errors.Join(err, e, e1, e2)
+	return bs, errors.Join(err, e)
 }
 
-// ConnectAsClientToServer take address of server and return conection in BluetoothSocket, WARNING: error can means only path of fail put defer before error handling
-func (b *ServerSocket) ConnectAsClientToServer(address string) (bs *Socket, e error) {
+// ConnectAsClientToServer take MAC address of server and
+// return conection in BluetoothSocket
+func (a *adapterAndroid) ConnectAsClientToServer(address string) (bs Socket, e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		caddress := C.CString(address)
 		defer C.free(unsafe.Pointer(caddress))
-		sock := C.connectToBluetoothServer(C.uintptr_t(env), b.self, caddress, &errMsgC)
+		sock := C.connectToBluetoothServer(C.uintptr_t(env), a.javaAdapter, caddress, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		bs = &Socket{self: sock}
+		bs = &socketAndroid{javaSocket: sock}
 		return nil
 	})
-	var e1, e2 error
-	if bs != nil {
-		e1 = bs.FetchAddress()
-		e2 = bs.FetchName()
-	}
-	return bs, errors.Join(err, e, e1, e2)
+	return bs, errors.Join(err, e)
 }
 
-// FetchName it is usefully if GetName return empty string, it try to set internal address
-func (b *Socket) FetchName() (e error) {
+// FetchName returns name of your device
+func (b *socketAndroid) FetchName() (res string, e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
-
 		var errMsgC *C.char
-		nameC := C.getClientName(C.uintptr_t(env), b.self, &errMsgC)
+		nameC := C.getClientName(C.uintptr_t(env), b.javaSocket, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		b.name = C.GoString(nameC)
+		res = C.GoString(nameC)
 		C.free(unsafe.Pointer(nameC))
 		return nil
 	})
-	return errors.Join(err, e)
+	return res, errors.Join(err, e)
 }
 
-// FetchAddress it is usefully if GetAddress return empty string, it try to set internal address
-func (b *Socket) FetchAddress() (e error) {
+// FetchAddress returns address of your device
+func (b *socketAndroid) FetchAddress() (res string, e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
-		nameC := C.getClientAddress(C.uintptr_t(env), b.self, &errMsgC)
+		nameC := C.getClientAddress(C.uintptr_t(env), b.javaSocket, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		b.address = C.GoString(nameC)
+		res = C.GoString(nameC)
 		C.free(unsafe.Pointer(nameC))
 		return nil
 	})
-	return errors.Join(err, e)
+	return res, errors.Join(err, e)
 }
 
-// GetName returns address of client
-func (b *Socket) GetName() string {
-	return b.name
-}
-
-// GetAddress returns address of client
-func (b *Socket) GetAddress() string {
-	return b.address
-}
-
-func (b *Socket) Close() error {
-	var errMsgC *C.char
+// Close is closing socket
+func (b *socketAndroid) Close() (e error) {
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
-		C.closeBluetoothServerSocket(C.uintptr_t(env), b.self, &errMsgC)
+		var errMsgC *C.char
+		C.closeBluetoothServerSocket(C.uintptr_t(env), b.javaSocket, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+		}
 		return nil
 	})
 
-	if errMsgC != nil {
-		err = errors.Join(errors.New(C.GoString(errMsgC)), err)
-		C.free(unsafe.Pointer(errMsgC))
-		return err
-	}
-	return nil
+	return errors.Join(e, err)
 }
 
-// GetReadWriter returns *ReadWriter to communicate , WARNING: error can means only path of fail put defer before error handling
-func (b *Socket) GetReadWriter() (rw *ReadWriter, e error) {
+// GetReadWriter returns *readWriterAndroid to communicate , WARNING: error can means only path of fail put defer before error handling
+func (b *socketAndroid) GetReadWriter() (_ ReadWriter, e error) {
 	var errMsgC *C.char
-	rw = &ReadWriter{}
+	rw := &readWriterAndroid{}
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
-		inputStream := C.getBluetoothInputStream(C.uintptr_t(env), b.self, &errMsgC)
+		inputStream := C.getBluetoothInputStream(C.uintptr_t(env), b.javaSocket, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
 			return nil
 		}
-		outputStream := C.getBluetoothOutputStream(C.uintptr_t(env), b.self, &errMsgC)
+		outputStream := C.getBluetoothOutputStream(C.uintptr_t(env), b.javaSocket, &errMsgC)
 		if errMsgC != nil {
 			e = errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
@@ -984,7 +920,7 @@ func (b *Socket) GetReadWriter() (rw *ReadWriter, e error) {
 
 }
 
-func (r *ReadWriter) Read(p []byte) (n int, err error) {
+func (r *readWriterAndroid) Read(p []byte) (n int, err error) {
 	if p == nil || len(p) == 0 {
 		return -1, errors.New("empty buffer")
 	}
@@ -1011,7 +947,7 @@ func (r *ReadWriter) Read(p []byte) (n int, err error) {
 	return
 }
 
-func (r *ReadWriter) Write(p []byte) (n int, err error) {
+func (r *readWriterAndroid) Write(p []byte) (n int, err error) {
 	if p == nil || len(p) == 0 {
 		return 0, errors.New("empty buffer")
 	}
@@ -1028,11 +964,11 @@ func (r *ReadWriter) Write(p []byte) (n int, err error) {
 	return n, errors.Join(er, err)
 }
 
-func (r *ReadWriter) Close() error {
+func (r *readWriterAndroid) Close() error {
 	return errors.Join(r.close(r.in), r.close(r.out))
 }
 
-func (r *ReadWriter) close(stream C.jobject) (e error) {
+func (r *readWriterAndroid) close(stream C.jobject) (e error) {
 	var errMsgC *C.char
 	err := runOnFyneJVM(func(vm, env, ctx uintptr) error {
 		C.closeStream0(C.uintptr_t(env), stream, &errMsgC)
