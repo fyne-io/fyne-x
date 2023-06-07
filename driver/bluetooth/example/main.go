@@ -4,8 +4,23 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/widget"
 	"time"
+)
+
+const (
+	N = 100000000
+)
+
+type msg struct {
+	x, y, z uint64
+	end     bool
+}
+
+var (
+	howMany    binding.Int
+	strHowMany binding.String
 )
 
 func main() {
