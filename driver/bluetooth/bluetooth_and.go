@@ -675,6 +675,7 @@ void freeBluetoothAdapter(uintptr_t env, jobject bluetoothAdapter, char** errorM
 import "C"
 import (
 	"errors"
+	"fmt"
 	_ "fyne.io/fyne/v2"
 	"unsafe"
 	_ "unsafe"
@@ -686,19 +687,20 @@ type adapterAndroid struct {
 	stop        chan struct{}
 }
 
-// readWriterAndroid has java input and output stream on android
-type readWriterAndroid struct {
-	in, out C.jobject
-}
-
 // socketAndroid is representing bluetooth socket on android
 type socketAndroid struct {
 	javaSocket C.jobject
+	rw         *readWriterAndroid
 }
 
 // serverSocketAndroid is representing bluetooth server socket on android
 type serverSocketAndroid struct {
 	javaServerSocket C.jobject
+}
+
+// readWriterAndroid has java input and output stream on android
+type readWriterAndroid struct {
+	in, out C.jobject
 }
 
 // runOnJVM is link to fyne.io/fyne/v2/internal/driver/mobile/mobileinit.RunOnJVM
@@ -750,13 +752,6 @@ func (a *adapterAndroid) FetchAddress() (str string, e error) {
 	return str, errors.Join(e, err)
 }
 
-// StopServer send signal to server to end
-func (a *adapterAndroid) StopServer() {
-	go func() {
-		a.stop <- struct{}{}
-	}()
-}
-
 // Close clean bluetooth adapter from memory
 func (a *adapterAndroid) Close() (e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
@@ -788,9 +783,28 @@ func (a *adapterAndroid) GetBluetoothServerSocket() (bs ServerSocket, e error) {
 	return bs, errors.Join(e, err)
 }
 
-// FetchAddress it is usefully if GetAddress return empty string,
+// ConnectAsClientToServer take MAC address of server and
+// return conection in BluetoothSocket
+func (a *adapterAndroid) ConnectAsClientToServer(address string) (bs Socket, e error) {
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		caddress := C.CString(address)
+		defer C.free(unsafe.Pointer(caddress))
+		sock := C.connectToBluetoothServer(C.uintptr_t(env), a.javaAdapter, caddress, &errMsgC)
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+			return nil
+		}
+		bs = &socketAndroid{javaSocket: sock}
+		return nil
+	})
+	return bs, errors.Join(err, e)
+}
+
+// FetchStringData it is usefully if GetAddress return empty string,
 // it try to set internal address
-func (b *serverSocketAndroid) FetchAddress() (res string, e error) {
+func (b *serverSocketAndroid) FetchStringData() (res string, e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		nameC := C.getAddress(C.uintptr_t(env), b.javaServerSocket, &errMsgC)
@@ -834,27 +848,41 @@ func (b *serverSocketAndroid) Accept() (bs Socket, e error) {
 	return bs, errors.Join(err, e)
 }
 
-// ConnectAsClientToServer take MAC address of server and
-// return conection in BluetoothSocket
-func (a *adapterAndroid) ConnectAsClientToServer(address string) (bs Socket, e error) {
-	err := runOnJVM(func(vm, env, ctx uintptr) error {
-		var errMsgC *C.char
-		caddress := C.CString(address)
-		defer C.free(unsafe.Pointer(caddress))
-		sock := C.connectToBluetoothServer(C.uintptr_t(env), a.javaAdapter, caddress, &errMsgC)
-		if errMsgC != nil {
-			e = errors.New(C.GoString(errMsgC))
-			C.free(unsafe.Pointer(errMsgC))
-			return nil
-		}
-		bs = &socketAndroid{javaSocket: sock}
-		return nil
-	})
-	return bs, errors.Join(err, e)
+func (b *socketAndroid) FetchStringData() (string, error) {
+	name, err := b.fetchName()
+	if err != nil {
+		return "", err
+	}
+	addr, err := b.fetchAddress()
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("name:%s, address: %s", name, addr), nil
 }
 
-// FetchName returns name of your device
-func (b *socketAndroid) FetchName() (res string, e error) {
+func (b *socketAndroid) Read(bytes []byte) (int, error) {
+	if b.rw == nil {
+		var err error
+		b.rw, err = b.getReadWriter()
+		if err != nil {
+			return 0, err
+		}
+	}
+	return b.rw.Read(bytes)
+}
+
+func (b *socketAndroid) Write(bytes []byte) (int, error) {
+	if b.rw == nil {
+		var err error
+		b.rw, err = b.getReadWriter()
+		if err != nil {
+			return 0, err
+		}
+	}
+	return b.rw.Write(bytes)
+}
+
+func (b *socketAndroid) fetchName() (res string, e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		nameC := C.getClientName(C.uintptr_t(env), b.javaSocket, &errMsgC)
@@ -870,8 +898,7 @@ func (b *socketAndroid) FetchName() (res string, e error) {
 	return res, errors.Join(err, e)
 }
 
-// FetchAddress returns address of your device
-func (b *socketAndroid) FetchAddress() (res string, e error) {
+func (b *socketAndroid) fetchAddress() (res string, e error) {
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		nameC := C.getClientAddress(C.uintptr_t(env), b.javaSocket, &errMsgC)
@@ -899,13 +926,12 @@ func (b *socketAndroid) Close() (e error) {
 		return nil
 	})
 
-	return errors.Join(e, err)
+	return errors.Join(e, err, b.rw.Close())
 }
 
-// GetReadWriter returns *readWriterAndroid to communicate , WARNING: error can means only path of fail put defer before error handling
-func (b *socketAndroid) GetReadWriter() (_ ReadWriter, e error) {
+func (b *socketAndroid) getReadWriter() (rw *readWriterAndroid, e error) {
 	var errMsgC *C.char
-	rw := &readWriterAndroid{}
+	rw = &readWriterAndroid{}
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		inputStream := C.getBluetoothInputStream(C.uintptr_t(env), b.javaSocket, &errMsgC)
 		if errMsgC != nil {

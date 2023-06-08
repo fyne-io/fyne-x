@@ -4,51 +4,35 @@ import (
 	"errors"
 )
 
-type Handle func(ReadWriter, Socket)
+type Handle func(Socket)
 
 // Server creates server and listen to clients
 func Server(a Adapter, stop chan struct{}, fn Handle) (resErr error) {
-	type errMsg struct {
-		err error
-		con Socket
-	}
 	socket, err := a.GetBluetoothServerSocket()
 	if err != nil {
 		return err
 	}
 	defer func() { resErr = errors.Join(resErr, socket.Close()) }()
-	chMsg := make(chan errMsg)
+	chErr := make(chan error)
 	for {
 		select {
 		case <-stop:
 			return
-		case msg := <-chMsg:
-			resErr = msg.err
-			if msg.con != nil {
-				resErr = errors.Join(resErr, msg.con.Close())
-			}
+		case e := <-chErr:
+			resErr = e
 			return
 		default:
 		}
 		con, err0 := socket.Accept()
 		if err0 != nil {
-			return err0
+			resErr = err0
+			return
 		}
 		go func() {
-			readWriter, e := con.GetReadWriter()
+			fn(con)
+			e := con.Close()
 			if e != nil {
-				chMsg <- errMsg{err: e, con: con}
-				return
-			}
-			fn(readWriter, con) // handle
-			e = readWriter.Close()
-			if e != nil {
-				chMsg <- errMsg{err: e, con: con}
-				return
-			}
-			e = con.Close()
-			if e != nil {
-				chMsg <- errMsg{err: e, con: nil}
+				chErr <- e
 			}
 		}()
 	}
