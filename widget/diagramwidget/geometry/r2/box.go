@@ -36,6 +36,64 @@ func (b Box) Area() float64 {
 	return b.S.X * b.S.Y
 }
 
+// FindPerimeterPointNearestContainedPoint
+func (b Box) FindPerimeterPointNearestContainedPoint(containedPoint Vec2) Vec2 {
+	if !b.Contains(containedPoint) {
+		return MakeVec2(0, 0)
+	}
+	top := b.GetCorner1().Y
+	left := b.GetCorner1().X
+	bottom := b.GetCorner4().Y
+	right := b.GetCorner4().X
+	topDistance := containedPoint.Y - top
+	leftDistance := containedPoint.X - left
+	bottomDistance := bottom - containedPoint.Y
+	rightDistance := right - containedPoint.X
+	if bottomDistance > topDistance {
+		// top is closer
+		if rightDistance > leftDistance {
+			// left is closer
+			if leftDistance > topDistance {
+				// top is the closest
+				return MakeVec2(containedPoint.X, top)
+			} else {
+				// left is the closest
+				return MakeVec2(left, containedPoint.Y)
+			}
+		} else {
+			// right is closer
+			if rightDistance > topDistance {
+				// top is the closest
+				return MakeVec2(containedPoint.X, top)
+			} else {
+				// right is the closest
+				return MakeVec2(right, containedPoint.Y)
+			}
+		}
+	} else {
+		// bottom is closer
+		if rightDistance > leftDistance {
+			// left is closer
+			if leftDistance > bottomDistance {
+				// bottom is the closest
+				return MakeVec2(containedPoint.X, bottom)
+			} else {
+				// left is the closest
+				return MakeVec2(left, containedPoint.Y)
+			}
+		} else {
+			// right is closer
+			if rightDistance > bottomDistance {
+				// bottom is the closest
+				return MakeVec2(containedPoint.X, bottom)
+			} else {
+				// right is the closest
+				return MakeVec2(right, containedPoint.Y)
+			}
+		}
+	}
+}
+
 // GetCorner1 returns the top left corner of the box
 func (b Box) GetCorner1() Vec2 {
 	return b.A
@@ -126,11 +184,11 @@ func (b Box) Center() Vec2 {
 
 // Contains returns true if the point v is within the box b.
 func (b Box) Contains(v Vec2) bool {
-	if (v.X < b.GetCorner1().X) && (v.X > b.GetCorner2().X) {
+	if (v.X < b.GetCorner1().X) || (v.X > b.GetCorner2().X) {
 		return false
 	}
 
-	if (v.Y < b.GetCorner1().Y) && (v.Y > b.GetCorner3().Y) {
+	if (v.Y < b.GetCorner1().Y) || (v.Y > b.GetCorner3().Y) {
 		return false
 	}
 

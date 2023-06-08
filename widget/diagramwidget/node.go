@@ -214,6 +214,16 @@ func (bdn *BaseDiagramNode) innerPos() fyne.Position {
 	}
 }
 
+// IsLink returns false because this is a node
+func (bdn *BaseDiagramNode) IsLink() bool {
+	return false
+}
+
+// IsNode returns true because this is a node
+func (bdn *BaseDiagramNode) IsNode() bool {
+	return true
+}
+
 // func (bdn *BaseDiagramNode) MouseIn(event *desktop.MouseEvent) {
 // 	log.Print("Node MouseIn")
 // 	// conTrans := bdn.GetDiagram().connectionTransaction

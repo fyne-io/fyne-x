@@ -98,7 +98,9 @@ func main() {
 	node5.Move(fyne.NewPos(600, 200))
 
 	// Link0
-	link0 := diagramwidget.NewDiagramLink(diagramWidget, node0.GetEdgePad(), node1.GetEdgePad(), "Link0")
+	link0 := diagramwidget.NewDiagramLink(diagramWidget, "Link0")
+	link0.SetSourcePad(node0.GetEdgePad())
+	link0.SetTargetPad(node1.GetEdgePad())
 	link0.AddSourceAnchoredText("sourceRole", "sourceRole")
 	link0.AddMidpointAnchoredText("linkName", "Link 0")
 	solidDiamond := createDiamondDecoration()
@@ -106,7 +108,9 @@ func main() {
 	link0.AddSourceDecoration(solidDiamond)
 
 	// Link1
-	link1 := diagramwidget.NewDiagramLink(diagramWidget, node2.GetEdgePad(), node1.GetEdgePad(), "Link1")
+	link1 := diagramwidget.NewDiagramLink(diagramWidget, "Link1")
+	link1.SetSourcePad(node2.GetEdgePad())
+	link1.SetTargetPad(node1.GetEdgePad())
 	link1.LinkColor = color.RGBA{255, 64, 64, 255}
 	link1.AddTargetDecoration(diagramwidget.NewArrowhead())
 	link1.AddTargetDecoration(diagramwidget.NewArrowhead())
@@ -117,23 +121,31 @@ func main() {
 	link1.AddSourceDecoration(diagramwidget.NewArrowhead())
 
 	// Link2
-	link2 := diagramwidget.NewDiagramLink(diagramWidget, node0.GetEdgePad(), node3.GetEdgePad(), "Link2")
+	link2 := diagramwidget.NewDiagramLink(diagramWidget, "Link2")
+	link2.SetSourcePad(node0.GetEdgePad())
+	link2.SetTargetPad(node3.GetEdgePad())
 	link2.AddMidpointAnchoredText("linkName", "Link 2")
 	link2.AddSourceDecoration(createHalfArrowDecoration())
 
 	// Link3
-	link3 := diagramwidget.NewDiagramLink(diagramWidget, node2.GetEdgePad(), node3.GetEdgePad(), "Link3")
+	link3 := diagramwidget.NewDiagramLink(diagramWidget, "Link3")
+	link3.SetSourcePad(node2.GetEdgePad())
+	link3.SetTargetPad(node3.GetEdgePad())
 	link3.AddSourceAnchoredText("sourceRole", "sourceRole")
 	link3.AddMidpointAnchoredText("linkName", "Link 3")
 	link3.AddTargetAnchoredText("targetRole", "targetRole")
 	link3.AddMidpointDecoration(createTriangleDecoration())
 
 	// Link4
-	link4 := diagramwidget.NewDiagramLink(diagramWidget, node4.GetEdgePad(), node3.GetEdgePad(), "Link4")
+	link4 := diagramwidget.NewDiagramLink(diagramWidget, "Link4")
+	link4.SetSourcePad(node4.GetEdgePad())
+	link4.SetTargetPad(node3.GetEdgePad())
 	link4.AddMidpointAnchoredText("linkName", "Link 4")
 
 	// Link5
-	link5 := diagramwidget.NewDiagramLink(diagramWidget, link4.GetMidPad(), node5.GetEdgePad(), "Link5")
+	link5 := diagramwidget.NewDiagramLink(diagramWidget, "Link5")
+	link5.SetSourcePad(link4.GetMidPad())
+	link5.SetTargetPad(node5.GetEdgePad())
 	link5.AddMidpointAnchoredText("linkName", "Link 5")
 	link5.AddTargetDecoration(diagramwidget.NewArrowhead())
 

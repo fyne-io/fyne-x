@@ -28,7 +28,7 @@ func (lp *LinkPoint) GetLink() DiagramLink {
 }
 
 func (lp *LinkPoint) IsConnectionAllowed(connectionPad ConnectionPad) bool {
-	return lp.link.IsConnectionAllowed(lp, connectionPad)
+	return lp.link.isConnectionAllowed(lp, connectionPad)
 }
 
 // linkPointRenderer

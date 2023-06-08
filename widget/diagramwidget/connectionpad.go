@@ -23,6 +23,8 @@ type ConnectionPad interface {
 	GetPadOwner() DiagramElement
 	GetCenterInDiagramCoordinates() fyne.Position
 	getConnectionPointInDiagramCoordinates(referencePoint fyne.Position) fyne.Position
+	MouseDown(*desktop.MouseEvent)
+	MouseUp(*desktop.MouseEvent)
 }
 
 type connectionPad struct {
@@ -33,6 +35,60 @@ type connectionPad struct {
 
 func (cp *connectionPad) GetPadOwner() DiagramElement {
 	return cp.padOwner
+}
+
+// MouseDown responds to mouse down events
+func (pp *PointPad) MouseDown(event *desktop.MouseEvent) {
+	connectionTransaction := pp.padOwner.GetDiagram().connectionTransaction
+	if connectionTransaction != nil {
+		link := connectionTransaction.link
+		if link.isConnectionAllowed(connectionTransaction.linkPoint, pp) {
+			padOwnerPosition := pp.padOwner.Position()
+			pseudoEvent := &fyne.DragEvent{
+				PointEvent: fyne.PointEvent{},
+				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X+10, event.Position.Y+padOwnerPosition.Y-10),
+			}
+			// the link point has to be changed before the handle is dragged
+			connectionTransaction.linkPoint = connectionTransaction.link.getLinkPoints()[1]
+			link.GetHandle(TARGET.ToString()).Dragged(pseudoEvent)
+			link.Refresh()
+			link.SetSourcePad(pp)
+			link.Refresh()
+			link.GetDiagram().SelectDiagramElement(link)
+			link.ShowHandles()
+		}
+	}
+}
+
+// MouseDown responds to mouse down events
+func (rp *RectanglePad) MouseDown(event *desktop.MouseEvent) {
+	connectionTransaction := rp.padOwner.GetDiagram().connectionTransaction
+	if connectionTransaction != nil {
+		link := connectionTransaction.link
+		if link.isConnectionAllowed(connectionTransaction.linkPoint, rp) {
+			padOwnerPosition := rp.padOwner.Position()
+			pseudoEvent := &fyne.DragEvent{
+				PointEvent: fyne.PointEvent{},
+				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X, event.Position.Y+padOwnerPosition.Y),
+			}
+			// the link point has to be changed before the handle is dragged
+			connectionTransaction.linkPoint = connectionTransaction.link.getLinkPoints()[1]
+			link.GetHandle(TARGET.ToString()).Dragged(pseudoEvent)
+			link.SetSourcePad(rp)
+			link.GetDiagram().SelectDiagramElement(link)
+			link.ShowHandles()
+		}
+	}
+}
+
+// MouseUp responds to mouse up events
+func (pp *PointPad) MouseUp(event *desktop.MouseEvent) {
+
+}
+
+// MouseUp responds to mouse up events
+func (rp *RectanglePad) MouseUp(event *desktop.MouseEvent) {
+
 }
 
 /******************************
@@ -85,7 +141,7 @@ func (pp *PointPad) getConnectionPointInDiagramCoordinates(referencePoint fyne.P
 // MouseIn responds to mouse movements within the pointPadSize distance of the center
 func (pp *PointPad) MouseIn(event *desktop.MouseEvent) {
 	conTrans := pp.padOwner.GetDiagram().connectionTransaction
-	if conTrans != nil && conTrans.link.IsConnectionAllowed(conTrans.linkPoint, pp) {
+	if conTrans != nil && conTrans.link.isConnectionAllowed(conTrans.linkPoint, pp) {
 		pp.padColor = pp.padOwner.GetDiagram().padColor
 		conTrans.pendingPad = pp
 	} else {
@@ -191,13 +247,19 @@ func (rp *RectanglePad) GetCenterInDiagramCoordinates() fyne.Position {
 // getConnectionPointInDiagramCoordinates returns the point at which the connection should be made from a reference point.
 // The reference point is in diagram coordinates and the returned point is also in diagram coordinates.
 // For a RectanglePad this point is the intersection of a line segment from the reference point to the center
-// of the rectangle pad and the rectangle bounding the pad.
+// of the rectangle pad and the rectangle bounding the pad. If the reference point is within the bounds of the rectangle,
+// the returned point is the point on the perimeter that is nearest the reference point.
 func (rp *RectanglePad) getConnectionPointInDiagramCoordinates(referencePoint fyne.Position) fyne.Position {
+	var connectionPoint r2.Vec2
 	box := rp.makeBox()
 	r2ReferencePoint := r2.MakeVec2(float64(referencePoint.X), float64(referencePoint.Y))
-	linkLine := r2.MakeLineFromEndpoints(box.Center(), r2ReferencePoint)
-	r2Intersection, _ := box.Intersect(linkLine)
-	return fyne.NewPos(float32(r2Intersection.X), float32(r2Intersection.Y))
+	if box.Contains(r2ReferencePoint) {
+		connectionPoint = box.FindPerimeterPointNearestContainedPoint(r2ReferencePoint)
+	} else {
+		linkLine := r2.MakeLineFromEndpoints(box.Center(), r2ReferencePoint)
+		connectionPoint, _ = box.Intersect(linkLine)
+	}
+	return fyne.NewPos(float32(connectionPoint.X), float32(connectionPoint.Y))
 }
 
 // makeBox returns an r2 box representing the rectangle pad's position and size in the
@@ -215,7 +277,7 @@ func (rp *RectanglePad) makeBox() r2.Box {
 // MouseIn responds to the mouse entering the bounds of the RectanglePad
 func (rp *RectanglePad) MouseIn(event *desktop.MouseEvent) {
 	conTrans := rp.padOwner.GetDiagram().connectionTransaction
-	if conTrans != nil && conTrans.link.IsConnectionAllowed(conTrans.linkPoint, rp) {
+	if conTrans != nil && conTrans.link.isConnectionAllowed(conTrans.linkPoint, rp) {
 		rp.padColor = rp.padOwner.GetDiagram().padColor
 		conTrans.pendingPad = rp
 	} else {

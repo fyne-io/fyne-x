@@ -15,12 +15,34 @@ var _ fyne.Tappable = (*BaseDiagramLink)(nil)
 var _ desktop.Hoverable = (*BaseDiagramLink)(nil)
 var _ DiagramElement = (*BaseDiagramLink)(nil)
 
+type LinkEnd int
+
+var LinkEnds [2]LinkEnd = [2]LinkEnd{SOURCE, TARGET}
+
+const (
+	SOURCE LinkEnd = iota
+	TARGET
+)
+
+func (le LinkEnd) ToString() string {
+	switch le {
+	case SOURCE:
+		return "source"
+	case TARGET:
+		return "target"
+	}
+	return ""
+}
+
 type DiagramLink interface {
 	DiagramElement
 	getBaseDiagramLink() *BaseDiagramLink
+	getLinkPoints() []*LinkPoint
 	GetSourcePad() ConnectionPad
 	GetTargetPad() ConnectionPad
-	IsConnectionAllowed(*LinkPoint, ConnectionPad) bool
+	isConnectionAllowed(*LinkPoint, ConnectionPad) bool
+	SetSourcePad(ConnectionPad)
+	SetTargetPad(ConnectionPad)
 }
 
 // BaseDiagramLink is a directed graphic connection between two DiagramElements that are referred to as the Source
@@ -53,6 +75,8 @@ type BaseDiagramLink struct {
 	targetAnchoredText   map[string]*AnchoredText
 	MidpointDecorations  []Decoration
 	midpointAnchoredText map[string]*AnchoredText
+	// We keep the typed link so that when extensions are created the callbacks are called with the correct type
+	typedLink DiagramLink
 }
 
 // NewDiagramLink creates a DiagramLink widget connecting the two indicated ConnectionPads. It adds itself to the
@@ -60,21 +84,19 @@ type BaseDiagramLink struct {
 // It can be used to retrieve the DiagramLink from the Diagram. The ID is intended to be used to facilitate mapping the
 // DiagramLink to the information it represents in the application. The DiagramLink uses the DiagramWidget's ForegroundColor
 // as the default color for the line segments.
-func NewDiagramLink(diagram *DiagramWidget, sourcePad, targetPad ConnectionPad, linkID string) *BaseDiagramLink {
+func NewDiagramLink(diagram *DiagramWidget, linkID string) *BaseDiagramLink {
 	bdl := &BaseDiagramLink{}
-	InitializeBaseDiagramLink(bdl, diagram, sourcePad, targetPad, linkID)
+	InitializeBaseDiagramLink(bdl, diagram, linkID)
 	return bdl
 }
 
 // InitializeBaseDiagramLink initializes the BaseDiagramLink. It must be called by any extensions to BaseDiagramLink
-func InitializeBaseDiagramLink(diagramLink DiagramLink, diagram *DiagramWidget, sourcePad, targetPad ConnectionPad, linkID string) {
+func InitializeBaseDiagramLink(diagramLink DiagramLink, diagram *DiagramWidget, linkID string) {
 	bdl := diagramLink.getBaseDiagramLink()
 	bdl.linkPoints = []*LinkPoint{}
 	bdl.linkSegments = []*LinkSegment{}
 	bdl.LinkColor = diagram.GetForegroundColor()
 	bdl.strokeWidth = 2
-	bdl.sourcePad = sourcePad
-	bdl.targetPad = targetPad
 	bdl.sourceAnchoredText = make(map[string]*AnchoredText)
 	bdl.midpointAnchoredText = make(map[string]*AnchoredText)
 	bdl.targetAnchoredText = make(map[string]*AnchoredText)
@@ -86,15 +108,13 @@ func InitializeBaseDiagramLink(diagramLink DiagramLink, diagram *DiagramWidget, 
 	bdl.pads["default"].Move(bdl.getMidPosition())
 	bdl.pads["default"].Hide()
 	bdl.ExtendBaseWidget(diagramLink)
-	for _, handleKey := range []string{"source", "target"} {
+	bdl.typedLink = diagramLink
+	for _, linkEnd := range LinkEnds {
 		newHandle := NewHandle(bdl)
-		bdl.handles[handleKey] = newHandle
+		bdl.handles[linkEnd.ToString()] = newHandle
 		newHandle.Hide()
 	}
-
 	bdl.diagram.addLink(diagramLink)
-	bdl.diagram.addLinkDependency(bdl.sourcePad.GetPadOwner(), bdl, bdl.sourcePad)
-	bdl.diagram.addLinkDependency(bdl.targetPad.GetPadOwner(), bdl, bdl.targetPad)
 	diagramLink.Refresh()
 }
 
@@ -192,6 +212,10 @@ func (bdl *BaseDiagramLink) getHandleKey(handle *Handle) string {
 	return ""
 }
 
+func (bdl *BaseDiagramLink) getLinkPoints() []*LinkPoint {
+	return bdl.linkPoints
+}
+
 // GetMidPad returns the PointPad at the midpoint so that it can be used as either the Source or Target
 // pad for another Link.
 func (bdl *BaseDiagramLink) GetMidPad() ConnectionPad {
@@ -239,11 +263,11 @@ func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent)
 	var linkPoint *LinkPoint
 	var pad ConnectionPad
 	switch handleKey {
-	case "source":
+	case SOURCE.ToString():
 		linkPoint = bdl.linkPoints[0]
 		pad = bdl.sourcePad
 		bdl.sourcePad = nil
-	case "target":
+	case TARGET.ToString():
 		linkPoint = bdl.linkPoints[len(bdl.linkPoints)-1]
 		pad = bdl.targetPad
 		bdl.targetPad = nil
@@ -274,35 +298,38 @@ func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
 	if connTrans != nil {
 		if connTrans.pendingPad != nil {
 			// We have a new pad for connection
-			bdl.diagram.removeLinkDependency(connTrans.initialPad.GetPadOwner(), bdl, connTrans.initialPad)
+			if connTrans.initialPad != nil {
+				bdl.diagram.removeLinkDependency(connTrans.initialPad.GetPadOwner(), bdl, connTrans.initialPad)
+			}
 			bdl.diagram.addLinkDependency(connTrans.pendingPad.GetPadOwner(), bdl, connTrans.pendingPad)
 			bdl.pads[handleKey] = connTrans.pendingPad
 			switch handleKey {
-			case "source":
+			case SOURCE.ToString():
 				bdl.sourcePad = connTrans.pendingPad
-			case "target":
+			case TARGET.ToString():
 				bdl.targetPad = connTrans.pendingPad
 			}
 			if bdl.diagram.LinkConnectionChangedCallback != nil {
-				bdl.diagram.LinkConnectionChangedCallback(bdl, handleKey, connTrans.initialPad, connTrans.pendingPad)
+				bdl.diagram.LinkConnectionChangedCallback(bdl.typedLink, handleKey, connTrans.initialPad, connTrans.pendingPad)
 			}
 		} else {
 			// We revert to the original pad.
 			bdl.pads[handleKey] = connTrans.initialPad
 			switch handleKey {
-			case "source":
+			case SOURCE.ToString():
 				bdl.sourcePad = connTrans.initialPad
-			case "target":
+			case TARGET.ToString():
 				bdl.targetPad = connTrans.initialPad
 			}
 		}
 		bdl.diagram.connectionTransaction = nil
 		bdl.diagram.hideAllPads()
+		bdl.diagram.SelectDiagramElement(bdl)
 		bdl.Refresh()
 	}
 }
 
-func (bdl *BaseDiagramLink) IsConnectionAllowed(linkPoint *LinkPoint, pad ConnectionPad) bool {
+func (bdl *BaseDiagramLink) isConnectionAllowed(linkPoint *LinkPoint, pad ConnectionPad) bool {
 	pointIndex := -1
 	for i, lp := range bdl.linkPoints {
 		if lp == linkPoint {
@@ -317,8 +344,27 @@ func (bdl *BaseDiagramLink) IsConnectionAllowed(linkPoint *LinkPoint, pad Connec
 		// the point is not the source or target point
 		return false
 	}
-	// By default, we accept any connection. Subclasses can override
+	if bdl.diagram.IsConnectionAllowedCallback != nil {
+		var linkEnd LinkEnd
+		if pointIndex == 0 {
+			linkEnd = SOURCE
+		} else if pointIndex == len(bdl.linkPoints)-1 {
+			linkEnd = TARGET
+		}
+		return bdl.diagram.IsConnectionAllowedCallback(bdl, linkEnd, pad)
+	}
+	// By default, we accept any connection
 	return true
+}
+
+// IsLink returns true because this is a link
+func (bdl *BaseDiagramLink) IsLink() bool {
+	return true
+}
+
+// IsNode returns false because this is a link
+func (bdl *BaseDiagramLink) IsNode() bool {
+	return false
 }
 
 // MouseIn responds to the mouse entering the bounding rectangle of the Link
@@ -335,6 +381,38 @@ func (bdl *BaseDiagramLink) MouseMoved(event *desktop.MouseEvent) {
 // MouseOut responds to the mouse leaving the bounding rectangle of the Link
 func (bdl *BaseDiagramLink) MouseOut() {
 	log.Printf("Left Link")
+}
+
+// SetSourcePad sets the source pad and adds the link dependency to the diagram
+func (bdl *BaseDiagramLink) SetSourcePad(pad ConnectionPad) {
+	oldPad := bdl.sourcePad
+	if oldPad != pad {
+		if oldPad != nil {
+			bdl.diagram.removeLinkDependency(oldPad.GetPadOwner(), bdl, oldPad)
+		}
+		bdl.sourcePad = pad
+		bdl.diagram.addLinkDependency(bdl.sourcePad.GetPadOwner(), bdl, bdl.sourcePad)
+		if bdl.diagram.LinkConnectionChangedCallback != nil {
+			bdl.diagram.LinkConnectionChangedCallback(bdl.typedLink, SOURCE.ToString(), oldPad, pad)
+		}
+		bdl.Refresh()
+	}
+}
+
+// SetTargetPad sets the target pad and adds the link dependency to the diagram
+func (bdl *BaseDiagramLink) SetTargetPad(pad ConnectionPad) {
+	oldPad := bdl.targetPad
+	if oldPad != pad {
+		if oldPad != nil {
+			bdl.diagram.removeLinkDependency(oldPad.GetPadOwner(), bdl, oldPad)
+		}
+		bdl.targetPad = pad
+		bdl.diagram.addLinkDependency(bdl.targetPad.GetPadOwner(), bdl, bdl.targetPad)
+		if bdl.diagram.LinkConnectionChangedCallback != nil {
+			bdl.diagram.LinkConnectionChangedCallback(bdl.typedLink, TARGET.ToString(), oldPad, pad)
+		}
+		bdl.Refresh()
+	}
 }
 
 // Tapped handles tap events
@@ -463,7 +541,12 @@ func (dlr *diagramLinkRenderer) Refresh() {
 	// Have to change the sign of Y since the window inverts the Y axis
 	lineVector := r2.Vec2{X: float64(dlr.link.linkPoints[1].Position().X - dlr.link.linkPoints[0].Position().X),
 		Y: -float64(dlr.link.linkPoints[1].Position().Y - dlr.link.linkPoints[0].Position().Y)}
-	sourceAngle := lineVector.Angle()
+	var sourceAngle float64
+	if lineVector.Length() == 0 {
+		sourceAngle = 0
+	} else {
+		sourceAngle = lineVector.Angle()
+	}
 	sourceOffset := 0.0
 	for _, decoration := range dlr.link.SourceDecorations {
 		decorationReferencePoint := fyne.Position{
@@ -539,9 +622,9 @@ func (dlr *diagramLinkRenderer) Refresh() {
 	// calculate the handle positions
 	for key, handle := range dlr.link.handles {
 		switch key {
-		case "source":
+		case SOURCE.ToString():
 			handle.Move(dlr.link.linkPoints[0].Position())
-		case "target":
+		case TARGET.ToString():
 			handle.Move(dlr.link.linkPoints[len(dlr.link.linkPoints)-1].Position())
 		}
 		handle.Resize(fyne.NewSize(handle.handleSize, handle.handleSize))

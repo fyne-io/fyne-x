@@ -57,12 +57,14 @@ type DiagramWidget struct {
 	diagramElementLinkDependencies map[string][]linkPadPair
 	connectionTransaction          *connectionTransaction
 	padColor                       color.Color
+	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
+	IsConnectionAllowedCallback func(DiagramLink, LinkEnd, ConnectionPad) bool
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
 	// "source" or "target". The first pad is the old pad, the second one is the new pad
 	LinkConnectionChangedCallback func(DiagramLink, string, ConnectionPad, ConnectionPad)
 	// OnTappedCallback is called when the diagram background is tapped. If present, it overrides the default
 	// diagram behavior for Tapped()
-	OnTapped func(*DiagramWidget, *fyne.PointEvent)
+	OnTappedCallback func(*DiagramWidget, *fyne.PointEvent)
 	// PrimaryDiagramElementSelectionChangedCallback is called when the primary element selection changes
 	PrimaryDiagramElementSelectionChangedCallback func(string)
 	// ElementTappedExtendsSelection determines the behavior when one or more elements are already selected and
@@ -152,6 +154,7 @@ func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 // ClearSelection clears the selection and invokes the PrimaryDiagramElementSelectionChangedCallback
 func (dw *DiagramWidget) ClearSelection() {
 	for _, de := range dw.selection {
+		de.HideHandles()
 		dw.removeElementFromSelection(de)
 	}
 }
@@ -348,14 +351,20 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 		dw.RemoveElement(pair.link.id)
 	}
 	delete(dw.diagramElementLinkDependencies, elementID)
-	switch element.(type) {
-	case *BaseDiagramNode:
+	if element.IsNode() {
 		delete(dw.Nodes, elementID)
-	case *BaseDiagramLink:
+	} else if element.IsLink() {
 		delete(dw.Links, elementID)
 		dw.removeDependenciesInvolvingLink(elementID)
 	}
 	dw.Refresh()
+}
+
+// SelectDiagramElement clears the selection, makes the indicated element the primary selection, and invokes
+// the PrimaryDiagramElementSelectionChangedCallback
+func (dw *DiagramWidget) SelectDiagramElement(element DiagramElement) {
+	dw.ClearSelection()
+	dw.addElementToSelection(element)
 }
 
 // SelectDiagramElementNoCallback makes the indicated element the PrimarySelection. It does not invoke the
@@ -386,11 +395,17 @@ func (dw *DiagramWidget) showAllPads() {
 	}
 }
 
+// StartNewLinkConnectionTransaction starts the process of adding a link, setting up for the source connection
+func (dw *DiagramWidget) StartNewLinkConnectionTransaction(link DiagramLink) {
+	dw.connectionTransaction = NewConnectionTransaction(link.getBaseDiagramLink().linkPoints[0], link, nil, fyne.NewPos(0, 0))
+	dw.showAllPads()
+}
+
 // Tapped  respondss to taps in the diagram background. It removes all diagram elements
 // from the selection
 func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
-	if dw.OnTapped != nil {
-		dw.OnTapped(dw, event)
+	if dw.OnTappedCallback != nil {
+		dw.OnTappedCallback(dw, event)
 	} else {
 		dw.ClearSelection()
 	}

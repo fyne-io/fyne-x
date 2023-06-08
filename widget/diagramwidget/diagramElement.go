@@ -34,6 +34,10 @@ type DiagramElement interface {
 	handleDragEnd(handle *Handle)
 	// HideHandles hides the handles on the DiagramElement
 	HideHandles()
+	// IsLink returns true if the diagram element is a link
+	IsLink() bool
+	// IsNode returns true of the diagram element is a node
+	IsNode() bool
 	// ShowHandles shows the handles on the DiagramElement
 	ShowHandles()
 	// SetForegroundColor sets the foreground color for the widget

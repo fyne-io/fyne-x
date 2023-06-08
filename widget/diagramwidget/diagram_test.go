@@ -20,7 +20,9 @@ func TestDependencies(t *testing.T) {
 	node2.Move(fyne.NewPos(200, 100))
 	assert.Equal(t, 0, len(diagram.diagramElementLinkDependencies))
 	linkID := "Link1"
-	link := NewDiagramLink(diagram, node1.pads["default"], node2.pads["default"], linkID)
+	link := NewDiagramLink(diagram, linkID)
+	link.SetSourcePad(node1.pads["default"])
+	link.SetTargetPad(node2.pads["default"])
 	assert.NotNil(t, link)
 	assert.Equal(t, 2, len(diagram.diagramElementLinkDependencies))
 
