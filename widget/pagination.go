@@ -131,10 +131,10 @@ func (p *Pagination) CreateRenderer() fyne.WidgetRenderer {
 		}
 		totalPages := p.GetTotalPages()
 		if targetPage < 1 {
-			return errors.New("page should not be less than 1")
+			return errors.New("page should not be smaller than 1")
 		}
 		if targetPage > totalPages {
-			return errors.New("page should be less than total page")
+			return errors.New("page should not bigger than total page")
 		}
 		return nil
 	}
