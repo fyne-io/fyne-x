@@ -184,6 +184,19 @@ m := NewMap()
 
 ![](img/map.png)
 
+
+### Pagination
+A pagination widget is generally used with table widget, when page, pageSize, totalRows changed, 
+it will call user defined function which can be used to reload data and refresh table.  
+
+```go
+pager := widget.NewPagination(10)
+pager.SetTotalRows(100)
+pager.OnChange = func(page, pageSize int){}
+```
+[Demo](./cmd/pagination/main.go) available for example usage
+![](img/pagination.png)
+
 ## Data Binding
 
 Community contributed data sources for binding.
