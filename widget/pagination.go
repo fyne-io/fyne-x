@@ -102,7 +102,7 @@ func (p *Pagination) handlePreClick() {
 func (p *Pagination) handleNextClick() {
 	current, _ := p.page.Get()
 	total, _ := p.totalPages.Get()
-	if current == total {
+	if current >= total {
 		return
 	}
 	current += 1
