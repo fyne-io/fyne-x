@@ -111,9 +111,9 @@ func (p *Pagination) handleNextClick() {
 }
 
 func (p *Pagination) onSubmit() {
-	page, _ := p.page.Get()
-	pSize, _ := p.pageSize.Get()
 	if p.OnChange != nil {
+		page, _ := p.page.Get()
+		pSize, _ := p.pageSize.Get()
 		p.OnChange(page, pSize)
 	}
 }
