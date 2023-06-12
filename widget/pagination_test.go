@@ -11,10 +11,8 @@ import (
 func TestNewPagination(t *testing.T) {
 	p := NewPagination(10)
 	_ = test.WidgetRenderer(p)
-	e, _ := p.Objects[1].(*widget.Entry)
-	assert.Equal(t, "1", e.Text)
-	e, _ = p.Objects[4].(*widget.Entry)
-	assert.Equal(t, "10", e.Text)
+	assert.Equal(t, 1, p.GetPage())
+	assert.Equal(t, 10, p.GetPageSize())
 }
 
 func TestPagination_PrevButton(t *testing.T) {
