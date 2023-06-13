@@ -12,21 +12,32 @@ import (
 	widget2 "fyne.io/x/fyne/widget"
 )
 
+var (
+	data            [][]string
+	table           *widget.Table
+	defaultPageSize = 10
+	defaultPage     = 1
+)
+
 func main() {
 	a := app.New()
 	w := a.NewWindow("Pagination")
-	w.Resize(fyne.NewSize(500, 330))
+	w.Resize(fyne.NewSize(500, 400))
 
-	pager := widget2.NewPagination(10)
-	pager.SetTotalRows(50)
-	pager.Resize(fyne.NewSize(500, 30))
+	pager := widget2.NewPagination(defaultPageSize)
+	pager.SetTotalRows(getTotalRows())
 	pager.OnChange = func(p, s int) {
 		fmt.Printf("page: %d, pageSize: %d\n", p, s)
+		updateData(p, s)
 	}
 	btn := widget.NewButton("reset total", func() {
 		pager.SetTotalRows(getTotalRows())
 	})
-	c := container.NewVBox(pager, btn)
+	updateData(defaultPage, defaultPageSize)
+	createTable()
+	table.Resize(fyne.NewSize(500, 300))
+
+	c := container.NewVBox(btn, table, pager)
 	w.SetContent(c)
 	w.ShowAndRun()
 }
@@ -34,4 +45,31 @@ func main() {
 func getTotalRows() int {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return int(100 * r.Float64())
+}
+
+func createTable() {
+	tb := widget.NewTable(
+		func() (int, int) {
+			return len(data), 1
+		},
+		func() fyne.CanvasObject {
+			return widget.NewLabel("template")
+		},
+		func(i widget.TableCellID, o fyne.CanvasObject) {
+			l := o.(*widget.Label)
+			l.SetText(data[i.Row][i.Col])
+		})
+	table = tb
+	table.Refresh()
+}
+
+// updateData will do db query or http request to get a range of data
+func updateData(page, pageSize int) {
+	var result [][]string
+	for i := 0; i < pageSize; i++ {
+		result = append(result, []string{
+			fmt.Sprintf("page%d", page),
+		})
+	}
+	data = result
 }
