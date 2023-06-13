@@ -13,15 +13,15 @@ import (
 	"syscall"
 )
 
-// adapterUnix
+// adapter
 type adapterUnix struct{}
 
-// socketUnix
+// socket
 type socketUnix struct {
 	fd int
 }
 
-// serverSocketUnix
+// serverSocket
 type serverSocketUnix struct {
 	fd int
 }

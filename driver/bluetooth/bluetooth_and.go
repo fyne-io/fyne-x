@@ -648,6 +648,28 @@ char* getBluetoothName(uintptr_t env, jobject bluetoothAdapter, char** errorMsg)
     return heapString;
 }
 
+bool enableBluetooth(uintptr_t env, jobject bluetoothAdapter, char** errorMsg) {
+    JNIEnv* envPtr = (JNIEnv*)env;
+    // Get the enable method
+    jclass bluetoothAdapterClass = (*envPtr)->GetObjectClass(envPtr, bluetoothAdapter);
+    jmethodID enableMethod = (*envPtr)->GetMethodID(envPtr, bluetoothAdapterClass, "enable", "()Z");
+    if (enableMethod == NULL) {
+        copyToError("Failed to find enable method", errorMsg);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        return false;
+    }
+    // Invoke the enable method
+    jboolean result = (*envPtr)->CallBooleanMethod(envPtr, bluetoothAdapter, enableMethod);
+    if ((*envPtr)->ExceptionCheck(envPtr)) {
+        copyToError("Failed to invoke enable method", errorMsg);
+        (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+        return false;
+    }
+    // Release memory
+    (*envPtr)->DeleteLocalRef(envPtr, bluetoothAdapterClass);
+    return result;
+}
+
 void freeBluetoothAdapter(uintptr_t env, jobject bluetoothAdapter, char** errorMsg) {
     if (bluetoothAdapter != NULL) {
         JNIEnv* envPtr = (JNIEnv*)env;
@@ -677,6 +699,7 @@ import (
 	"errors"
 	"fmt"
 	_ "fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/driver"
 	"unsafe"
 	_ "unsafe"
 )
@@ -705,11 +728,7 @@ type readWriterAndroid struct {
 
 // runOnJVM is link to fyne.io/fyne/v2/internal/driver/mobile/mobileinit.RunOnJVM
 // it direct call internal fyne RunOnJVM
-//
-//go:linkname runOnJVM fyne.io/fyne/v2/internal/driver/mobile/mobileinit.RunOnJVM
-func runOnJVM(fn func(vm, env, ctx uintptr) error) error
-
-/*func runOnJVM(fn func(vm, env, ctx uintptr) error) error {
+func runOnJVM(fn func(vm, env, ctx uintptr) error) error {
 	return driver.RunNative(func(context interface{}) error {
 		if androidContext, ok := context.(driver.AndroidContext); ok {
 			return fn(androidContext.VM, androidContext.Env, androidContext.Ctx)
@@ -717,23 +736,30 @@ func runOnJVM(fn func(vm, env, ctx uintptr) error) error
 		return errors.New("no context android")
 	})
 }
-*/
 
 // NewBluetoothDefaultAdapter get Bluetooth adapter
-func NewBluetoothDefaultAdapter() (b Adapter, e error) {
+func NewBluetoothDefaultAdapter() (_ Adapter, e error) {
+	var bb *adapterAndroid
 	err := runOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
 		adapter := C.getBluetoothAdapter(C.uintptr_t(env), &errMsgC)
 		if errMsgC != nil {
-			err := errors.New(C.GoString(errMsgC))
+			er := errors.New(C.GoString(errMsgC))
 			C.free(unsafe.Pointer(errMsgC))
-			e = err
+			e = er
 			return nil
 		}
-		b = &adapterAndroid{javaAdapter: adapter, stop: make(chan struct{})}
+		bb = &adapterAndroid{javaAdapter: adapter, stop: make(chan struct{})}
 		return nil
 	})
-	return b, errors.Join(e, err)
+	enable, err := bb.enable()
+	if err != nil {
+		return nil, errors.Join(err, bb.Close())
+	}
+	if !enable {
+		return nil, errors.Join(errors.New("not available bluetooth"), bb.Close())
+	}
+	return bb, errors.Join(e, err)
 }
 
 func (a *adapterAndroid) FetchAddress() (str string, e error) {
@@ -800,6 +826,19 @@ func (a *adapterAndroid) ConnectAsClientToServer(address string) (bs Socket, e e
 		return nil
 	})
 	return bs, errors.Join(err, e)
+}
+
+func (a *adapterAndroid) enable() (b bool, e error) {
+	err := runOnJVM(func(vm, env, ctx uintptr) error {
+		var errMsgC *C.char
+		b = bool(C.enableBluetooth(C.uintptr_t(env), a.javaAdapter, &errMsgC))
+		if errMsgC != nil {
+			e = errors.New(C.GoString(errMsgC))
+			C.free(unsafe.Pointer(errMsgC))
+		}
+		return nil
+	})
+	return b, errors.Join(e, err)
 }
 
 // FetchStringData it is usefully if GetAddress return empty string,
