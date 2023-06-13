@@ -22,7 +22,7 @@ func runServerReturnError(window fyne.Window) {
 }
 
 // handle function
-func comunicate(readWriter bluetooth.ReadWriter, socketInfo bluetooth.Socket) {
+func comunicate(socket bluetooth.Socket) {
 	m := msg{
 		x: 10,
 		y: 10000,
@@ -38,7 +38,7 @@ func comunicate(readWriter bluetooth.ReadWriter, socketInfo bluetooth.Socket) {
 		m.z = (m.z + i + m.x + m.y) % 700
 		bytes, er := json.Marshal(m) // defined size of msg
 		if er == nil {
-			_, err := readWriter.Write(bytes)
+			_, err := socket.Write(bytes)
 			if err != nil {
 				fmt.Println(err)
 			}

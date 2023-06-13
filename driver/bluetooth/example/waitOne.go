@@ -18,15 +18,9 @@ func serverManual(adapter bluetooth.Adapter) {
 		fmt.Println(er)
 		return
 	}
-	readWriter, er := con.GetReadWriter()
-	defer fmt.Println(readWriter.Close())
-	if er != nil {
-		return
-	}
-	comunicate2(readWriter, con)
+	comunicate2(con)
 }
 
-func comunicate2(readWriter bluetooth.ReadWriter, con bluetooth.Socket) {
-
+func comunicate2(con bluetooth.Socket) {
 	// TODO meaningfull logic
 }

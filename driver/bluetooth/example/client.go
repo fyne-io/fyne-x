@@ -29,12 +29,6 @@ func connectTo(adapter bluetooth.Adapter, mac string) {
 		return
 	}
 	defer fmt.Println(socket.Close())
-	readWriter, err := socket.GetReadWriter()
-	if err != nil {
-		return
-	}
-	defer fmt.Println(readWriter.Close())
-
 	bytes, er := json.Marshal(msg{}) // defined size of msg
 	if er != nil {
 		return
@@ -42,7 +36,7 @@ func connectTo(adapter bluetooth.Adapter, mac string) {
 	expected := len(bytes)
 	for i := uint64(0); i < N; i++ {
 		m := msg{}
-		n, er := readWriter.Read(bytes)
+		n, er := socket.Read(bytes)
 		if er != nil || n != expected {
 			fmt.Println("1. ", er, ", ", n)
 			continue
