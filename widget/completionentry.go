@@ -2,7 +2,6 @@ package widget
 
 import (
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -262,9 +261,6 @@ func (item *completionEntryListItem) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (item *completionEntryListItem) Tapped(_ *fyne.PointEvent) {
+	item.parent.list.Select(item.id)
 	item.parent.setTextFromMenu(item.parent.Options[item.id])
 }
-
-func (item *completionEntryListItem) MouseIn(_ *desktop.MouseEvent)    { item.parent.list.Select(item.id) }
-func (item *completionEntryListItem) MouseMoved(_ *desktop.MouseEvent) {}
-func (item *completionEntryListItem) MouseOut()                        {}

@@ -157,14 +157,15 @@ func TestCompletionEntry_Rotation(t *testing.T) {
 	entry.SetText("foobar")
 	entry.CursorColumn = 6 // place the cursor after the text
 
-	// loop one time (nb items + 1) to go back to the first element
-	for i := 0; i <= len(entry.Options); i++ {
+	// loop one time (nb items) to go back to the first elements
+	// (don't forget that first item is selected on list display)
+	for i := 0; i < len(entry.Options); i++ {
 		win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyDown})
 	}
 
 	assert.Equal(t, 0, entry.selected)
 
-	// Do the same in reverse order, here, onlh one time to go on the last item
+	// Do the same in reverse order, here, only one time to go on the last item
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyUp})
 	assert.Equal(t, len(entry.Options)-1, entry.selected)
 }
