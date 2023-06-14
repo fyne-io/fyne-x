@@ -28,7 +28,7 @@ func (p paginationLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(totalWidth, maxHeight)
 }
 
-// Layout is called to put all child objects into same row
+// Layout is called to set position of all child objects of pagination widget
 func (p paginationLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	x := float32(0.0)
 	y := float32(0.0)
@@ -41,7 +41,7 @@ func (p paginationLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
-// Pagination create a pagination widget
+// Pagination defines a pagination widget
 type Pagination struct {
 	widget.BaseWidget
 	page            binding.Int
@@ -53,12 +53,13 @@ type Pagination struct {
 	defaultPageSize int
 }
 
-// Reset will set page and pageSize to initial config
+// Reset will set page to 1 and pageSize to initial config
 func (p *Pagination) Reset() {
 	p.page.Set(firstPage)
 	p.pageSize.Set(p.defaultPageSize)
 }
 
+// SetTotalRows will set the total rows, also reset page, pageSize, total pages
 func (p *Pagination) SetTotalRows(total int) {
 	p.Reset()
 	p.totalRows.Set(total)
@@ -67,16 +68,19 @@ func (p *Pagination) SetTotalRows(total int) {
 	p.Refresh()
 }
 
+// GetPage return current page
 func (p *Pagination) GetPage() int {
 	page, _ := p.page.Get()
 	return page
 }
 
+// GetPageSize return current page size
 func (p *Pagination) GetPageSize() int {
 	size, _ := p.pageSize.Get()
 	return size
 }
 
+// GetTotalPages return total pages
 func (p *Pagination) GetTotalPages() int {
 	pages, _ := p.totalPages.Get()
 	return pages
@@ -118,6 +122,8 @@ func (p *Pagination) onSubmit() {
 	}
 }
 
+// CreateRenderer returns a new WidgetRenderer for this widget.
+// This should not be called by regular code, it is used internally to render a widget.
 func (p *Pagination) CreateRenderer() fyne.WidgetRenderer {
 	pre := widget.NewButtonWithIcon("", theme.NavigateBackIcon(), p.handlePreClick)
 	next := widget.NewButtonWithIcon("", theme.NavigateNextIcon(), p.handleNextClick)
@@ -187,6 +193,7 @@ func (p *Pagination) CreateRenderer() fyne.WidgetRenderer {
 	return widget.NewSimpleRenderer(c)
 }
 
+// NewPagination create a new pagination widget
 func NewPagination(pageSize int) *Pagination {
 	p := &Pagination{
 		page:            binding.NewInt(),
