@@ -190,7 +190,7 @@ A pagination widget usually works with table widget, when page, pageSize, totalR
 it will call user defined function which can be used to reload data and refresh table.  
 
 ```go
-pager := widget.NewPagination(10)
+pager := widget.NewPagination()
 total := getTotalRows() // get count of search conditions
 pager.SetTotalRows(total)
 pager.OnChange = func(page, pageSize int){

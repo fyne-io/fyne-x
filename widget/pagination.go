@@ -16,7 +16,10 @@ type paginationLayout struct{}
 
 var _ fyne.Layout = (*paginationLayout)(nil)
 
-var firstPage = 1
+var (
+	firstPage       = 1
+	defaultPageSize = 10
+)
 
 // MinSize set the minimal size for pagination widget
 func (p paginationLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -53,10 +56,15 @@ type Pagination struct {
 	defaultPageSize int
 }
 
-// Reset will set page to 1 and pageSize to initial config
+// Reset will set page to firstPage and page size to defaultPageSize
 func (p *Pagination) Reset() {
 	p.page.Set(firstPage)
 	p.pageSize.Set(p.defaultPageSize)
+}
+
+// SetDefaultPageSize will set the default page size
+func (p *Pagination) SetDefaultPageSize(size int) {
+	p.defaultPageSize = size
 }
 
 // SetTotalRows will set the total rows, also reset page, pageSize, total pages
@@ -194,13 +202,13 @@ func (p *Pagination) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewPagination create a new pagination widget
-func NewPagination(pageSize int) *Pagination {
+func NewPagination() *Pagination {
 	p := &Pagination{
 		page:            binding.NewInt(),
 		pageSize:        binding.NewInt(),
 		totalPages:      binding.NewInt(),
 		totalRows:       binding.NewInt(),
-		defaultPageSize: pageSize,
+		defaultPageSize: defaultPageSize,
 	}
 	p.Reset()
 	p.ExtendBaseWidget(p)

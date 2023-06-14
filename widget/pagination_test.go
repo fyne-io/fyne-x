@@ -9,14 +9,14 @@ import (
 )
 
 func TestNewPagination(t *testing.T) {
-	p := NewPagination(10)
+	p := NewPagination()
 	_ = test.WidgetRenderer(p)
 	assert.Equal(t, 1, p.GetPage())
 	assert.Equal(t, 10, p.GetPageSize())
 }
 
 func TestPagination_PrevButton(t *testing.T) {
-	p := NewPagination(10)
+	p := NewPagination()
 	p.SetTotalRows(100)
 	_ = test.WidgetRenderer(p)
 	btn, _ := p.Objects[0].(*widget.Button)
@@ -26,7 +26,7 @@ func TestPagination_PrevButton(t *testing.T) {
 }
 
 func TestPagination_NextButton(t *testing.T) {
-	p := NewPagination(10)
+	p := NewPagination()
 	p.SetTotalRows(15)
 
 	_ = test.WidgetRenderer(p)

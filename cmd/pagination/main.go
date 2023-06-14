@@ -24,7 +24,7 @@ func main() {
 	w := a.NewWindow("Pagination")
 	w.Resize(fyne.NewSize(500, 400))
 
-	pager := widget2.NewPagination(defaultPageSize)
+	pager := widget2.NewPagination()
 	pager.SetTotalRows(getTotalRows())
 	pager.OnChange = func(p, s int) {
 		fmt.Printf("page: %d, pageSize: %d\n", p, s)
