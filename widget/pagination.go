@@ -106,7 +106,7 @@ func (p *Pagination) handlePreClick() {
 	if current == 1 {
 		return
 	}
-	current -= 1
+	current--
 	p.page.Set(current)
 	p.onSubmit()
 }
@@ -117,7 +117,7 @@ func (p *Pagination) handleNextClick() {
 	if current >= total {
 		return
 	}
-	current += 1
+	current++
 	p.page.Set(current)
 	p.onSubmit()
 }
