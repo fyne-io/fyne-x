@@ -39,17 +39,17 @@ func (cp *connectionPad) GetPadOwner() DiagramElement {
 
 // MouseDown responds to mouse down events
 func (pp *PointPad) MouseDown(event *desktop.MouseEvent) {
-	connectionTransaction := pp.padOwner.GetDiagram().connectionTransaction
+	connectionTransaction := pp.padOwner.GetDiagram().ConnectionTransaction
 	if connectionTransaction != nil {
-		link := connectionTransaction.link
-		if link.isConnectionAllowed(connectionTransaction.linkPoint, pp) {
+		link := connectionTransaction.Link
+		if link.isConnectionAllowed(connectionTransaction.LinkPoint, pp) {
 			padOwnerPosition := pp.padOwner.Position()
 			pseudoEvent := &fyne.DragEvent{
 				PointEvent: fyne.PointEvent{},
 				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X+10, event.Position.Y+padOwnerPosition.Y-10),
 			}
 			// the link point has to be changed before the handle is dragged
-			connectionTransaction.linkPoint = connectionTransaction.link.getLinkPoints()[1]
+			connectionTransaction.LinkPoint = connectionTransaction.Link.getLinkPoints()[1]
 			link.GetHandle(TARGET.ToString()).Dragged(pseudoEvent)
 			link.Refresh()
 			link.SetSourcePad(pp)
@@ -62,17 +62,17 @@ func (pp *PointPad) MouseDown(event *desktop.MouseEvent) {
 
 // MouseDown responds to mouse down events
 func (rp *RectanglePad) MouseDown(event *desktop.MouseEvent) {
-	connectionTransaction := rp.padOwner.GetDiagram().connectionTransaction
+	connectionTransaction := rp.padOwner.GetDiagram().ConnectionTransaction
 	if connectionTransaction != nil {
-		link := connectionTransaction.link
-		if link.isConnectionAllowed(connectionTransaction.linkPoint, rp) {
+		link := connectionTransaction.Link
+		if link.isConnectionAllowed(connectionTransaction.LinkPoint, rp) {
 			padOwnerPosition := rp.padOwner.Position()
 			pseudoEvent := &fyne.DragEvent{
 				PointEvent: fyne.PointEvent{},
 				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X, event.Position.Y+padOwnerPosition.Y),
 			}
 			// the link point has to be changed before the handle is dragged
-			connectionTransaction.linkPoint = connectionTransaction.link.getLinkPoints()[1]
+			connectionTransaction.LinkPoint = connectionTransaction.Link.getLinkPoints()[1]
 			link.GetHandle(TARGET.ToString()).Dragged(pseudoEvent)
 			link.SetSourcePad(rp)
 			link.GetDiagram().SelectDiagramElement(link)
@@ -140,10 +140,10 @@ func (pp *PointPad) getConnectionPointInDiagramCoordinates(referencePoint fyne.P
 
 // MouseIn responds to mouse movements within the pointPadSize distance of the center
 func (pp *PointPad) MouseIn(event *desktop.MouseEvent) {
-	conTrans := pp.padOwner.GetDiagram().connectionTransaction
-	if conTrans != nil && conTrans.link.isConnectionAllowed(conTrans.linkPoint, pp) {
+	conTrans := pp.padOwner.GetDiagram().ConnectionTransaction
+	if conTrans != nil && conTrans.Link.isConnectionAllowed(conTrans.LinkPoint, pp) {
 		pp.padColor = pp.padOwner.GetDiagram().padColor
-		conTrans.pendingPad = pp
+		conTrans.PendingPad = pp
 	} else {
 		pp.padColor = color.Transparent
 	}
@@ -158,9 +158,9 @@ func (pp *PointPad) MouseMoved(event *desktop.MouseEvent) {
 // MouseOut responds to mouse movements within the pointPadSize distance of the center
 func (pp *PointPad) MouseOut() {
 	pp.padColor = color.Transparent
-	conTrans := pp.padOwner.GetDiagram().connectionTransaction
-	if conTrans != nil && conTrans.pendingPad == pp {
-		conTrans.pendingPad = nil
+	conTrans := pp.padOwner.GetDiagram().ConnectionTransaction
+	if conTrans != nil && conTrans.PendingPad == pp {
+		conTrans.PendingPad = nil
 	}
 	pp.Refresh()
 	pp.padOwner.GetDiagram().ForceRepaint()
@@ -276,10 +276,10 @@ func (rp *RectanglePad) makeBox() r2.Box {
 
 // MouseIn responds to the mouse entering the bounds of the RectanglePad
 func (rp *RectanglePad) MouseIn(event *desktop.MouseEvent) {
-	conTrans := rp.padOwner.GetDiagram().connectionTransaction
-	if conTrans != nil && conTrans.link.isConnectionAllowed(conTrans.linkPoint, rp) {
+	conTrans := rp.padOwner.GetDiagram().ConnectionTransaction
+	if conTrans != nil && conTrans.Link.isConnectionAllowed(conTrans.LinkPoint, rp) {
 		rp.padColor = rp.padOwner.GetDiagram().padColor
-		conTrans.pendingPad = rp
+		conTrans.PendingPad = rp
 	} else {
 		rp.padColor = color.Transparent
 	}
@@ -294,9 +294,9 @@ func (rp *RectanglePad) MouseMoved(event *desktop.MouseEvent) {
 // MouseOut responds to mouse movements leaving the rectangle pad
 func (rp *RectanglePad) MouseOut() {
 	rp.padColor = color.Transparent
-	conTrans := rp.padOwner.GetDiagram().connectionTransaction
-	if conTrans != nil && conTrans.pendingPad == rp {
-		conTrans.pendingPad = nil
+	conTrans := rp.padOwner.GetDiagram().ConnectionTransaction
+	if conTrans != nil && conTrans.PendingPad == rp {
+		conTrans.PendingPad = nil
 	}
 	rp.Refresh()
 	rp.padOwner.GetDiagram().ForceRepaint()

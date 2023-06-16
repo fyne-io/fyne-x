@@ -2,6 +2,7 @@ package diagramwidget
 
 import (
 	"image/color"
+	"log"
 	"reflect"
 
 	"fyne.io/fyne/v2"
@@ -55,13 +56,24 @@ type DiagramWidget struct {
 	primarySelection               DiagramElement
 	selection                      map[string]DiagramElement
 	diagramElementLinkDependencies map[string][]linkPadPair
-	connectionTransaction          *connectionTransaction
-	padColor                       color.Color
+	// ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes
+	ConnectionTransaction *ConnectionTransaction
+	padColor              color.Color
 	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
 	IsConnectionAllowedCallback func(DiagramLink, LinkEnd, ConnectionPad) bool
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
 	// "source" or "target". The first pad is the old pad, the second one is the new pad
 	LinkConnectionChangedCallback func(DiagramLink, string, ConnectionPad, ConnectionPad)
+	// MouseDownCallback is called when a MouseDown occurs in the diagram
+	MouseDownCallback func(*desktop.MouseEvent)
+	// MouseInCallback is called when a MouseIn occurs in the diagram
+	MouseInCallback func(*desktop.MouseEvent)
+	// MouseMovedCallback is called when a MouseMove occurs in the diagram
+	MouseMovedCallback func(*desktop.MouseEvent)
+	// MouseOutCallback is called when a MouseOut occurs in the diagram
+	MouseOutCallback func()
+	// MouseUpCallback is invoked when a MouseUp occurs in the diagram
+	MouseUpCallback func(*desktop.MouseEvent)
 	// OnTappedCallback is called when the diagram background is tapped. If present, it overrides the default
 	// diagram behavior for Tapped()
 	OnTappedCallback func(*DiagramWidget, *fyne.PointEvent)
@@ -256,6 +268,11 @@ func (dw *DiagramWidget) GetDiagramElements() map[string]DiagramElement {
 	return diagramElements
 }
 
+// GetPrimarySelection returns the diagram element that is currently selected
+func (dw *DiagramWidget) GetPrimarySelection() DiagramElement {
+	return dw.primarySelection
+}
+
 // hideAllPads is a work-around for fyne Issue #3906 in which a child's Hoverable interface
 // (i.e. the pad) masks the parent's Tappable interface. This function (and all references to
 // it) should be removed when this issue has been resolved
@@ -277,16 +294,42 @@ func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
 	return dw.selection[de.GetDiagramElementID()] != nil
 }
 
-// MouseIn responds to the mouse moving into the diagram. It presently is a noop
-func (dw *DiagramWidget) MouseIn(event *desktop.MouseEvent) {
+// MouseDown responds to MouseDown events. It invokes the callback, if present
+func (dw *DiagramWidget) MouseDown(event *desktop.MouseEvent) {
+	log.Print("MouseDown called")
+	if dw.MouseDownCallback != nil {
+		dw.MouseDownCallback(event)
+	}
 }
 
-// MouseOut responds to the mouse leaving the diagram. It presently is a noop
-func (dw *DiagramWidget) MouseOut() {
+// MouseIn responds to the mouse moving into the diagram. It presently is a noop
+func (dw *DiagramWidget) MouseIn(event *desktop.MouseEvent) {
+	log.Print("MouseIn called")
+	if dw.MouseInCallback != nil {
+		dw.MouseInCallback(event)
+	}
 }
 
 // MouseMoved responds to mouse movements in the diagram. It presently is a noop
 func (dw *DiagramWidget) MouseMoved(event *desktop.MouseEvent) {
+	log.Print("MouseMoved called")
+	if dw.MouseMovedCallback != nil {
+		dw.MouseMovedCallback(event)
+	}
+}
+
+// MouseOut responds to the mouse leaving the diagram. It presently is a noop
+func (dw *DiagramWidget) MouseOut() {
+	if dw.MouseOutCallback != nil {
+		dw.MouseOutCallback()
+	}
+}
+
+// MouseDown responds to MouseDown events. It invokes the callback, if present
+func (dw *DiagramWidget) MouseUp(event *desktop.MouseEvent) {
+	if dw.MouseUpCallback != nil {
+		dw.MouseUpCallback(event)
+	}
 }
 
 // removeDependenciesInvolvingLink re-creates the diagram's dependencies, omitting any
@@ -397,7 +440,7 @@ func (dw *DiagramWidget) showAllPads() {
 
 // StartNewLinkConnectionTransaction starts the process of adding a link, setting up for the source connection
 func (dw *DiagramWidget) StartNewLinkConnectionTransaction(link DiagramLink) {
-	dw.connectionTransaction = NewConnectionTransaction(link.getBaseDiagramLink().linkPoints[0], link, nil, fyne.NewPos(0, 0))
+	dw.ConnectionTransaction = NewConnectionTransaction(link.getBaseDiagramLink().linkPoints[0], link, nil, fyne.NewPos(0, 0))
 	dw.showAllPads()
 }
 

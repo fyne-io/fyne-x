@@ -39,7 +39,9 @@ type DiagramLink interface {
 	getBaseDiagramLink() *BaseDiagramLink
 	getLinkPoints() []*LinkPoint
 	GetSourcePad() ConnectionPad
+	GetSourceHandle() *Handle
 	GetTargetPad() ConnectionPad
+	GetTargetHandle() *Handle
 	isConnectionAllowed(*LinkPoint, ConnectionPad) bool
 	SetSourcePad(ConnectionPad)
 	SetTargetPad(ConnectionPad)
@@ -242,12 +244,20 @@ func (bdl *BaseDiagramLink) GetTargetAnchoredText(key string) *AnchoredText {
 	return bdl.targetAnchoredText[key]
 }
 
+func (bdl *BaseDiagramLink) GetSourceHandle() *Handle {
+	return bdl.handles[SOURCE.ToString()]
+}
+
 func (bdl *BaseDiagramLink) GetSourcePad() ConnectionPad {
 	return bdl.sourcePad
 }
 
 func (bdl *BaseDiagramLink) getSourcePosition() fyne.Position {
 	return bdl.linkPoints[0].Position()
+}
+
+func (bdl *BaseDiagramLink) GetTargetHandle() *Handle {
+	return bdl.handles[TARGET.ToString()]
 }
 
 func (bdl *BaseDiagramLink) GetTargetPad() ConnectionPad {
@@ -275,14 +285,14 @@ func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent)
 	if linkPoint == nil {
 		return
 	}
-	connTrans := bdl.diagram.connectionTransaction
+	connTrans := bdl.diagram.ConnectionTransaction
 	if connTrans == nil {
 		connTrans = NewConnectionTransaction(linkPoint, bdl, pad, linkPoint.Position())
-		bdl.diagram.connectionTransaction = connTrans
+		bdl.diagram.ConnectionTransaction = connTrans
 		// TODO remove this after fyne Issue #3906 has been resolved
 		bdl.diagram.showAllPads()
 
-	} else if connTrans.linkPoint != linkPoint {
+	} else if connTrans.LinkPoint != linkPoint {
 		// The existing transaction is for a different linkPoint
 		return
 	}
@@ -293,36 +303,36 @@ func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent)
 }
 
 func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
-	connTrans := bdl.diagram.connectionTransaction
+	connTrans := bdl.diagram.ConnectionTransaction
 	handleKey := bdl.getHandleKey(handle)
 	if connTrans != nil {
-		if connTrans.pendingPad != nil {
+		if connTrans.PendingPad != nil {
 			// We have a new pad for connection
-			if connTrans.initialPad != nil {
-				bdl.diagram.removeLinkDependency(connTrans.initialPad.GetPadOwner(), bdl, connTrans.initialPad)
+			if connTrans.InitialPad != nil {
+				bdl.diagram.removeLinkDependency(connTrans.InitialPad.GetPadOwner(), bdl, connTrans.InitialPad)
 			}
-			bdl.diagram.addLinkDependency(connTrans.pendingPad.GetPadOwner(), bdl, connTrans.pendingPad)
-			bdl.pads[handleKey] = connTrans.pendingPad
+			bdl.diagram.addLinkDependency(connTrans.PendingPad.GetPadOwner(), bdl, connTrans.PendingPad)
+			bdl.pads[handleKey] = connTrans.PendingPad
 			switch handleKey {
 			case SOURCE.ToString():
-				bdl.sourcePad = connTrans.pendingPad
+				bdl.sourcePad = connTrans.PendingPad
 			case TARGET.ToString():
-				bdl.targetPad = connTrans.pendingPad
+				bdl.targetPad = connTrans.PendingPad
 			}
 			if bdl.diagram.LinkConnectionChangedCallback != nil {
-				bdl.diagram.LinkConnectionChangedCallback(bdl.typedLink, handleKey, connTrans.initialPad, connTrans.pendingPad)
+				bdl.diagram.LinkConnectionChangedCallback(bdl.typedLink, handleKey, connTrans.InitialPad, connTrans.PendingPad)
 			}
 		} else {
 			// We revert to the original pad.
-			bdl.pads[handleKey] = connTrans.initialPad
+			bdl.pads[handleKey] = connTrans.InitialPad
 			switch handleKey {
 			case SOURCE.ToString():
-				bdl.sourcePad = connTrans.initialPad
+				bdl.sourcePad = connTrans.InitialPad
 			case TARGET.ToString():
-				bdl.targetPad = connTrans.initialPad
+				bdl.targetPad = connTrans.InitialPad
 			}
 		}
-		bdl.diagram.connectionTransaction = nil
+		bdl.diagram.ConnectionTransaction = nil
 		bdl.diagram.hideAllPads()
 		bdl.diagram.SelectDiagramElement(bdl)
 		bdl.Refresh()
@@ -635,20 +645,21 @@ func (dlr *diagramLinkRenderer) Refresh() {
 	dlr.link.GetDiagram().ForceRepaint()
 }
 
-type connectionTransaction struct {
-	linkPoint       *LinkPoint
-	link            DiagramLink
-	initialPad      ConnectionPad
-	initialPosition fyne.Position
-	pendingPad      ConnectionPad
+// ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes only
+type ConnectionTransaction struct {
+	LinkPoint       *LinkPoint
+	Link            DiagramLink
+	InitialPad      ConnectionPad
+	InitialPosition fyne.Position
+	PendingPad      ConnectionPad
 }
 
-func NewConnectionTransaction(linkPoint *LinkPoint, link DiagramLink, initialPad ConnectionPad, initialPosition fyne.Position) *connectionTransaction {
-	ct := &connectionTransaction{
-		linkPoint:       linkPoint,
-		link:            link,
-		initialPad:      initialPad,
-		initialPosition: initialPosition,
+func NewConnectionTransaction(linkPoint *LinkPoint, link DiagramLink, initialPad ConnectionPad, initialPosition fyne.Position) *ConnectionTransaction {
+	ct := &ConnectionTransaction{
+		LinkPoint:       linkPoint,
+		Link:            link,
+		InitialPad:      initialPad,
+		InitialPosition: initialPosition,
 	}
 	return ct
 }
