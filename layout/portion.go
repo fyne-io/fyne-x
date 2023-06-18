@@ -19,7 +19,7 @@ func (p *HPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 		return
 	}
 
-	padding := theme.InnerPadding()
+	padding := theme.Padding()
 	xpos := padding
 
 	for i, child := range objects {
@@ -55,7 +55,8 @@ func (p *HPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		}
 	}
 
-	return fyne.NewSize(maxMinWidth/p.Portions[maxIndex], height)
+	totalPadding := float32(len(objects)-1) * theme.Padding()
+	return fyne.NewSize(maxMinWidth/p.Portions[maxIndex]+totalPadding, height)
 }
 
 // NewHPortion creates a layout that partitions objects verticaly taking up
@@ -78,7 +79,7 @@ func (p *VPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 		return
 	}
 
-	padding := theme.InnerPadding()
+	padding := theme.Padding()
 	ypos := padding
 
 	for i, child := range objects {
@@ -114,7 +115,8 @@ func (p *VPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		}
 	}
 
-	return fyne.NewSize(width, maxMinHeight/p.Portions[maxIndex])
+	totalPadding := float32(len(objects)-1) * theme.Padding()
+	return fyne.NewSize(width, maxMinHeight/p.Portions[maxIndex]+totalPadding)
 }
 
 // NewVPortion creates a layout that partitions objects verticaly taking up
