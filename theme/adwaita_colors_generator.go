@@ -43,13 +43,13 @@ import (
 
 var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .DarkScheme }}
-    {{$key}}: {{$value}},
+    {{$key}}: {{$value.Col}}, // Adwaita color name @{{$value.Hex}}
 {{- end }}
 }
 
 var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .LightScheme }}
-    {{$key}}: {{$value}},
+    {{$key}}: {{$value.Col}}, // Adwaita color name @{{$value.Hex}}
 {{- end }}
 }`
 )
@@ -75,10 +75,15 @@ var (
 	}
 )
 
+type colorInfo struct {
+	Col string
+	Hex string
+}
+
 func main() {
 
-	darkScheme := map[string]string{}
-	lightScheme := map[string]string{}
+	darkScheme := map[string]colorInfo{}
+	lightScheme := map[string]colorInfo{}
 
 	reps, err := http.Get(adwaitaColorPage)
 	if err != nil {
@@ -100,8 +105,14 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		lightScheme[colname] = fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A)
-		darkScheme[colname] = fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", dcol.R, dcol.G, dcol.B, dcol.A)
+		lightScheme[colname] = colorInfo{
+			Col: fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A),
+			Hex: color,
+		}
+		darkScheme[colname] = colorInfo{
+			Col: fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", dcol.R, dcol.G, dcol.B, dcol.A),
+			Hex: color,
+		}
 	}
 
 	out, err := os.Create(output)
@@ -118,8 +129,8 @@ func main() {
 	// generate the source
 	buffer := bytes.NewBuffer(nil)
 	err = tpl.Execute(buffer, struct {
-		LightScheme map[string]string
-		DarkScheme  map[string]string
+		LightScheme map[string]colorInfo
+		DarkScheme  map[string]colorInfo
 	}{
 		LightScheme: lightScheme,
 		DarkScheme:  darkScheme,
