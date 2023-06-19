@@ -17,8 +17,8 @@ type Adwaita struct {
 	override fyne.Theme
 }
 
-// NewAdwaita returns a new Adwaita theme.
-func NewAdwaita() fyne.Theme {
+// AdwaitaTheme returns a new Adwaita theme.
+func AdwaitaTheme() fyne.Theme {
 	return &Adwaita{}
 }
 
