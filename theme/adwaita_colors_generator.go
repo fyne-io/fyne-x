@@ -43,13 +43,13 @@ import (
 
 var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .DarkScheme }}
-    {{$key}}: {{$value.Col}}, // Adwaita color name @{{$value.Hex}}
+    {{$key}}: {{$value.Col}}, // Adwaita color name @{{$value.AdwName}}
 {{- end }}
 }
 
 var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .LightScheme }}
-    {{$key}}: {{$value.Col}}, // Adwaita color name @{{$value.Hex}}
+    {{$key}}: {{$value.Col}}, // Adwaita color name @{{$value.AdwName}}
 {{- end }}
 }`
 )
@@ -76,8 +76,8 @@ var (
 )
 
 type colorInfo struct {
-	Col string
-	Hex string
+	Col     string // go formated color
+	AdwName string // Adwaita color name from the documentation
 }
 
 func main() {
@@ -106,12 +106,12 @@ func main() {
 			log.Fatal(err)
 		}
 		lightScheme[colname] = colorInfo{
-			Col: fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A),
-			Hex: color,
+			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A),
+			AdwName: color,
 		}
 		darkScheme[colname] = colorInfo{
-			Col: fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", dcol.R, dcol.G, dcol.B, dcol.A),
-			Hex: color,
+			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", dcol.R, dcol.G, dcol.B, dcol.A),
+			AdwName: color,
 		}
 	}
 
