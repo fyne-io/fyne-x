@@ -13,9 +13,7 @@ var _ fyne.Theme = (*Adwaita)(nil)
 
 // Adwaita is a theme that follows the Adwaita theme.
 // See: https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html
-type Adwaita struct {
-	override fyne.Theme
-}
+type Adwaita struct{}
 
 // AdwaitaTheme returns a new Adwaita theme.
 func AdwaitaTheme() fyne.Theme {
@@ -39,30 +37,15 @@ func (a *Adwaita) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) col
 
 // Font returns the named font for the current theme.
 func (a *Adwaita) Font(style fyne.TextStyle) fyne.Resource {
-	if a.override != nil {
-		return a.override.Font(style)
-	}
 	return theme.DefaultTheme().Font(style)
 }
 
 // Icon returns the named resource for the current theme.
 func (a *Adwaita) Icon(name fyne.ThemeIconName) fyne.Resource {
-	if a.override != nil {
-		return a.override.Icon(name)
-	}
 	return theme.DefaultTheme().Icon(name)
 }
 
 // Size returns the size of the named resource for the current theme.
 func (a *Adwaita) Size(name fyne.ThemeSizeName) float32 {
-	if a.override != nil {
-		return a.override.Size(name)
-	}
 	return theme.DefaultTheme().Size(name)
-}
-
-// setGTKFallbackTheme provides a way to override the theme with a custom one. Actually, it's a hack to
-// get Gnome specific sizes, icons and fonts using FromDesktopEnvironment() function.
-func (a *Adwaita) setGTKFallbackTheme(t fyne.Theme) {
-	a.override = t
 }
