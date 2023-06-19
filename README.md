@@ -250,6 +250,17 @@ pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 
 Adwaita is the theme used in new version of KDE and Gnome (and derivatives) on GNU/Linux.
 This theme proposes a color-schme taken from the Adwaita scpecification.
 
+Use it with:
+
+```go
+import "fyne.io/x/fyne/theme"
+//...
+
+a := app.New()
+app.Settings().SetTheme(theme.AdwaitaTheme())
+```
+
 ![Adwaita Dark](./img/adwaita-theme-dark.png)
 
 ![Adwaita Light](./img/adwaita-theme-light.png)
+
