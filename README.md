@@ -243,3 +243,13 @@ for validation using an entropy system.
 pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 70.
 ```
 
+## Themes
+
+### Adwaita
+
+Adwaita is the theme used in new version of KDE and Gnome (and derivatives) on GNU/Linux.
+This theme proposes a color-schme taken from the Adwaita scpecification.
+
+![Adwaita Dark](./img/adwaita-theme-dark.png)
+
+![Adwaita Light](./img/adwaita-theme-light.png)
