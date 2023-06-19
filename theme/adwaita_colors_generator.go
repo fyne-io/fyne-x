@@ -41,13 +41,13 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-var AdwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
+var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .DarkScheme }}
     {{$key}}: {{$value}},
 {{- end }}
 }
 
-var AdwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
+var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .LightScheme }}
     {{$key}}: {{$value}},
 {{- end }}

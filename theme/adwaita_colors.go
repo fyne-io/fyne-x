@@ -13,7 +13,7 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-var AdwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
+var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorBlue:                  color.RGBA{0x78, 0xae, 0xed, 0xff},
 	theme.ColorGreen:                 color.RGBA{0x8f, 0xf0, 0xa4, 0xff},
 	theme.ColorNameBackground:        color.RGBA{0x24, 0x24, 0x24, 0xff},
@@ -28,7 +28,7 @@ var AdwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorYellow:                color.RGBA{0xf8, 0xe4, 0x5c, 0xff},
 }
 
-var AdwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
+var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorBlue:                  color.RGBA{0x1c, 0x71, 0xd8, 0xff},
 	theme.ColorGreen:                 color.RGBA{0x26, 0xa2, 0x69, 0xff},
 	theme.ColorNameBackground:        color.RGBA{0xfa, 0xfa, 0xfa, 0xff},

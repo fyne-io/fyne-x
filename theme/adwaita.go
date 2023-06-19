@@ -26,11 +26,11 @@ func AdwaitaTheme() fyne.Theme {
 func (a *Adwaita) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {
 	switch variant {
 	case theme.VariantLight:
-		if c, ok := AdwaitaLightScheme[name]; ok {
+		if c, ok := adwaitaLightScheme[name]; ok {
 			return c
 		}
 	case theme.VariantDark:
-		if c, ok := AdwaitaDarkScheme[name]; ok {
+		if c, ok := adwaitaDarkScheme[name]; ok {
 			return c
 		}
 	}
