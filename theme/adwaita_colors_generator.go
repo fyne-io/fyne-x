@@ -116,7 +116,7 @@ func main() {
 		log.Fatal(err)
 	}
 	// generate the source
-	buffer := bytes.NewBufferString("")
+	buffer := bytes.NewBuffer(nil)
 	err = tpl.Execute(buffer, struct {
 		LightScheme map[string]string
 		DarkScheme  map[string]string
@@ -129,8 +129,7 @@ func main() {
 	}
 
 	// format the file
-	content := buffer.String()
-	if formatted, err := format.Source([]byte(content)); err != nil {
+	if formatted, err := format.Source(buffer.Bytes()); err != nil {
 		log.Fatal(err)
 	} else {
 		out.Write(formatted)
