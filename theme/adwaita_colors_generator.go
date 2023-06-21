@@ -64,16 +64,31 @@ var (
 
 	// map to describe the colors to get from the Adwaita page and the name of the color in the Fyne theme
 	colorToGet = map[string]string{
-		"theme.ColorNameBackground":        "window_bg_color",    // or "view_bg_color"
-		"theme.ColorNameForeground":        "window_fg_color",    // or "view_fg_color"
-		"theme.ColorNameOverlayBackground": "popover_bg_color",   // not sure about this one
+		"theme.ColorNameBackground":        "window_bg_color", // or "view_bg_color"
+		"theme.ColorNameForeground":        "window_fg_color", // or "view_fg_color"
+		"theme.ColorNameMenuBackground":    "view_bg_color",   // not sure about this one
+		"theme.ColorNameSelection":         "accent_bg_color",
+		"theme.ColorNameOverlayBackground": "view_bg_color",      // not sure about this one
 		"theme.ColorNamePrimary":           "accent_bg_color",    // accent_color is the primary color for Adwaita
 		"theme.ColorNameInputBackground":   "view_bg_color",      // or "window_bg_color"
 		"theme.ColorNameButton":            "headerbar_bg_color", // it's the closer color to the button color
-		"theme.ColorNameShadow":            "shade_color",        // or @dark_X
-		"theme.ColorNameSuccess":           "success_color",      // or @green_X
-		"theme.ColorNameWarning":           "warning_color",      // or @yellow_X
-		"theme.ColorNameError":             "destructive_color",  // or @red_X
+		"theme.ColorNameShadow":            "shade_color",
+		"theme.ColorNameSuccess":           "success_bg_color",
+		"theme.ColorNameWarning":           "warning_bg_color", // Adwaita doesn't have "orange_x" color for "dark"
+		"theme.ColorNameError":             "error_bg_color",
+	}
+
+	// and standard color names:
+	// if the key has got 2 values, the first one is the light color, the second one is the dark color
+	standardColorToGet = map[string]string{
+		"theme.ColorRed":    "red_3,red_4",     // based on error_bg_color
+		"theme.ColorOrange": "orange_3",        // more or less the same as warning_bg_color
+		"theme.ColorYellow": "yellow_3",        // more or less the same as warning_bg_color
+		"theme.ColorGreen":  "green_4,green_5", // based on success_bg_color
+		"theme.ColorBlue":   "blue_3",
+		"theme.ColorPurple": "purple_3",
+		"theme.ColorBrown":  "brown_3",
+		"theme.ColorGray":   "dark_2",
 	}
 )
 
@@ -101,7 +116,7 @@ func main() {
 	rows = tableRowMatcher.FindAllStringSubmatch(string(htpage), -1)
 
 	// inline function, to get the color for a specific name and variant
-	getColorFor := func(name, variant string) (col color.RGBA, err error) {
+	getWidgetColorFor := func(name, variant string) (col color.RGBA, err error) {
 		for _, row := range rows {
 			// check if the row is for "@success_color" (@ is html encoded)
 			if strings.Contains(row[0], "&#64;"+name) || strings.Contains(row[0], "@"+name) {
@@ -119,12 +134,25 @@ func main() {
 		return
 	}
 
+	getStandardColorFor := func(name string) (col color.RGBA, err error) {
+		for _, row := range rows {
+			// check if the row is for "@success_color" (@ is html encoded)
+			if strings.Contains(row[0], "&#64;"+name) || strings.Contains(row[0], "@"+name) {
+				// the color is in the second column
+				c := tableColorCellMatcher.FindAllStringSubmatch(row[0], -1)
+				col, err = stringToColor(c[0][1])
+				return
+			}
+		}
+		return
+	}
+
 	for colname, color := range colorToGet {
-		lcol, err := getColorFor(color, "light")
+		lcol, err := getWidgetColorFor(color, "light")
 		if err != nil {
 			log.Fatal(err)
 		}
-		dcol, err := getColorFor(color, "dark")
+		dcol, err := getWidgetColorFor(color, "dark")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -135,6 +163,33 @@ func main() {
 		darkScheme[colname] = colorInfo{
 			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", dcol.R, dcol.G, dcol.B, dcol.A),
 			AdwName: color,
+		}
+	}
+
+	for colname, color := range standardColorToGet {
+		lightColorName := color
+		darkColorName := color
+		colors := strings.Split(color, ",")
+		if len(colors) == 2 {
+			lightColorName = colors[0]
+			darkColorName = colors[1]
+		}
+
+		lcol, err := getStandardColorFor(lightColorName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		dcol, err := getStandardColorFor(darkColorName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		lightScheme[colname] = colorInfo{
+			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A),
+			AdwName: lightColorName,
+		}
+		darkScheme[colname] = colorInfo{
+			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", dcol.R, dcol.G, dcol.B, dcol.A),
+			AdwName: darkColorName,
 		}
 	}
 
