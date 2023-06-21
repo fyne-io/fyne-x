@@ -55,33 +55,38 @@ var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 )
 
 var (
-	tableRowMatcher       = regexp.MustCompile(`(?s)<tr>(.*?)</tr>`)
+	// All colors are described in a table. Each color is a row.
+	tableRowMatcher = regexp.MustCompile(`(?s)<tr>(.*?)</tr>`)
+
+	// The color values are in a <tt> tag, the first one is the light color, the second one is the dark color.
+	// The color is described in a rgba() format, or in a #RRGGBB format.
 	tableColorCellMatcher = regexp.MustCompile(`(?s)<tt>((?:rgba|#).*?)</tt>`)
-	rows                  = [][]string{}
-	colorToGet            = map[string]string{
-		"theme.ColorNameBackground":        "window_bg_color", // or "view_bg_color"
-		"theme.ColorNameForeground":        "window_fg_color", // or "view_fg_color"
-		"theme.ColorNameOverlayBackground": "popover_bg_color",
-		"theme.ColorNamePrimary":           "accent_bg_color",
-		"theme.ColorNameInputBackground":   "view_bg_color", // or "window_bg_color"
-		"theme.ColorNameError":             "destructive_color",
+
+	// map to describe the colors to get from the Adwaita page and the name of the color in the Fyne theme
+	colorToGet = map[string]string{
+		"theme.ColorNameBackground":        "window_bg_color",    // or "view_bg_color"
+		"theme.ColorNameForeground":        "window_fg_color",    // or "view_fg_color"
+		"theme.ColorNameOverlayBackground": "popover_bg_color",   // not sure about this one
+		"theme.ColorNamePrimary":           "accent_bg_color",    // accent_color is the primary color for Adwaita
+		"theme.ColorNameInputBackground":   "view_bg_color",      // or "window_bg_color"
+		"theme.ColorNameError":             "destructive_color",  // or @red_X
 		"theme.ColorNameButton":            "headerbar_bg_color", // it's the closer color to the button color
-		"theme.ColorNameShadow":            "shade_color",
-		// some colors to ensure that the theme is almost complete
-		"theme.ColorGreen":  "success_color",
-		"theme.ColorYellow": "warning_color",
-		"theme.ColorRed":    "destructive_color",
-		"theme.ColorBlue":   "accent_color",
+		"theme.ColorNameShadow":            "shade_color",        // or @dark_X
+		"theme.ColorGreen":                 "success_color",      // or @green_X
+		"theme.ColorYellow":                "warning_color",      // or @yellow_X
+		"theme.ColorRed":                   "destructive_color",  // or @red_X
+		"theme.ColorBlue":                  "accent_color",       // or @blue_X
 	}
 )
 
 type colorInfo struct {
-	Col     string // go formated color
-	AdwName string // Adwaita color name from the documentation
+	Col     string // go formated color (color.RGBA{0x00, 0x00, 0x00, 0x00})
+	AdwName string // Adwaita color name from the documentation without the "@"
 }
 
 func main() {
 
+	rows := [][]string{}
 	darkScheme := map[string]colorInfo{}
 	lightScheme := map[string]colorInfo{}
 
@@ -94,7 +99,27 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	// find all the rows in the tables
 	rows = tableRowMatcher.FindAllStringSubmatch(string(htpage), -1)
+
+	// inline function, to get the color for a specific name and variant
+	getColorFor := func(name, variant string) (col color.RGBA, err error) {
+		for _, row := range rows {
+			// check if the row is for "@success_color" (@ is html encoded)
+			if strings.Contains(row[0], "&#64;"+name) || strings.Contains(row[0], "@"+name) {
+				// the color is in the second column
+				c := tableColorCellMatcher.FindAllStringSubmatch(row[0], -1)
+				switch variant {
+				case "light":
+					col, err = stringToColor(c[0][1])
+				case "dark":
+					col, err = stringToColor(c[1][1])
+				}
+				return
+			}
+		}
+		return
+	}
 
 	for colname, color := range colorToGet {
 		lcol, err := getColorFor(color, "light")
@@ -146,26 +171,6 @@ func main() {
 		out.Write(formatted)
 	}
 
-}
-
-func getColorFor(name, variant string) (col color.RGBA, err error) {
-	// get the color from the adwaita_colors.go
-	// return the color
-	for _, row := range rows {
-		// check if the row is for "@success_color" (@ is html encoded)
-		if strings.Contains(row[0], "&#64;"+name) || strings.Contains(row[0], "@"+name) {
-			// the color is in the second column
-			c := tableColorCellMatcher.FindAllStringSubmatch(row[0], -1)
-			switch variant {
-			case "light":
-				col, err = stringToColor(c[0][1])
-			case "dark":
-				col, err = stringToColor(c[1][1])
-			}
-			return
-		}
-	}
-	return
 }
 
 func stringToColor(s string) (c color.RGBA, err error) {
