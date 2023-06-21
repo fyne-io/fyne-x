@@ -2,7 +2,14 @@
 
 package bluetooth
 
-import "errors"
+import (
+	"errors"
+	/*
+		"github.com/go-ole/go-ole"
+		"runtime"
+
+		"github.com/go-ole/go-ole/oleutil"
+	*/)
 
 // adapter
 type adapterWin struct{}
