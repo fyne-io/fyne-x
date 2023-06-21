@@ -1,12 +1,13 @@
 package main
 
+import "C"
 import (
-	"bluetoothFyne/bluetooth" // testing project
 	"encoding/json"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/driver/bluetooth"
 	"fyne.io/fyne/v2/widget"
 	"strconv"
 )
@@ -18,7 +19,7 @@ func runServerReturnError(window fyne.Window) {
 		return
 	}
 	defer fmt.Println(adapter.Close())
-	serverAutomatic(adapter, window) // autonatic many
+	serverAutomatic(adapter, window)
 }
 
 // handle function

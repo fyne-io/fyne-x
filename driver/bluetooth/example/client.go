@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bluetoothFyne/bluetooth"
 	"encoding/json"
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/driver/bluetooth"
 	"fyne.io/fyne/v2/widget"
 )
 

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"bluetoothFyne/bluetooth"
 	"fmt"
+	"fyne.io/fyne/v2/driver/bluetooth"
 )
 
 func serverManual(adapter bluetooth.Adapter) {
