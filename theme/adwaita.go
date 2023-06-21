@@ -12,14 +12,14 @@ import (
 
 var _ fyne.Theme = (*Adwaita)(nil)
 
-// Adwaita is a theme that follows the Adwaita theme.
-// See: https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html
-type Adwaita struct{}
-
 // AdwaitaTheme returns a new Adwaita theme.
 func AdwaitaTheme() fyne.Theme {
 	return &Adwaita{}
 }
+
+// Adwaita is a theme that follows the Adwaita theme.
+// See: https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html
+type Adwaita struct{}
 
 // Color returns the named color for the current theme.
 func (a *Adwaita) Color(name fyne.ThemeColorName, variant fyne.ThemeVariant) color.Color {

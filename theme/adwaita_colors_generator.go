@@ -69,13 +69,11 @@ var (
 		"theme.ColorNameOverlayBackground": "popover_bg_color",   // not sure about this one
 		"theme.ColorNamePrimary":           "accent_bg_color",    // accent_color is the primary color for Adwaita
 		"theme.ColorNameInputBackground":   "view_bg_color",      // or "window_bg_color"
-		"theme.ColorNameError":             "destructive_color",  // or @red_X
 		"theme.ColorNameButton":            "headerbar_bg_color", // it's the closer color to the button color
 		"theme.ColorNameShadow":            "shade_color",        // or @dark_X
-		"theme.ColorGreen":                 "success_color",      // or @green_X
-		"theme.ColorYellow":                "warning_color",      // or @yellow_X
-		"theme.ColorRed":                   "destructive_color",  // or @red_X
-		"theme.ColorBlue":                  "accent_color",       // or @blue_X
+		"theme.ColorNameSuccess":           "success_color",      // or @green_X
+		"theme.ColorNameWarning":           "warning_color",      // or @yellow_X
+		"theme.ColorNameError":             "destructive_color",  // or @red_X
 	}
 )
 
