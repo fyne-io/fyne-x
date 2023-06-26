@@ -2,7 +2,6 @@ package diagramwidget
 
 import (
 	"image/color"
-	"log"
 	"reflect"
 
 	"fyne.io/fyne/v2"
@@ -296,7 +295,6 @@ func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
 
 // MouseDown responds to MouseDown events. It invokes the callback, if present
 func (dw *DiagramWidget) MouseDown(event *desktop.MouseEvent) {
-	log.Print("MouseDown called")
 	if dw.MouseDownCallback != nil {
 		dw.MouseDownCallback(event)
 	}
@@ -304,7 +302,6 @@ func (dw *DiagramWidget) MouseDown(event *desktop.MouseEvent) {
 
 // MouseIn responds to the mouse moving into the diagram. It presently is a noop
 func (dw *DiagramWidget) MouseIn(event *desktop.MouseEvent) {
-	log.Print("MouseIn called")
 	if dw.MouseInCallback != nil {
 		dw.MouseInCallback(event)
 	}
@@ -312,7 +309,6 @@ func (dw *DiagramWidget) MouseIn(event *desktop.MouseEvent) {
 
 // MouseMoved responds to mouse movements in the diagram. It presently is a noop
 func (dw *DiagramWidget) MouseMoved(event *desktop.MouseEvent) {
-	log.Print("MouseMoved called")
 	if dw.MouseMovedCallback != nil {
 		dw.MouseMovedCallback(event)
 	}
