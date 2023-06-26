@@ -89,7 +89,7 @@ A date entry widget which returns a [time](https://pkg.go.dev/time).
 
 <p align="center" class="align:center;margin:auto">
 
-<img  src="widget-date-input.png"  style="max-width: 100%"  alt="DateInputWidget widget"/>
+<img  src="https://github.com/heejit/fyne-x/blob/master/img/widget-date-input.png"  style="max-width: 100%"  alt="DateInputWidget widget"/>
 
 </p>
 
