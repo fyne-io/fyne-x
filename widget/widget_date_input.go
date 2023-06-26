@@ -9,11 +9,11 @@ import (
 	"time"
 )
 
-const ConstDefaultDateFormat = "02-Jan-2006"
+const defaultDateFormat = "02-Jan-2006"
 
-var DayPos = []int{0, 2}
-var MonthPos = []int{3, 6}
-var YearPos = []int{7, 11}
+var dayPos = []int{0, 2}
+var monthPos = []int{3, 6}
+var yearPos = []int{7, 11}
 
 type MyDateEntry struct {
 	widget.Entry
@@ -29,13 +29,13 @@ func NewMyDateEntry() *MyDateEntry {
 
 // Get current cursor position to Section (Day Month year)
 func (e *MyDateEntry) cursorPosToSection() string {
-	if e.CursorColumn >= DayPos[0] && e.CursorColumn <= DayPos[1] {
+	if e.CursorColumn >= dayPos[0] && e.CursorColumn <= dayPos[1] {
 		return "d"
 	}
-	if e.CursorColumn >= MonthPos[0] && e.CursorColumn <= MonthPos[1] {
+	if e.CursorColumn >= monthPos[0] && e.CursorColumn <= monthPos[1] {
 		return "m"
 	}
-	if e.CursorColumn >= YearPos[0] && e.CursorColumn <= YearPos[1] {
+	if e.CursorColumn >= yearPos[0] && e.CursorColumn <= yearPos[1] {
 		return "y"
 	}
 	return ""
@@ -44,15 +44,15 @@ func (e *MyDateEntry) cursorPosToSection() string {
 // Get Day Month year to cursor postion
 func (e *MyDateEntry) sectionToCursorPos(lsec string) int {
 	if lsec == "d" {
-		return DayPos[0]
+		return dayPos[0]
 	}
 
 	if lsec == "m" {
-		return MonthPos[0]
+		return monthPos[0]
 	}
 
 	if lsec == "y" {
-		return YearPos[0]
+		return yearPos[0]
 	}
 	return -1
 }
@@ -85,7 +85,7 @@ func (e *MyDateEntry) setCurrentDate() {
 
 // update current display
 func (e *MyDateEntry) updateDisplay() {
-	e.SetText(e.currentDateValue.Format(ConstDefaultDateFormat))
+	e.SetText(e.currentDateValue.Format(defaultDateFormat))
 }
 
 // handle key events
@@ -112,13 +112,13 @@ func (e *MyDateEntry) TypedKey(key *fyne.KeyEvent) {
 	}
 
 	if key.Name == fyne.KeyEnter {
-		e.parse_and_update_date()
+		e.parseAndUpdateDate()
 		e.addTime(0, e.cursorPosToSection())
 		return
 	}
 
 	if key.Name == fyne.KeyReturn {
-		e.parse_and_update_date()
+		e.parseAndUpdateDate()
 		e.addTime(0, e.cursorPosToSection())
 		return
 	}
@@ -128,7 +128,7 @@ func (e *MyDateEntry) TypedKey(key *fyne.KeyEvent) {
 
 // this where we are converting current text to date
 func (e *MyDateEntry) FocusLost() {
-	e.parse_and_update_date()
+	e.parseAndUpdateDate()
 	e.Entry.FocusLost()
 }
 
@@ -136,7 +136,7 @@ func (e *MyDateEntry) FocusLost() {
 // we assume 1st part is always Day
 // input = 1 -> 1-CurMonth-CurYear
 // input = 1.5, 1/5, 1-5 -> 1-5-CurYear
-func (e *MyDateEntry) parse_and_update_date() {
+func (e *MyDateEntry) parseAndUpdateDate() {
 	var date_str = e.Text
 
 	e.TextStyle.Bold = false
@@ -184,7 +184,7 @@ func (e *MyDateEntry) parse_and_update_date() {
 	if e.currentDateValue.IsZero() == true {
 		e.SetText("")
 	} else {
-		e.SetText(e.currentDateValue.Format(ConstDefaultDateFormat))
+		e.SetText(e.currentDateValue.Format(defaultDateFormat))
 		e.TextStyle.Bold = true
 	}
 }

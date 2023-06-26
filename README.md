@@ -80,6 +80,34 @@ calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
 ```
 [Demo](./cmd/hexwidget_demo/main.go) available for example usage
 
+
+### DateEntryWidget
+
+  
+
+A date entry widget which returns a [time](https://pkg.go.dev/time).
+
+<p align="center" class="align:center;margin:auto">
+
+<img  src="widget-date-input.png"  style="max-width: 100%"  alt="DateInputWidget widget"/>
+
+</p>
+
+  
+
+To use create a new date entry:
+
+```go
+
+dateEntry := xwidget.NewMyDateEntry()
+
+Get entered date:
+
+dateEntry.ToDate()
+
+```
+[Demo](./cmd/date_input_widget_demo/main.go) available for example usage
+
 ### Animated Gif
 
 A widget that will run animated gifs.
