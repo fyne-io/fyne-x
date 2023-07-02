@@ -125,12 +125,13 @@ var (
 	}
 
 	// map to describe the icons to get from the Adwaita gitlab page and the name of the icon in the Fyne theme
+	// note: all empty icons are those that are not defined yet. We should make some choices about them.
 	iconsToGet = map[string]string{
 		"IconNameCancel":        "symbolic/ui/window-close-symbolic.svg",
 		"IconNameConfirm":       "symbolic/actions/object-select-symbolic.svg",
 		"IconNameDelete":        "symbolic/places/user-trash-symbolic.svg",
 		"IconNameSearch":        "symbolic/actions/system-search-symbolic.svg",
-		"IconNameSearchReplace": "symbolic/actions/system-search-symbolic.svg", // to be changed
+		"IconNameSearchReplace": "",
 		"IconNameMenu":          "symbolic/actions/open-menu-symbolic.svg",
 		"IconNameMenuExpand":    "symbolic/ui/pan-end-symbolic.svg",
 
