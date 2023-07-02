@@ -311,11 +311,11 @@ func generateColorScheme() error {
 	for colname, color := range colorToGet {
 		lcol, err := getWidgetColorFor(color, "light")
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("failed to get light color for %s: %w", color, err)
 		}
 		dcol, err := getWidgetColorFor(color, "dark")
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("failed to get dark color for %s: %w", color, err)
 		}
 		lightScheme[colname] = colorInfo{
 			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A),
@@ -338,11 +338,11 @@ func generateColorScheme() error {
 
 		lcol, err := getStandardColorFor(lightColorName)
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("failed to get light color for %s: %w", lightColorName, err)
 		}
 		dcol, err := getStandardColorFor(darkColorName)
 		if err != nil {
-			log.Fatal(err)
+			return fmt.Errorf("failed to get dark color for %s: %w", darkColorName, err)
 		}
 		lightScheme[colname] = colorInfo{
 			Col:     fmt.Sprintf("color.RGBA{0x%02x, 0x%02x, 0x%02x, 0x%02x}", lcol.R, lcol.G, lcol.B, lcol.A),
@@ -353,12 +353,6 @@ func generateColorScheme() error {
 			AdwName: darkColorName,
 		}
 	}
-
-	out, err := os.Create(colorSchemeOutput)
-	if err != nil {
-		return fmt.Errorf("failed to create output file: %w", err)
-	}
-	defer out.Close()
 
 	tpl := template.New("source")
 	tpl, err = tpl.Parse(colorSourceTpl)
@@ -375,33 +369,15 @@ func generateColorScheme() error {
 		DarkScheme:  darkScheme,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to execute template: %w", err)
 	}
 
 	// format the file
 	if formatted, err := format.Source(buffer.Bytes()); err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to format source: %w", err)
 	} else {
-		out.Write(formatted)
+		return ioutil.WriteFile(colorSchemeOutput, formatted, 0644)
 	}
-	return nil
-}
-
-// stringToColor converts a string to a color.RGBA
-func stringToColor(s string) (c color.RGBA, err error) {
-	c.A = 0xff
-	switch len(s) {
-	case 7:
-		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
-	case 9:
-		_, err = fmt.Sscanf(s, "#%02x%02x%02x%02x", &c.R, &c.G, &c.B, &c.A)
-	default:
-		// rgba(...) format
-		var a float32
-		_, err = fmt.Sscanf(s, "rgba(%d, %d, %d, %f)", &c.R, &c.G, &c.B, &a)
-		c.A = uint8(a * 255)
-	}
-	return
 }
 
 // generateIcons generates the icons file from the Adwaita icon theme. It downloads the theme from the gitlab repository
@@ -460,14 +436,8 @@ func generateIcons() error {
 		}
 
 		filecontent := res.Content()
-		//// replace fill= to fill=none on the firts path
-		//if strings.Contains(file, "symbolic") {
-		//	filecontent = regexp.MustCompile(`fill="[^"]*"`).ReplaceAll(filecontent, []byte(`fill="#000000"`))
-		//}
-		icons[name] = struct {
-			StaticName string
-			Content    string
-		}{
+
+		icons[name] = iconInfo{
 			StaticName: filepath.Base(iconfile),
 			Content:    string(filecontent),
 		}
@@ -489,19 +459,29 @@ func generateIcons() error {
 		Icons: icons,
 	})
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("Error executing template: %w", err)
 	}
 
-	result := buffer.Bytes()
-
-	//result, err = format.Source(result)
-	//if err != nil {
-	//	return fmt.Errorf("error formatting source: %w", err)
-	//}
-
-	err = ioutil.WriteFile(iconsOutput, result, 0644)
-	if err != nil {
-		return fmt.Errorf("error writing source: %w\n%s", err, string(iconSourceTpl))
+	if formatted, err := format.Source(buffer.Bytes()); err != nil {
+		return fmt.Errorf("error formatting source: %w", err)
+	} else {
+		return ioutil.WriteFile(iconsOutput, formatted, 0644)
 	}
-	return nil
+}
+
+// stringToColor converts a string to a color.RGBA
+func stringToColor(s string) (c color.RGBA, err error) {
+	c.A = 0xff
+	switch len(s) {
+	case 7:
+		_, err = fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+	case 9:
+		_, err = fmt.Sscanf(s, "#%02x%02x%02x%02x", &c.R, &c.G, &c.B, &c.A)
+	default:
+		// rgba(...) format
+		var a float32
+		_, err = fmt.Sscanf(s, "rgba(%d, %d, %d, %f)", &c.R, &c.G, &c.B, &a)
+		c.A = uint8(a * 255)
+	}
+	return
 }
