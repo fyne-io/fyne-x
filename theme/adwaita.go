@@ -43,6 +43,9 @@ func (a *Adwaita) Font(style fyne.TextStyle) fyne.Resource {
 
 // Icon returns the named resource for the current theme.
 func (a *Adwaita) Icon(name fyne.ThemeIconName) fyne.Resource {
+	if icon, ok := adwaitaIcons[name]; ok {
+		return icon
+	}
 	return theme.DefaultTheme().Icon(name)
 }
 
