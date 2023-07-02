@@ -238,7 +238,6 @@ type colorInfo struct {
 	Col     string // go formated color (color.RGBA{0x00, 0x00, 0x00, 0x00})
 	AdwName string // Adwaita color name from the documentation without the "@"
 }
-
 type iconInfo struct {
 	StaticName string // the theme name of the icon for Fyne
 	Content    string // the content of the icon, SVG content
@@ -254,108 +253,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-}
-
-// generateIcons generates the icons file from the Adwaita icon theme. It downloads the theme from the gitlab repository
-// as a tar file and extracts it in a temporary directory.
-// Then, using the icons map, it get the corresponding icon and generate the go file.
-func generateIcons() error {
-
-	// get https://gitlab.gnome.org/GNOME/adwaita-icon-theme/-/archive/master/adwaita-icon-theme-master.tar?path=Adwaita as a tar file and extract it in memory
-	resp, err := http.Get(adwaitaIconsPage)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	tarReader := tar.NewReader(resp.Body)
-
-	// extract in a temporary directory
-	tmpDir, err := ioutil.TempDir("", "adwaita")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(tmpDir)
-	for {
-		header, err := tarReader.Next()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return err
-
-		}
-		if header.Typeflag == tar.TypeReg {
-			target := filepath.Join(tmpDir, header.Name)
-			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
-				return err
-			}
-			file, err := os.Create(target)
-			if err != nil {
-				return err
-			}
-			defer file.Close()
-			if _, err := io.Copy(file, tarReader); err != nil {
-				return err
-			}
-		}
-	}
-
-	icons := map[string]iconInfo{}
-	for name, iconfile := range iconsToGet {
-		if iconfile == "" {
-			continue
-		}
-		res, err := fyne.LoadResourceFromPath(filepath.Join(tmpDir, "adwaita-icon-theme-master-Adwaita", "Adwaita", iconfile))
-		if err != nil {
-			log.Println("Error bundeling", name, "from", iconfile, ":", err)
-			continue
-		}
-
-		filecontent := res.Content()
-		//// replace fill= to fill=none on the firts path
-		//if strings.Contains(file, "symbolic") {
-		//	filecontent = regexp.MustCompile(`fill="[^"]*"`).ReplaceAll(filecontent, []byte(`fill="#000000"`))
-		//}
-		icons[name] = struct {
-			StaticName string
-			Content    string
-		}{
-			StaticName: filepath.Base(iconfile),
-			Content:    string(filecontent),
-		}
-	}
-
-	tpl := template.New("source")
-	tpl = tpl.Funcs(template.FuncMap{
-		"contains": strings.Contains,
-	})
-	tpl, err = tpl.Parse(iconSourceTpl)
-	if err != nil {
-		return fmt.Errorf("Error parsing template: %w", err)
-	}
-	// generate the source
-	buffer := bytes.NewBuffer(nil)
-	err = tpl.Execute(buffer, struct {
-		Icons map[string]iconInfo
-	}{
-		Icons: icons,
-	})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	result := buffer.Bytes()
-
-	//result, err = format.Source(result)
-	//if err != nil {
-	//	return fmt.Errorf("error formatting source: %w", err)
-	//}
-
-	err = ioutil.WriteFile(iconsOutput, result, 0644)
-	if err != nil {
-		return fmt.Errorf("error writing source: %w\n%s", err, string(iconSourceTpl))
-	}
-	return nil
 }
 
 // generateColorScheme generates the color scheme file from the Adwaita documentation. It downloads the documentation
@@ -505,4 +402,106 @@ func stringToColor(s string) (c color.RGBA, err error) {
 		c.A = uint8(a * 255)
 	}
 	return
+}
+
+// generateIcons generates the icons file from the Adwaita icon theme. It downloads the theme from the gitlab repository
+// as a tar file and extracts it in a temporary directory.
+// Then, using the icons map, it get the corresponding icon and generate the go file.
+func generateIcons() error {
+
+	// get https://gitlab.gnome.org/GNOME/adwaita-icon-theme/-/archive/master/adwaita-icon-theme-master.tar?path=Adwaita as a tar file and extract it in memory
+	resp, err := http.Get(adwaitaIconsPage)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	tarReader := tar.NewReader(resp.Body)
+
+	// extract in a temporary directory
+	tmpDir, err := ioutil.TempDir("", "adwaita")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmpDir)
+	for {
+		header, err := tarReader.Next()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return err
+
+		}
+		if header.Typeflag == tar.TypeReg {
+			target := filepath.Join(tmpDir, header.Name)
+			if err := os.MkdirAll(filepath.Dir(target), 0755); err != nil {
+				return err
+			}
+			file, err := os.Create(target)
+			if err != nil {
+				return err
+			}
+			defer file.Close()
+			if _, err := io.Copy(file, tarReader); err != nil {
+				return err
+			}
+		}
+	}
+
+	icons := map[string]iconInfo{}
+	for name, iconfile := range iconsToGet {
+		if iconfile == "" {
+			continue
+		}
+		res, err := fyne.LoadResourceFromPath(filepath.Join(tmpDir, "adwaita-icon-theme-master-Adwaita", "Adwaita", iconfile))
+		if err != nil {
+			log.Println("Error bundeling", name, "from", iconfile, ":", err)
+			continue
+		}
+
+		filecontent := res.Content()
+		//// replace fill= to fill=none on the firts path
+		//if strings.Contains(file, "symbolic") {
+		//	filecontent = regexp.MustCompile(`fill="[^"]*"`).ReplaceAll(filecontent, []byte(`fill="#000000"`))
+		//}
+		icons[name] = struct {
+			StaticName string
+			Content    string
+		}{
+			StaticName: filepath.Base(iconfile),
+			Content:    string(filecontent),
+		}
+	}
+
+	tpl := template.New("source")
+	tpl = tpl.Funcs(template.FuncMap{
+		"contains": strings.Contains,
+	})
+	tpl, err = tpl.Parse(iconSourceTpl)
+	if err != nil {
+		return fmt.Errorf("Error parsing template: %w", err)
+	}
+	// generate the source
+	buffer := bytes.NewBuffer(nil)
+	err = tpl.Execute(buffer, struct {
+		Icons map[string]iconInfo
+	}{
+		Icons: icons,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	result := buffer.Bytes()
+
+	//result, err = format.Source(result)
+	//if err != nil {
+	//	return fmt.Errorf("error formatting source: %w", err)
+	//}
+
+	err = ioutil.WriteFile(iconsOutput, result, 0644)
+	if err != nil {
+		return fmt.Errorf("error writing source: %w\n%s", err, string(iconSourceTpl))
+	}
+	return nil
 }

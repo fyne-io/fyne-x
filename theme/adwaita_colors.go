@@ -35,7 +35,6 @@ var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorRed:                   color.RGBA{0xc0, 0x1c, 0x28, 0xff}, // Adwaita color name @red_4
 	theme.ColorYellow:                color.RGBA{0xf6, 0xd3, 0x2d, 0xff}, // Adwaita color name @yellow_3
 }
-
 var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorBlue:                  color.RGBA{0x35, 0x84, 0xe4, 0xff}, // Adwaita color name @blue_3
 	theme.ColorBrown:                 color.RGBA{0x98, 0x6a, 0x44, 0xff}, // Adwaita color name @brown_3
