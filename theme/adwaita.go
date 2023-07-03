@@ -1,4 +1,3 @@
-//go:generate go run ./adwaita_theme_generator.go
 package theme
 
 import (
@@ -7,6 +6,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
 )
+
+//go:generate go run ./adwaita_theme_generator.go
 
 var _ fyne.Theme = (*Adwaita)(nil)
 
