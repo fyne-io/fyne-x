@@ -31,8 +31,8 @@ var segmentLookupTable []uint8 = []uint8{
 }
 
 // size of the hex widget
-const defaultHexHeight float32 = 62.0
-const defaultHexWidth float32 = defaultHexHeight * (7.8 / 14.0)
+const defaultHexHeight float32 = 58.0
+const defaultHexWidth float32 = defaultHexHeight * (8 / 14.0)
 
 // slant angle
 const defaultHexOffset float32 = 0.1 * defaultHexWidth
@@ -108,16 +108,16 @@ func (h *hexRenderer) Objects() []fyne.CanvasObject {
 // of the display mapped active-low onto 7 state bits, with segment 0 in
 // the least significant bit.
 //
-//       0
-//     -----
-//    |     |
-//  5 |     | 1
-//    |  6  |
-//     -----
-//    |     |
-//  4 |     | 2
-//    |  3  |
-//     -----
+//	     0
+//	   -----
+//	  |     |
+//	5 |     | 1
+//	  |  6  |
+//	   -----
+//	  |     |
+//	4 |     | 2
+//	  |  3  |
+//	   -----
 type HexWidget struct {
 	widget.BaseWidget
 	segments uint8
