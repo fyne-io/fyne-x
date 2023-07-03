@@ -61,13 +61,13 @@ import (
 
 var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .DarkScheme }}
-    {{ $key }}: {{ printf "color.RGBA{R: 0x%02x, G: 0x%02x, B: 0x%02x, A: 0x%02x}" $value.Col.R $value.Col.G $value.Col.B $value.Col.A }}, // Adwaita color name @{{$value.AdwName}}
+    {{ $key }}: {{ printf "color.NRGBA{R: 0x%02x, G: 0x%02x, B: 0x%02x, A: 0x%02x}" $value.Col.R $value.Col.G $value.Col.B $value.Col.A }}, // Adwaita color name @{{$value.AdwName}}
 {{- end }}
 }
 
 var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 {{- range $key, $value := .LightScheme }}
-    {{ $key }}: {{ printf "color.RGBA{R: 0x%02x, G: 0x%02X, B: 0x%02x, A: 0x%02x}" $value.Col.R $value.Col.G $value.Col.B $value.Col.A }}, // Adwaita color name @{{$value.AdwName}}
+    {{ $key }}: {{ printf "color.NRGBA{R: 0x%02x, G: 0x%02X, B: 0x%02x, A: 0x%02x}" $value.Col.R $value.Col.G $value.Col.B $value.Col.A }}, // Adwaita color name @{{$value.AdwName}}
 {{- end }}
 }`
 	// the template where to bundle the icons in a map
@@ -140,6 +140,8 @@ var (
 		"theme.ColorPurple": "purple_3",
 		"theme.ColorBrown":  "brown_3",
 		"theme.ColorGray":   "dark_2",
+		// specific
+		"theme.ColorNameScrollBar": "dark_5,light_1", // and we will change the alpha value later
 	}
 
 	// map to describe the icons to get from the Adwaita gitlab page and the name of the icon in the Fyne theme
@@ -368,6 +370,13 @@ func generateColorScheme() error {
 		if err != nil {
 			return fmt.Errorf("failed to get dark color for %s: %w", darkColorName, err)
 		}
+
+		// special case, alpha channel is 0x5b for scrollbar
+		if colname == "theme.ColorNameScrollBar" {
+			lcol.A = 0x5b
+			dcol.A = 0x5b
+		}
+
 		lightScheme[colname] = colorInfo{
 			Col:     lcol,
 			AdwName: lightColorName,
