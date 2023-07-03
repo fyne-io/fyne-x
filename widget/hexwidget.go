@@ -166,11 +166,6 @@ func (h *HexWidget) SetSlant(s float32) {
 	h.Refresh()
 }
 
-func setLineEndpoints(l *canvas.Line, pt1, pt2 fyne.Position) {
-	l.Move(fyne.NewPos(float32(pt1.X), float32(pt1.Y)))
-	l.Resize(fyne.NewSize(float32(pt2.X-pt1.X), float32(pt2.Y-pt1.Y)))
-}
-
 func (h *HexWidget) getSegmentColor(segno int) color.RGBA {
 	if (h.segments & (1 << uint(segno))) == 0 {
 		return h.hexOnColor
@@ -230,4 +225,9 @@ func (h *HexWidget) UpdateSegments(segments uint8) {
 func (h *HexWidget) Set(val uint) {
 	val = val % 16
 	h.UpdateSegments(segmentLookupTable[val])
+}
+
+func setLineEndpoints(l *canvas.Line, pt1, pt2 fyne.Position) {
+	l.Position1 = pt1
+	l.Position2 = pt2
 }
