@@ -23,11 +23,11 @@ var adwaitaDarkScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorNameError:             color.NRGBA{R: 0xc0, G: 0x1c, B: 0x28, A: 0xff}, // Adwaita color name @error_bg_color
 	theme.ColorNameForeground:        color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, // Adwaita color name @window_fg_color
 	theme.ColorNameInputBackground:   color.NRGBA{R: 0x1e, G: 0x1e, B: 0x1e, A: 0xff}, // Adwaita color name @view_bg_color
-	theme.ColorNameMenuBackground:    color.NRGBA{R: 0x1e, G: 0x1e, B: 0x1e, A: 0xff}, // Adwaita color name @view_bg_color
+	theme.ColorNameMenuBackground:    color.NRGBA{R: 0x38, G: 0x38, B: 0x38, A: 0xff}, // Adwaita color name @popover_bg_color
 	theme.ColorNameOverlayBackground: color.NRGBA{R: 0x1e, G: 0x1e, B: 0x1e, A: 0xff}, // Adwaita color name @view_bg_color
 	theme.ColorNamePrimary:           color.NRGBA{R: 0x35, G: 0x84, B: 0xe4, A: 0xff}, // Adwaita color name @accent_bg_color
 	theme.ColorNameScrollBar:         color.NRGBA{R: 0xff, G: 0xff, B: 0xff, A: 0x5b}, // Adwaita color name @light_1
-	theme.ColorNameSelection:         color.NRGBA{R: 0x35, G: 0x84, B: 0xe4, A: 0xff}, // Adwaita color name @accent_bg_color
+	theme.ColorNameSelection:         color.NRGBA{R: 0x30, G: 0x30, B: 0x30, A: 0xff}, // Adwaita color name @headerbar_bg_color
 	theme.ColorNameShadow:            color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x5b}, // Adwaita color name @shade_color
 	theme.ColorNameSuccess:           color.NRGBA{R: 0x26, G: 0xa2, B: 0x69, A: 0xff}, // Adwaita color name @success_bg_color
 	theme.ColorNameWarning:           color.NRGBA{R: 0xcd, G: 0x93, B: 0x09, A: 0xff}, // Adwaita color name @warning_bg_color
@@ -47,11 +47,11 @@ var adwaitaLightScheme = map[fyne.ThemeColorName]color.Color{
 	theme.ColorNameError:             color.NRGBA{R: 0xe0, G: 0x1B, B: 0x24, A: 0xff}, // Adwaita color name @error_bg_color
 	theme.ColorNameForeground:        color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0xcc}, // Adwaita color name @window_fg_color
 	theme.ColorNameInputBackground:   color.NRGBA{R: 0xff, G: 0xFF, B: 0xff, A: 0xff}, // Adwaita color name @view_bg_color
-	theme.ColorNameMenuBackground:    color.NRGBA{R: 0xff, G: 0xFF, B: 0xff, A: 0xff}, // Adwaita color name @view_bg_color
+	theme.ColorNameMenuBackground:    color.NRGBA{R: 0xff, G: 0xFF, B: 0xff, A: 0xff}, // Adwaita color name @popover_bg_color
 	theme.ColorNameOverlayBackground: color.NRGBA{R: 0xff, G: 0xFF, B: 0xff, A: 0xff}, // Adwaita color name @view_bg_color
 	theme.ColorNamePrimary:           color.NRGBA{R: 0x35, G: 0x84, B: 0xe4, A: 0xff}, // Adwaita color name @accent_bg_color
 	theme.ColorNameScrollBar:         color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x5b}, // Adwaita color name @dark_5
-	theme.ColorNameSelection:         color.NRGBA{R: 0x35, G: 0x84, B: 0xe4, A: 0xff}, // Adwaita color name @accent_bg_color
+	theme.ColorNameSelection:         color.NRGBA{R: 0xeb, G: 0xEB, B: 0xeb, A: 0xff}, // Adwaita color name @headerbar_bg_color
 	theme.ColorNameShadow:            color.NRGBA{R: 0x00, G: 0x00, B: 0x00, A: 0x11}, // Adwaita color name @shade_color
 	theme.ColorNameSuccess:           color.NRGBA{R: 0x2e, G: 0xC2, B: 0x7e, A: 0xff}, // Adwaita color name @success_bg_color
 	theme.ColorNameWarning:           color.NRGBA{R: 0xe5, G: 0xA5, B: 0x0a, A: 0xff}, // Adwaita color name @warning_bg_color

@@ -115,10 +115,10 @@ var (
 
 	// map to describe the colors to get from the Adwaita page and the name of the color in the Fyne theme
 	colorToGet = map[string]string{
-		"theme.ColorNameBackground":        "window_bg_color", // or "view_bg_color"
-		"theme.ColorNameForeground":        "window_fg_color", // or "view_fg_color"
-		"theme.ColorNameMenuBackground":    "view_bg_color",   // not sure about this one
-		"theme.ColorNameSelection":         "accent_bg_color",
+		"theme.ColorNameBackground":        "window_bg_color",  // or "view_bg_color"
+		"theme.ColorNameForeground":        "window_fg_color",  // or "view_fg_color"
+		"theme.ColorNameMenuBackground":    "popover_bg_color", // not sure about this one
+		"theme.ColorNameSelection":         "headerbar_bg_color",
 		"theme.ColorNameOverlayBackground": "view_bg_color",      // not sure about this one
 		"theme.ColorNamePrimary":           "accent_bg_color",    // accent_color is the primary color for Adwaita
 		"theme.ColorNameInputBackground":   "view_bg_color",      // or "window_bg_color"
