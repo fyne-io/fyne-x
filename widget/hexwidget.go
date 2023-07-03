@@ -5,7 +5,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -32,8 +31,8 @@ var segmentLookupTable []uint8 = []uint8{
 }
 
 // size of the hex widget
-const defaultHexHeight float32 = 75.0
-const defaultHexWidth float32 = defaultHexHeight * (7.5 / 14.0)
+const defaultHexHeight float32 = 62.0
+const defaultHexWidth float32 = defaultHexHeight * (7.8 / 14.0)
 
 // slant angle
 const defaultHexOffset float32 = 0.1 * defaultHexWidth
@@ -48,8 +47,8 @@ type hexRenderer struct {
 
 func (h *hexRenderer) MinSize() fyne.Size {
 	return fyne.NewSize(
-		h.hex.size.Width+theme.Padding()*2+2*h.hex.hexOffset,
-		h.hex.size.Height+theme.Padding()*2,
+		h.hex.size.Width+h.hex.hexOffset,
+		h.hex.size.Height,
 	)
 }
 
