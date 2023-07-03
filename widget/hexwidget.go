@@ -37,8 +37,8 @@ const defaultHexWidth float32 = defaultHexHeight * (8 / 14.0)
 // slant angle
 const defaultHexOffset float32 = 0.1 * defaultHexWidth
 
-var defaultHexOnColor color.RGBA = color.RGBA{200, 25, 25, 255}
-var defaultHexOffColor color.RGBA = color.RGBA{25, 15, 15, 64}
+var defaultHexOnColor color.Color = color.RGBA{200, 25, 25, 255}
+var defaultHexOffColor color.Color = color.RGBA{25, 15, 15, 64}
 
 type hexRenderer struct {
 	hex            *HexWidget
@@ -129,22 +129,22 @@ type HexWidget struct {
 	hexOffset float32
 
 	// color when the hex is on
-	hexOnColor color.RGBA
+	hexOnColor color.Color
 
 	// color when the hex is off
-	hexOffColor color.RGBA
+	hexOffColor color.Color
 }
 
 // SetOnColor changes the color that segments are shown as when they are
 // active/on.
-func (h *HexWidget) SetOnColor(c color.RGBA) {
+func (h *HexWidget) SetOnColor(c color.Color) {
 	h.hexOnColor = c
 	h.Refresh()
 }
 
 // SetOffColor changes the color that segments are shown as when they are
 // inactive/off.
-func (h *HexWidget) SetOffColor(c color.RGBA) {
+func (h *HexWidget) SetOffColor(c color.Color) {
 	h.hexOffColor = c
 	h.Refresh()
 }
@@ -164,7 +164,7 @@ func (h *HexWidget) SetSlant(s float32) {
 	h.Refresh()
 }
 
-func (h *HexWidget) getSegmentColor(segno int) color.RGBA {
+func (h *HexWidget) getSegmentColor(segno int) color.Color {
 	if (h.segments & (1 << uint(segno))) == 0 {
 		return h.hexOnColor
 	}
