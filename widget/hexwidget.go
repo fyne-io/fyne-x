@@ -52,26 +52,12 @@ func (h *hexRenderer) MinSize() fyne.Size {
 	)
 }
 
-func (h *hexRenderer) Layout(size fyne.Size) {
-}
-
-func (h *hexRenderer) ApplyTheme() {
-}
-
-func (h *hexRenderer) Refresh() {
+func (h *hexRenderer) Layout(_ fyne.Size) {
 	hexSegmentWidth := 0.2 * h.hex.size.Width
-	hexSegmentVLength := (9.14 / (2 * 14)) * h.hex.size.Height
-	hexSegmentHLength := (4.8 / 7.5) * h.hex.size.Width
 
-	h.segmentObjects[0].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[1].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[2].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[3].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[4].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[5].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[6].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-
-	pos := fyne.NewPos(h.hex.hexOffset, 0)
+	hexSegmentVLength := (h.hex.size.Height - hexSegmentWidth) / 2
+	hexSegmentHLength := h.hex.size.Width - hexSegmentWidth
+	pos := fyne.NewPos(h.hex.hexOffset, hexSegmentWidth/2)
 
 	pt0Center := fyne.NewPos(pos.X+h.hex.size.Width/2.0+h.hex.hexOffset, pos.Y)
 	pt05 := fyne.NewPos(float32(pt0Center.X)-(hexSegmentHLength/2), pt0Center.Y)
@@ -92,6 +78,18 @@ func (h *hexRenderer) Refresh() {
 	setLineEndpoints(h.segmentObjects[4].(*canvas.Line), pt34, pt65)
 	setLineEndpoints(h.segmentObjects[5].(*canvas.Line), pt65, pt05)
 	setLineEndpoints(h.segmentObjects[6].(*canvas.Line), pt65, pt61)
+}
+
+func (h *hexRenderer) Refresh() {
+	hexSegmentWidth := 0.2 * h.hex.size.Width
+
+	h.segmentObjects[0].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[1].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[2].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[3].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[4].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[5].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[6].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 
 	for i, v := range h.segmentObjects {
 		v.(*canvas.Line).StrokeColor = h.hex.getSegmentColor(i)
