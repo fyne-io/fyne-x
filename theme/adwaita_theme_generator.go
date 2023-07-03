@@ -28,6 +28,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -168,7 +169,7 @@ var (
 
 		"IconNameColorAchromatic": "",
 		"IconNameColorChromatic":  "",
-		"IconNameColorPalette":    "",
+		"IconNameColorPalette":    "symbolic/categories/applications-graphics-symbolic.svg",
 
 		"IconNameDocument":       "symbolic/mimetypes/text-x-generic-symbolic.svg",
 		"IconNameDocumentCreate": "symbolic/actions/document-new-symbolic.svg",
@@ -210,7 +211,7 @@ var (
 		"IconNameArrowDropDown": "symbolic/actions/go-down-symbolic.svg",
 		"IconNameArrowDropUp":   "symbolic/actions/go-up-symbolic.svg",
 
-		"IconNameFile":            "",
+		"IconNameFile":            "scalable/mimetypes/application-x-generic.svg",
 		"IconNameFileApplication": "scalable/mimetypes/application-x-executable.svg",
 		"IconNameFileAudio":       "scalable/mimetypes/audio-x-generic.svg",
 		"IconNameFileImage":       "scalable/mimetypes/image-x-generic.svg",
@@ -249,6 +250,11 @@ var (
 
 		"IconNameList": "symbolic/actions/view-list-symbolic.svg",
 		"IconNameGrid": "symbolic/actions/view-grid-symbolic.svg",
+	}
+	inkscape, _ = exec.LookPath("inkscape")
+	forcePNG    = map[string]bool{
+		"IconNameFileAudio":       true,
+		"IconNameFileApplication": true,
 	}
 )
 
@@ -450,16 +456,23 @@ func generateIcons() error {
 		if iconfile == "" {
 			continue
 		}
-		res, err := fyne.LoadResourceFromPath(filepath.Join(tmpDir, "adwaita-icon-theme-master-Adwaita", "Adwaita", iconfile))
+
+		iconPath := filepath.Join(tmpDir, "adwaita-icon-theme-master-Adwaita", "Adwaita", iconfile)
+		if _, ok := forcePNG[name]; ok {
+			svgToPng(iconPath)
+			iconPath = strings.TrimSuffix(iconPath, ".svg") + ".png"
+		}
+
+		res, err := fyne.LoadResourceFromPath(iconPath)
 		if err != nil {
-			log.Println("Error bundeling", name, "from", iconfile, ":", err)
+			log.Println("Error bundeling", name, "from", iconPath, ":", err)
 			continue
 		}
 
 		filecontent := res.Content()
 
 		icons[name] = iconInfo{
-			StaticName: filepath.Base(iconfile),
+			StaticName: filepath.Base(iconPath),
 			Content:    string(filecontent),
 		}
 	}
@@ -488,6 +501,24 @@ func generateIcons() error {
 	} else {
 		return ioutil.WriteFile(iconsOutput, formatted, 0644)
 	}
+}
+
+// svgToPng converts an SVG file to a PNG file using inkscape.
+//
+// TODO: fix oksvg to support all SVG files.
+func svgToPng(filename string) error {
+	// use inkscape to fix SVG files
+	if inkscape == "" {
+		return fmt.Errorf("inkscape not found")
+	}
+	log.Println("Converting", filename, "to PNG")
+	cmd := exec.Command(
+		inkscape,
+		"--export-type=png",
+		"--export-area-drawing",
+		"--vacuum-defs",
+		filename)
+	return cmd.Run()
 }
 
 // stringToColor converts a string to a color.RGBA
