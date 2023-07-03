@@ -1,3 +1,4 @@
+//go:generate go run ./adwaita_theme_generator.go
 package theme
 
 import (
@@ -7,12 +8,9 @@ import (
 	"fyne.io/fyne/v2/theme"
 )
 
-// must be in sync with adwaita_colors_generator.go - getting the colors from the Adwaita document page.
-//go:generate go run ./adwaita_theme_generator.go
-
 var _ fyne.Theme = (*Adwaita)(nil)
 
-// Adwaita is a theme that follows the Adwaita theme.
+// Adwaita is a theme that follows the Adwaita theme. It provides a light and dark theme + icons.
 // See: https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/named-colors.html
 type Adwaita struct{}
 
