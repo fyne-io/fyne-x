@@ -129,9 +129,9 @@ var (
 	iconsToGet = map[string]string{
 		"IconNameCancel":        "symbolic/ui/window-close-symbolic.svg",
 		"IconNameConfirm":       "symbolic/actions/object-select-symbolic.svg",
-		"IconNameDelete":        "symbolic/places/user-trash-symbolic.svg",
-		"IconNameSearch":        "symbolic/actions/system-search-symbolic.svg",
-		"IconNameSearchReplace": "",
+		"IconNameDelete":        "symbolic/actions/edit-delete-symbolic.svg",
+		"IconNameSearch":        "symbolic/actions/edit-find-symbolic.svg",
+		"IconNameSearchReplace": "symbolic/actions/edit-find-replace-symbolic.svg",
 		"IconNameMenu":          "symbolic/actions/open-menu-symbolic.svg",
 		"IconNameMenuExpand":    "symbolic/ui/pan-end-symbolic.svg",
 
@@ -166,12 +166,12 @@ var (
 		"IconNameWarning":  "symbolic/status/dialog-warning-symbolic.svg",
 		"IconNameError":    "symbolic/status/dialog-error-symbolic.svg",
 
-		"IconNameMailAttachment": "",
-		"IconNameMailCompose":    "",
-		"IconNameMailForward":    "",
-		"IconNameMailReply":      "",
-		"IconNameMailReplyAll":   "",
-		"IconNameMailSend":       "",
+		"IconNameMailAttachment": "symbolic/status/mail-attachment-symbolic.svg",
+		"IconNameMailCompose":    "symbolic/actions/mail-message-new-symbolic.svg",
+		"IconNameMailForward":    "symbolic/actions/mail-forward-symbolic.svg",
+		"IconNameMailReply":      "symbolic/actions/mail-reply-sender-symbolic.svg",
+		"IconNameMailReplyAll":   "symbolic/actions/mail-reply-all-symbolic.svg",
+		"IconNameMailSend":       "symbolic/actions/mail-send-symbolic.svg",
 
 		"IconNameMediaMusic":        "symbolic/mimetypes/audio-x-generic-symbolic.svg",
 		"IconNameMediaPhoto":        "symbolic/mimetypes/image-x-generic-symbolic.svg",
@@ -207,19 +207,19 @@ var (
 		"IconNameHome":            "symbolic/places/user-home-symbolic.svg",
 		"IconNameSettings":        "symbolic/categories/applications-system-symbolic.svg",
 
-		"IconNameViewFullScreen": "",
-		"IconNameViewRefresh":    "",
-		"IconNameViewRestore":    "",
-		"IconNameViewZoomFit":    "",
-		"IconNameViewZoomIn":     "",
-		"IconNameViewZoomOut":    "",
+		"IconNameViewFullScreen": "symbolic/actions/view-fullscreen-symbolic.svg",
+		"IconNameViewRefresh":    "symbolic/actions/view-refresh-symbolic.svg",
+		"IconNameViewRestore":    "symbolic/actions/view-restore-symbolic.svg",
+		"IconNameViewZoomFit":    "symbolic/actions/zoom-fit-best-symbolic.svg",
+		"IconNameViewZoomIn":     "symbolic/actions/zoom-in-symbolic.svg",
+		"IconNameViewZoomOut":    "symbolic/actions/zoom-out-symbolic.svg",
 
-		"IconNameVisibility":    "",
-		"IconNameVisibilityOff": "",
+		"IconNameVisibility":    "symbolic/actions/view-reveal-symbolic.svg",
+		"IconNameVisibilityOff": "symbolic/actions/view-conceal-symbolic.svg",
 
-		"IconNameVolumeDown": "",
-		"IconNameVolumeMute": "",
-		"IconNameVolumeUp":   "",
+		"IconNameVolumeDown": "symbolic/status/audio-volume-low-symbolic.svg",
+		"IconNameVolumeMute": "symbolic/status/audio-volume-muted-symbolic.svg",
+		"IconNameVolumeUp":   "symbolic/status/audio-volume-high-symbolic.svg",
 
 		"IconNameDownload": "symbolic/places/folder-download-symbolic.svg",
 		"IconNameComputer": "symbolic/devices/computer-symbolic.svg",
@@ -228,7 +228,7 @@ var (
 
 		"IconNameAccount": "symbolic/status/avatar-default-symbolic.svg",
 		"IconNameLogin":   "",
-		"IconNameLogout":  "",
+		"IconNameLogout":  "symbolic/actions/system-log-out-symbolic.svg",
 
 		"IconNameList": "symbolic/actions/view-list-symbolic.svg",
 		"IconNameGrid": "symbolic/actions/view-grid-symbolic.svg",
