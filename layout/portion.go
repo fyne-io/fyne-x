@@ -75,7 +75,7 @@ func NewHPortion(Portions []float32) *HPortion {
 
 var _ fyne.Layout = (*VPortion)(nil)
 
-// HPortion allows the canvas objects to be divided into portions of the height.
+// VPortion allows the canvas objects to be divided into portions of the height.
 // The length of the Portions slice needs to be equal to the amount of canvas objects.
 type VPortion struct {
 	Portions []float32
