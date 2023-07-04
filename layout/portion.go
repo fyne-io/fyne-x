@@ -9,10 +9,13 @@ import (
 
 var _ fyne.Layout = (*HPortion)(nil)
 
+// HPortion allows the canvas objects to be divided into portions of the width.
+// The length of the Portions slice needs to be equal to the amount of canvas objects.
 type HPortion struct {
 	Portions []float32
 }
 
+// Layout sets the size and position of the canvas objects.
 func (p *HPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	if len(p.Portions) != len(objects) {
 		log.Println("Mismatch between partitions and objects")
@@ -31,6 +34,8 @@ func (p *HPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
+// MinSize calculates the minimum required size to fit all objects.
+// It is equal to the largest width MinSize divided by the corresponding portion.
 func (p *HPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	if len(p.Portions) != len(objects) {
 		log.Println("Mismatch between partitions and objects")
@@ -59,7 +64,7 @@ func (p *HPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(maxMinWidth/p.Portions[maxIndex]+totalPadding, height)
 }
 
-// NewHPortion creates a layout that partitions objects verticaly taking up
+// NewHPortion creates a layout that partitions objects horizontally taking up
 // as large of a portion of the space as defined by the given slice.
 // The portions should be between 0 and 1 but not equal to.
 // The length of the Portions slice needs to be equal to the amount of objects.
@@ -69,10 +74,13 @@ func NewHPortion(Portions []float32) *HPortion {
 
 var _ fyne.Layout = (*VPortion)(nil)
 
+// HPortion allows the canvas objects to be divided into portions of the height.
+// The length of the Portions slice needs to be equal to the amount of canvas objects.
 type VPortion struct {
 	Portions []float32
 }
 
+// Layout sets the size and position of the canvas objects.
 func (p *VPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	if len(p.Portions) != len(objects) {
 		log.Println("Mismatch between partitions and objects")
@@ -91,6 +99,8 @@ func (p *VPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
+// MinSize calculates the minimum required size to fit all objects.
+// It is equal to the largest height MinSize divided by the corresponding portion.
 func (p *VPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	if len(p.Portions) != len(objects) {
 		log.Println("Mismatch between partitions and objects")
