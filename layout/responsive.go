@@ -64,7 +64,9 @@ type responsiveConfig map[responsiveBreakpoint]float32
 // newResponsiveConf return a new responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
-//      Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
+//	Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 func newResponsiveConf(ratios ...float32) responsiveConfig {
 	responsive := responsiveConfig{}
@@ -232,12 +234,13 @@ func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
 // configure the rule, each object could be encapsulated by a "Responsive" object.
 //
 // Example:
-//      container := NewResponsiveLayout(
-//          Responsive(label, 1, .5, .25),  // 100% for small, 50% for medium, 25% for large
-//          Responsive(button, 1, .5, .25), // ...
-//          label2,                         // this will be placed and resized with default behaviors
-//                                          // => 1, 1, 1
-//      )
+//
+//	container := NewResponsiveLayout(
+//	    Responsive(label, 1, .5, .25),  // 100% for small, 50% for medium, 25% for large
+//	    Responsive(button, 1, .5, .25), // ...
+//	    label2,                         // this will be placed and resized with default behaviors
+//	                                    // => 1, 1, 1
+//	)
 func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	r := &ResponsiveLayout{}
 
@@ -264,7 +267,9 @@ var _ fyne.Widget = (*responsiveWidget)(nil)
 // Responsive register the object with a responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
-//      Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
+//	Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
 func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
@@ -276,9 +281,6 @@ func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.Canva
 func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
 	if ro.render == nil {
 		return nil
-	}
-	if o, ok := ro.render.(fyne.Widget); ok {
-		return o.CreateRenderer()
 	}
 	return widget.NewSimpleRenderer(ro.render)
 }
