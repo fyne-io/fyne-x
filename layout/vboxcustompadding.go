@@ -66,7 +66,7 @@ func (v *VBoxCustomPadding) Layout(objects []fyne.CanvasObject, size fyne.Size) 
 	}
 
 	y := float32(0)
-	padding := theme.Padding() + v.ExtraPad
+	padding := v.themePad() + v.ExtraPad
 	extra := size.Height - total - (padding * float32(len(objects)-spacers-1))
 	extraCell := float32(0)
 	if spacers > 0 {
