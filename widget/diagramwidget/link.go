@@ -1,7 +1,6 @@
 package diagramwidget
 
 import (
-	"image/color"
 	"log"
 	"math"
 
@@ -65,10 +64,10 @@ type DiagramLink interface {
 // Link can connect to another Link using this ConnectionPad.
 type BaseDiagramLink struct {
 	diagramElement
-	linkPoints           []*LinkPoint
-	linkSegments         []*LinkSegment
-	LinkColor            color.Color
-	strokeWidth          float32
+	linkPoints   []*LinkPoint
+	linkSegments []*LinkSegment
+	// LinkColor            color.Color
+	// strokeWidth          float32
 	sourcePad            ConnectionPad
 	targetPad            ConnectionPad
 	SourceDecorations    []Decoration
@@ -97,12 +96,12 @@ func InitializeBaseDiagramLink(diagramLink DiagramLink, diagram *DiagramWidget, 
 	bdl := diagramLink.getBaseDiagramLink()
 	bdl.linkPoints = []*LinkPoint{}
 	bdl.linkSegments = []*LinkSegment{}
-	bdl.LinkColor = diagram.GetForegroundColor()
-	bdl.strokeWidth = 2
 	bdl.sourceAnchoredText = make(map[string]*AnchoredText)
 	bdl.midpointAnchoredText = make(map[string]*AnchoredText)
 	bdl.targetAnchoredText = make(map[string]*AnchoredText)
 	bdl.diagramElement.initialize(diagram, linkID)
+	bdl.properties.ForegroundColor = diagram.DefaultDiagramElementProperties.ForegroundColor
+	bdl.properties.StrokeWidth = diagram.DefaultDiagramElementProperties.StrokeWidth
 	bdl.linkPoints = append(bdl.linkPoints, NewLinkPoint(bdl))
 	bdl.linkPoints = append(bdl.linkPoints, NewLinkPoint(bdl))
 	bdl.linkSegments = append(bdl.linkSegments, NewLinkSegment(bdl, bdl.linkPoints[0].Position(), bdl.linkPoints[1].Position()))
@@ -312,7 +311,12 @@ func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
 				bdl.diagram.removeLinkDependency(connTrans.InitialPad.GetPadOwner(), bdl, connTrans.InitialPad)
 			}
 			bdl.diagram.addLinkDependency(connTrans.PendingPad.GetPadOwner(), bdl, connTrans.PendingPad)
-			bdl.pads[handleKey] = connTrans.PendingPad
+			switch handleKey {
+			case "source":
+				bdl.sourcePad = connTrans.PendingPad
+			case "target":
+				bdl.targetPad = connTrans.PendingPad
+			}
 			switch handleKey {
 			case SOURCE.ToString():
 				bdl.sourcePad = connTrans.PendingPad
@@ -324,7 +328,12 @@ func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
 			}
 		} else {
 			// We revert to the original pad.
-			bdl.pads[handleKey] = connTrans.InitialPad
+			switch handleKey {
+			case "source":
+				bdl.sourcePad = connTrans.InitialPad
+			case "target":
+				bdl.targetPad = connTrans.InitialPad
+			}
 			switch handleKey {
 			case SOURCE.ToString():
 				bdl.sourcePad = connTrans.InitialPad
@@ -545,7 +554,6 @@ func (dlr *diagramLinkRenderer) Refresh() {
 	for i := 0; i < len(dlr.link.linkPoints)-1; i++ {
 		linkSegment := dlr.link.linkSegments[i]
 		linkSegment.SetPoints(dlr.link.linkPoints[i].Position(), dlr.link.linkPoints[i+1].Position())
-		// linkSegment.Refresh()
 	}
 
 	// Have to change the sign of Y since the window inverts the Y axis
@@ -611,20 +619,20 @@ func (dlr *diagramLinkRenderer) Refresh() {
 		linkSegment.Refresh()
 	}
 	for _, decoration := range dlr.link.SourceDecorations {
-		decoration.SetStrokeColor(dlr.link.LinkColor)
-		decoration.SetStrokeWidth(dlr.link.strokeWidth)
+		decoration.SetStrokeColor(dlr.link.properties.ForegroundColor)
+		decoration.SetStrokeWidth(dlr.link.properties.StrokeWidth)
 		decoration.SetFillColor(dlr.link.diagram.GetBackgroundColor())
 		decoration.Refresh()
 	}
 	for _, decoration := range dlr.link.MidpointDecorations {
-		decoration.SetStrokeColor(dlr.link.LinkColor)
-		decoration.SetStrokeWidth(dlr.link.strokeWidth)
+		decoration.SetStrokeColor(dlr.link.properties.ForegroundColor)
+		decoration.SetStrokeWidth(dlr.link.properties.StrokeWidth)
 		decoration.SetFillColor(dlr.link.diagram.GetBackgroundColor())
 		decoration.Refresh()
 	}
 	for _, decoration := range dlr.link.TargetDecorations {
-		decoration.SetStrokeColor(dlr.link.LinkColor)
-		decoration.SetStrokeWidth(dlr.link.strokeWidth)
+		decoration.SetStrokeColor(dlr.link.properties.ForegroundColor)
+		decoration.SetStrokeWidth(dlr.link.properties.StrokeWidth)
 		decoration.SetFillColor(dlr.link.diagram.GetBackgroundColor())
 		decoration.Refresh()
 	}
@@ -642,7 +650,6 @@ func (dlr *diagramLinkRenderer) Refresh() {
 	}
 
 	dlr.link.diagram.refreshDependentLinks(dlr.link)
-	dlr.link.GetDiagram().ForceRepaint()
 }
 
 // ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes only

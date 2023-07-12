@@ -71,7 +71,6 @@ func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
 	at.Refresh()
-	at.link.diagramElement.GetDiagram().ForceRepaint()
 }
 
 // GetDisplayedTextBinding returns the binding for the displayed text

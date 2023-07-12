@@ -148,7 +148,6 @@ func (pp *PointPad) MouseIn(event *desktop.MouseEvent) {
 		pp.padColor = color.Transparent
 	}
 	pp.Refresh()
-	pp.padOwner.GetDiagram().ForceRepaint()
 }
 
 // MouseMoved responds to mouse movements within the pointPadSize distance of the center
@@ -163,7 +162,6 @@ func (pp *PointPad) MouseOut() {
 		conTrans.PendingPad = nil
 	}
 	pp.Refresh()
-	pp.padOwner.GetDiagram().ForceRepaint()
 }
 
 // pointPadRenderer
@@ -284,7 +282,6 @@ func (rp *RectanglePad) MouseIn(event *desktop.MouseEvent) {
 		rp.padColor = color.Transparent
 	}
 	rp.Refresh()
-	rp.padOwner.GetDiagram().ForceRepaint()
 }
 
 // MouseMoved responds to mouse movements within the rectangle pad
@@ -299,7 +296,6 @@ func (rp *RectanglePad) MouseOut() {
 		conTrans.PendingPad = nil
 	}
 	rp.Refresh()
-	rp.padOwner.GetDiagram().ForceRepaint()
 }
 
 // rectanglePadRenderer
@@ -333,5 +329,4 @@ func (rpr *rectanglePadRenderer) Refresh() {
 	rpr.rect.StrokeColor = rpr.rp.padColor
 	rpr.rect.FillColor = color.Transparent
 	rpr.rect.StrokeWidth = rpr.rp.lineWidth
-	rpr.rp.connectionPad.padOwner.GetDiagram().ForceRepaint()
 }

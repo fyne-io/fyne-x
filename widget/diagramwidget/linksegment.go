@@ -54,7 +54,7 @@ func (ls *LinkSegment) Tapped(event *fyne.PointEvent) {
 	clickPoint := geom.Coord{float64(event.Position.X), float64(event.Position.Y)}
 	p1 := geom.Coord{float64(ls.p1.X), float64(ls.p1.Y)}
 	p2 := geom.Coord{float64(ls.p2.X), float64(ls.p2.Y)}
-	if xy.DistanceFromPointToLine(clickPoint, p1, p2) <= float64(ls.link.strokeWidth/2)+1 {
+	if xy.DistanceFromPointToLine(clickPoint, p1, p2) <= float64(ls.link.properties.StrokeWidth/2)+1 {
 		ls.link.diagram.DiagramElementTapped(ls.link, event)
 	}
 }
@@ -97,7 +97,6 @@ func (lsr *linkSegmentRenderer) Refresh() {
 	lsr.ls.Resize(lsr.MinSize())
 	lsr.line.Position1 = lsr.ls.p1.AddXY(-widgetPosition.X, -widgetPosition.Y)
 	lsr.line.Position2 = lsr.ls.p2.AddXY(-widgetPosition.X, -widgetPosition.Y)
-	lsr.line.StrokeColor = lsr.ls.link.LinkColor
-	lsr.line.StrokeWidth = lsr.ls.link.strokeWidth
-	lsr.ls.link.GetDiagram().ForceRepaint()
+	lsr.line.StrokeColor = lsr.ls.link.properties.ForegroundColor
+	lsr.line.StrokeWidth = lsr.ls.link.properties.StrokeWidth
 }

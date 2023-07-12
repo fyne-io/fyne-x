@@ -8,7 +8,6 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
-	"fyne.io/fyne/v2/theme"
 )
 
 type DiagramNode interface {
@@ -46,15 +45,6 @@ type BaseDiagramNode struct {
 	// innerObject is the canvas object that should be drawn inside of
 	// the diagram node.
 	innerObject fyne.CanvasObject
-	// Padding is the distance between the inner object's drawing area
-	// and the box.
-	Padding float32
-	// BoxStrokeWidth is the stroke width of the box which delineates the
-	// node. Defaults to 1.
-	BoxStrokeWidth float32
-	// HandleStrokeWidth is the stroke width of the node handle, defaults
-	// to 3.
-	HandleStroke float32
 	// MovedCallback, if present, is invoked when the node is moved
 	MovedCallback func()
 }
@@ -74,9 +64,6 @@ func InitializeBaseDiagramNode(diagramNode DiagramNode, diagram *DiagramWidget, 
 	bdn := diagramNode.getBaseDiagramNode()
 	bdn.InnerSize = fyne.Size{Width: defaultWidth, Height: defaultHeight}
 	bdn.innerObject = obj
-	bdn.Padding = diagram.DiagramTheme.Size(theme.SizeNamePadding)
-	bdn.BoxStrokeWidth = 1
-	bdn.HandleStroke = 3
 	bdn.diagramElement.initialize(diagram, nodeID)
 	bdn.pads["default"] = NewRectanglePad(bdn)
 	bdn.pads["default"].Hide()
@@ -96,7 +83,7 @@ func (bdn *BaseDiagramNode) CreateRenderer() fyne.WidgetRenderer {
 		box:  canvas.NewRectangle(bdn.diagram.GetForegroundColor()),
 	}
 
-	dnr.box.StrokeWidth = bdn.BoxStrokeWidth
+	dnr.box.StrokeWidth = bdn.properties.StrokeWidth
 	dnr.box.FillColor = bdn.diagram.GetBackgroundColor()
 
 	(&dnr).Refresh()
@@ -200,7 +187,6 @@ func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent)
 	bdn.Resize(bdn.Size().Add(sizeChange))
 	bdn.Move(bdn.Position().Add(positionChange))
 	bdn.Refresh()
-	bdn.GetDiagram().ForceRepaint()
 }
 
 func (bdn *BaseDiagramNode) handleDragEnd(handle *Handle) {
@@ -209,8 +195,8 @@ func (bdn *BaseDiagramNode) handleDragEnd(handle *Handle) {
 
 func (bdn *BaseDiagramNode) innerPos() fyne.Position {
 	return fyne.Position{
-		X: float32(bdn.Padding),
-		Y: float32(bdn.Padding),
+		X: float32(bdn.properties.Padding),
+		Y: float32(bdn.properties.Padding),
 	}
 }
 
@@ -224,44 +210,19 @@ func (bdn *BaseDiagramNode) IsNode() bool {
 	return true
 }
 
-// func (bdn *BaseDiagramNode) MouseIn(event *desktop.MouseEvent) {
-// 	log.Print("Node MouseIn")
-// 	// conTrans := bdn.GetDiagram().connectionTransaction
-// 	// for _, pad := range bdn.pads {
-// 	// 	if conTrans != nil && conTrans.link.IsConnectionAllowed(conTrans.linkPoint, pad) {
-// 	// 		pad.Show()
-// 	// 	} else {
-// 	// 		pad.Hide()
-// 	// 	}
-// 	// }
-// 	// bdn.Refresh()
-// 	// bdn.diagram.ForceRepaint()
-// }
-
-// func (bdn *BaseDiagramNode) MouseOut() {
-// 	log.Print("Node MouseOut")
-// 	// for _, pad := range bdn.pads {
-// 	// 	pad.Hide()
-// 	// }
-// }
-
-// func (bdn *BaseDiagramNode) MouseMoved(event *desktop.MouseEvent) {
-// }
-
 func (bdn *BaseDiagramNode) Move(position fyne.Position) {
 	bdn.BaseWidget.Move(position)
 	if bdn.MovedCallback != nil {
 		bdn.MovedCallback()
 	}
 	bdn.Refresh()
-	bdn.diagram.ForceRepaint()
 }
 
 func (bdn *BaseDiagramNode) R2Box() r2.Box {
 	inner := bdn.effectiveInnerSize()
 	s := r2.V2(
-		float64(inner.Width+float32(2*bdn.Padding)),
-		float64(inner.Height+float32(2*bdn.Padding)),
+		float64(inner.Width+float32(2*bdn.properties.Padding)),
+		float64(inner.Height+float32(2*bdn.properties.Padding)),
 	)
 
 	return r2.MakeBox(bdn.R2Position(), s)
@@ -295,7 +256,7 @@ func (dnr *diagramNodeRenderer) ApplyTheme(size fyne.Size) {
 }
 
 func (dnr *diagramNodeRenderer) BackgroundColor() color.Color {
-	return dnr.node.diagram.DiagramTheme.Color(theme.ColorNameBackground, dnr.node.diagram.ThemeVariant)
+	return dnr.node.properties.BackgroundColor
 }
 
 func (dnr *diagramNodeRenderer) Destroy() {
@@ -305,8 +266,8 @@ func (dnr *diagramNodeRenderer) MinSize() fyne.Size {
 	// space for the inner widget, plus padding on all sides.
 	inner := dnr.node.effectiveInnerSize()
 	return fyne.Size{
-		Width:  inner.Width + float32(2*dnr.node.Padding),
-		Height: inner.Height + float32(2*dnr.node.Padding),
+		Width:  inner.Width + float32(2*dnr.node.properties.Padding),
+		Height: inner.Height + float32(2*dnr.node.properties.Padding),
 	}
 }
 
@@ -366,13 +327,13 @@ func (dnr *diagramNodeRenderer) Refresh() {
 		handle.Refresh()
 	}
 
-	dnr.box.StrokeWidth = dnr.node.BoxStrokeWidth
-	dnr.box.FillColor = color.Transparent
-	dnr.box.StrokeColor = dnr.node.diagram.GetForegroundColor()
+	dnr.box.StrokeWidth = dnr.node.properties.StrokeWidth
+	dnr.box.FillColor = dnr.node.properties.BackgroundColor
+	dnr.box.StrokeColor = dnr.node.properties.ForegroundColor
+	dnr.box.Refresh()
 
 	for _, pad := range dnr.node.pads {
 		pad.Refresh()
 	}
 	dnr.node.diagram.refreshDependentLinks(dnr.node)
-	dnr.node.GetDiagram().ForceRepaint()
 }

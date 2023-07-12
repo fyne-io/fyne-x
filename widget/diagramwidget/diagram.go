@@ -5,21 +5,10 @@ import (
 	"reflect"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
-
-// ForceRepaint is a workaround for a Fyne bug (Issue #2205) in which moving a canvas object does not
-// trigger repainting. When the issue is resolved, this function and all references to it should be
-// removed. The DummyBox on the GlobalDiagram should also be removed.
-// The conditionals here are required during initialization.
-func (dw *DiagramWidget) ForceRepaint() {
-	if dw != nil && dw.dummyBox != nil {
-		dw.dummyBox.Refresh()
-	}
-}
 
 // Verify that interfaces are fully implemented
 var _ fyne.Tappable = (*DiagramWidget)(nil)
@@ -41,20 +30,17 @@ type DiagramWidget struct {
 	// ID is expected to be unique across all DiagramWidgets in the application.
 	ID string
 
-	// Diagrams may want to use a different theme and variant than the application. The default value is the
-	// applicaton's theme and variant
-	DiagramTheme fyne.Theme
-	ThemeVariant fyne.ThemeVariant
-	Offset       fyne.Position
+	Offset fyne.Position
 
 	// DesiredSize specifies the size of the displayed diagram. Defaults to 800 x 600
 	DesiredSize fyne.Size
 
-	Nodes                          map[string]DiagramNode
-	Links                          map[string]DiagramLink
-	primarySelection               DiagramElement
-	selection                      map[string]DiagramElement
-	diagramElementLinkDependencies map[string][]linkPadPair
+	DefaultDiagramElementProperties DiagramElementProperties
+	Nodes                           map[string]DiagramNode
+	Links                           map[string]DiagramLink
+	primarySelection                DiagramElement
+	selection                       map[string]DiagramElement
+	diagramElementLinkDependencies  map[string][]linkPadPair
 	// ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes
 	ConnectionTransaction *ConnectionTransaction
 	padColor              color.Color
@@ -82,29 +68,33 @@ type DiagramWidget struct {
 	// an element that is not currently selected is tapped. When true, the new element is added to the selection.
 	// When false, the selection is cleared and the new element is made the only selected element.
 	ElementTappedExtendsSelection bool
-
-	// TODO Remove dummyBox when fyne rendering issue is resolved
-	dummyBox *canvas.Rectangle
 }
 
 // NewDiagramWidget creates a DiagramWidget. The user-supplied ID can be used to map the diagram
 // to data structures within the of the application. It is expected to  be unique within the application
 func NewDiagramWidget(id string) *DiagramWidget {
 	dw := &DiagramWidget{
-		ID:                             id,
-		DiagramTheme:                   fyne.CurrentApp().Settings().Theme(),
-		ThemeVariant:                   fyne.CurrentApp().Settings().ThemeVariant(),
+		ID: id,
+		// DiagramTheme:                   fyne.CurrentApp().Settings().Theme(),
+		// ThemeVariant:                   fyne.CurrentApp().Settings().ThemeVariant(),
 		DesiredSize:                    fyne.Size{Width: 800, Height: 600},
 		Offset:                         fyne.Position{X: 0, Y: 0},
 		Nodes:                          map[string]DiagramNode{},
 		Links:                          map[string]DiagramLink{},
-		dummyBox:                       canvas.NewRectangle(color.Transparent),
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPadPair{},
 		padColor:                       defaultPadColor,
 	}
-	dw.dummyBox.SetMinSize(fyne.Size{Height: 50, Width: 50})
-	dw.dummyBox.Move(fyne.Position{X: 50, Y: 50})
+	appTheme := fyne.CurrentApp().Settings().Theme()
+	appVariant := fyne.CurrentApp().Settings().ThemeVariant()
+	dw.DefaultDiagramElementProperties.ForegroundColor = appTheme.Color(theme.ColorNameForeground, appVariant)
+	dw.DefaultDiagramElementProperties.HandleColor = appTheme.Color(theme.ColorNameForeground, appVariant)
+	dw.DefaultDiagramElementProperties.BackgroundColor = appTheme.Color(theme.ColorNameBackground, appVariant)
+	dw.DefaultDiagramElementProperties.TextSize = 12
+	dw.DefaultDiagramElementProperties.CaptionTextSize = appTheme.Size(theme.SizeNameCaptionText)
+	dw.DefaultDiagramElementProperties.Padding = appTheme.Size(theme.SizeNamePadding)
+	dw.DefaultDiagramElementProperties.StrokeWidth = 1
+	dw.DefaultDiagramElementProperties.HandleStrokeWidth = 1
 
 	dw.ExtendBaseWidget(dw)
 
@@ -192,7 +182,6 @@ func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.Poi
 	if !dw.IsSelected(de) {
 		dw.addElementToSelection(de)
 	}
-	dw.ForceRepaint()
 }
 
 // DragEnd is called when the drag comes to an end. It refreshes the widget
@@ -203,7 +192,7 @@ func (dw *DiagramWidget) DragEnd() {
 // GetBackgroundColor returns the background color for the widget from the diagram's theme, which
 // may be different from the application's theme.
 func (dw *DiagramWidget) GetBackgroundColor() color.Color {
-	return dw.DiagramTheme.Color(theme.ColorNameBackground, dw.ThemeVariant)
+	return dw.DefaultDiagramElementProperties.BackgroundColor
 }
 
 // GetDiagramElement returns the diagram element with the specified ID, whether
@@ -220,13 +209,7 @@ func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
 // GetForegroundColor returns the foreground color from the diagram's theme, which may
 // be different from the application's theme
 func (dw *DiagramWidget) GetForegroundColor() color.Color {
-	return dw.DiagramTheme.Color(theme.ColorNameForeground, dw.ThemeVariant)
-}
-
-// GetHoverColor returns the hover color from the diagram's theme, which may may
-// be different from the application's  theme
-func (dw *DiagramWidget) GetHoverColor() color.Color {
-	return dw.DiagramTheme.Color(theme.ColorNameHover, dw.ThemeVariant)
+	return dw.DefaultDiagramElementProperties.ForegroundColor
 }
 
 // DiagramNodeDragged moves the indicated node and refreshes any links that may be attached
@@ -234,7 +217,6 @@ func (dw *DiagramWidget) GetHoverColor() color.Color {
 func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	dw.DisplaceNode(node, delta)
-	dw.ForceRepaint()
 }
 
 // DisplaceNode moves the indicated node and refreshes any links that may be attached
@@ -242,7 +224,6 @@ func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.D
 func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
-	dw.ForceRepaint()
 }
 
 // Dragged responds to a drag movement in the background of the diagram. It moves all nodes
@@ -384,6 +365,9 @@ func (dw *DiagramWidget) refreshDependentLinks(de DiagramElement) {
 // RemoveElement removes the element from the diagram. It also removes any linkss to the element
 func (dw *DiagramWidget) RemoveElement(elementID string) {
 	element := dw.GetDiagramElement(elementID)
+	if element == nil {
+		return
+	}
 	// We make a copy of the dependencies because the array can get modified during the iteration
 	currentDependencies := append([]linkPadPair(nil), dw.diagramElementLinkDependencies[elementID]...)
 	for _, pair := range currentDependencies {
@@ -448,7 +432,6 @@ func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
 	} else {
 		dw.ClearSelection()
 	}
-	dw.ForceRepaint()
 }
 
 // diagramWidgetRenderer
@@ -474,7 +457,6 @@ func (r *diagramWidgetRenderer) Objects() []fyne.CanvasObject {
 	for _, e := range r.diagramWidget.Links {
 		obj = append(obj, e)
 	}
-	obj = append(obj, r.diagramWidget.dummyBox)
 	return obj
 }
 

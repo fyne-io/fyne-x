@@ -60,8 +60,8 @@ func NewArrowhead() *Arrowhead {
 func (a *Arrowhead) CreateRenderer() fyne.WidgetRenderer {
 	ar := arrowheadRenderer{
 		arrowhead: a,
-		left:      canvas.NewLine(a.link.LinkColor),
-		right:     canvas.NewLine(a.link.LinkColor),
+		left:      canvas.NewLine(a.link.properties.ForegroundColor),
+		right:     canvas.NewLine(a.link.properties.ForegroundColor),
 	}
 	return &ar
 }

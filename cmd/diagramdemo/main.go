@@ -111,7 +111,7 @@ func main() {
 	link1 := diagramwidget.NewDiagramLink(diagramWidget, "Link1")
 	link1.SetSourcePad(node2.GetEdgePad())
 	link1.SetTargetPad(node1.GetEdgePad())
-	link1.LinkColor = color.RGBA{255, 64, 64, 255}
+	link1.SetForegroundColor(color.RGBA{255, 64, 64, 255})
 	link1.AddTargetDecoration(diagramwidget.NewArrowhead())
 	link1.AddTargetDecoration(diagramwidget.NewArrowhead())
 	link1.AddMidpointDecoration(diagramwidget.NewArrowhead())
