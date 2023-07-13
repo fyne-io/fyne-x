@@ -1,7 +1,6 @@
 package diagramwidget
 
 import (
-	"log"
 	"math"
 
 	"fyne.io/x/fyne/widget/diagramwidget/geometry/r2"
@@ -388,18 +387,14 @@ func (bdl *BaseDiagramLink) IsNode() bool {
 
 // MouseIn responds to the mouse entering the bounding rectangle of the Link
 func (bdl *BaseDiagramLink) MouseIn(event *desktop.MouseEvent) {
-	log.Print("Entered Link")
-	// TODO implement this
 }
 
 // MouseMoved responds to the mouse moving while within the bounding rectangle of the Link
 func (bdl *BaseDiagramLink) MouseMoved(event *desktop.MouseEvent) {
-	// TODO implement this
 }
 
 // MouseOut responds to the mouse leaving the bounding rectangle of the Link
 func (bdl *BaseDiagramLink) MouseOut() {
-	log.Printf("Left Link")
 }
 
 // SetSourcePad sets the source pad and adds the link dependency to the diagram
@@ -436,7 +431,6 @@ func (bdl *BaseDiagramLink) SetTargetPad(pad ConnectionPad) {
 
 // Tapped handles tap events
 func (bdl *BaseDiagramLink) Tapped(event *fyne.PointEvent) {
-	log.Print("Link tapped")
 }
 
 // diagramLinkRenderer

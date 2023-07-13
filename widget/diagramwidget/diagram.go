@@ -49,6 +49,11 @@ type DiagramWidget struct {
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
 	// "source" or "target". The first pad is the old pad, the second one is the new pad
 	LinkConnectionChangedCallback func(DiagramLink, string, ConnectionPad, ConnectionPad)
+	// LinkSegmentMouseDownSecondaryCallback is called when a secondary button MouseDown occurs in a link segment
+	LinkSegmentMouseDownSecondaryCallback func(DiagramLink, *desktop.MouseEvent)
+	// LinkSegmentMouseUpCallback is called when a MouseUp occurs in a link segment and it was either the
+	// secondary button or it was the primary button but at a different location than the MouseDown
+	LinkSegmentMouseUpCallback func(DiagramLink, *desktop.MouseEvent)
 	// MouseDownCallback is called when a MouseDown occurs in the diagram
 	MouseDownCallback func(*desktop.MouseEvent)
 	// MouseInCallback is called when a MouseIn occurs in the diagram
@@ -175,7 +180,7 @@ func (dw *DiagramWidget) Cursor() desktop.Cursor {
 }
 
 // DiagramElementTapped adds the element to the selection when the element is tapped
-func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement, event *fyne.PointEvent) {
+func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement) {
 	if !dw.ElementTappedExtendsSelection {
 		dw.ClearSelectionNoCallback()
 	}

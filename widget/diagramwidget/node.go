@@ -243,7 +243,7 @@ func (bdn *BaseDiagramNode) SetInnerObject(obj fyne.CanvasObject) {
 }
 
 func (bdn *BaseDiagramNode) Tapped(event *fyne.PointEvent) {
-	bdn.diagram.DiagramElementTapped(bdn, event)
+	bdn.diagram.DiagramElementTapped(bdn)
 }
 
 // diagramNodeRenderer

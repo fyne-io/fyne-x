@@ -11,15 +11,13 @@ import (
 	"github.com/twpayne/go-geom/xy"
 )
 
-var _ fyne.Tappable = (*LinkSegment)(nil)
-var _ desktop.Hoverable = (*LinkSegment)(nil)
-
 type LinkSegment struct {
 	widget.BaseWidget
 	link *BaseDiagramLink
 	// p1 and p2 are coordinates in the link's coordinate space
-	p1 fyne.Position
-	p2 fyne.Position
+	p1                fyne.Position
+	p2                fyne.Position
+	mouseDownPosition fyne.Position
 }
 
 func NewLinkSegment(link *BaseDiagramLink, p1 fyne.Position, p2 fyne.Position) *LinkSegment {
@@ -36,26 +34,34 @@ func NewLinkSegment(link *BaseDiagramLink, p1 fyne.Position, p2 fyne.Position) *
 func (ls *LinkSegment) CreateRenderer() fyne.WidgetRenderer {
 	lsr := &linkSegmentRenderer{
 		ls:   ls,
-		line: canvas.NewLine(ls.link.diagram.GetForegroundColor()),
+		line: canvas.NewLine(ls.link.GetForegroundColor()),
 	}
 	return lsr
 }
 
-func (ls *LinkSegment) MouseIn(event *desktop.MouseEvent) {
+// MouseDown behavior depends upon the mouse event. If it is the primary button, it records the locateion of the
+// MouseDown in preparation for a MouseUp at the same location, which will trigger Tapped() behavior. Otherwise, if
+// it is the seconday button and a callback is present, it will invoke the callback
+func (ls *LinkSegment) MouseDown(event *desktop.MouseEvent) {
+	if event.Button == desktop.MouseButtonPrimary {
+		ls.mouseDownPosition = event.Position
+	} else if event.Button == desktop.MouseButtonSecondary && ls.link.diagram.LinkSegmentMouseDownSecondaryCallback != nil {
+		ls.link.diagram.LinkSegmentMouseDownSecondaryCallback(ls.link.typedLink, event)
+	}
 }
 
-func (ls *LinkSegment) MouseMoved(event *desktop.MouseEvent) {
-}
-
-func (ls *LinkSegment) MouseOut() {
-}
-
-func (ls *LinkSegment) Tapped(event *fyne.PointEvent) {
-	clickPoint := geom.Coord{float64(event.Position.X), float64(event.Position.Y)}
-	p1 := geom.Coord{float64(ls.p1.X), float64(ls.p1.Y)}
-	p2 := geom.Coord{float64(ls.p2.X), float64(ls.p2.Y)}
-	if xy.DistanceFromPointToLine(clickPoint, p1, p2) <= float64(ls.link.properties.StrokeWidth/2)+1 {
-		ls.link.diagram.DiagramElementTapped(ls.link, event)
+// MouseUp behavior depends on the mouse event. If it is the primary button and it is at the same location as the MouseDown,
+// the Tapped() behavior is invoked. Otherwise, if there is a callback present, the callback is invoked.
+func (ls *LinkSegment) MouseUp(event *desktop.MouseEvent) {
+	if event.Button == desktop.MouseButtonPrimary && ls.mouseDownPosition == event.Position {
+		clickPoint := geom.Coord{float64(event.Position.X), float64(event.Position.Y)}
+		p1 := geom.Coord{float64(ls.p1.X), float64(ls.p1.Y)}
+		p2 := geom.Coord{float64(ls.p2.X), float64(ls.p2.Y)}
+		if xy.DistanceFromPointToLine(clickPoint, p1, p2) <= float64(ls.link.properties.StrokeWidth/2)+1 {
+			ls.link.diagram.DiagramElementTapped(ls.link)
+		}
+	} else if ls.link.diagram.LinkSegmentMouseUpCallback != nil {
+		ls.link.diagram.LinkSegmentMouseUpCallback(ls.link.typedLink, event)
 	}
 }
 
