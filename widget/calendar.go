@@ -171,15 +171,17 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 				}
 			} else if c.SelectionMode == CalendarMulti {
 				// Only add it to the slice if it does not contain it
-				index := math.MaxInt
+				var index int
+				var found bool
 				for i, t := range c.SelectedDates {
 					if dateEquals(t, selectedDate) {
 						index = i
+						found = true
 						break
 					}
 				}
 
-				if index == math.MaxInt {
+				if !found {
 					c.SelectedDates = append(c.SelectedDates, selectedDate)
 					b.Importance = calendarSelectColor
 				} else {
@@ -263,16 +265,18 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 					} else if c.SelectedDates[0].Before(selectedDate) && selectedDate.Before(c.SelectedDates[len(c.SelectedDates)-1]) {
 						// If a date between the start and end is clicked
 
-						index := math.MaxInt
+						var index int
+						var found bool
 						for i, t := range c.SelectedDates {
 							if dateEquals(t, selectedDate) {
 								index = i
+								found = true
 								break
 							}
 						}
 
 						// Should not happen
-						if index == math.MaxInt {
+						if !found {
 							fyne.LogError("Calendar", errors.New("index of selected date could not be found in the selected dates of the calendar"))
 							return
 						}
