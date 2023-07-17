@@ -432,10 +432,10 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, selectionMode int, onChanged func([]time.Time)) *Calendar {
+func NewCalendar(cT time.Time, onChanged func([]time.Time)) *Calendar {
 	c := &Calendar{
 		currentTime:   cT,
-		SelectionMode: selectionMode,
+		SelectionMode: CalendarSingle,
 		OnChanged:     onChanged,
 	}
 

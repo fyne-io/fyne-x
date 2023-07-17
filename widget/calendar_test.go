@@ -14,7 +14,7 @@ import (
 
 func TestNewCalendar(t *testing.T) {
 	now := time.Now()
-	c := NewCalendar(now, CalendarSingle, nil)
+	c := NewCalendar(now, nil)
 	assert.Equal(t, now.Day(), c.currentTime.Day())
 	assert.Equal(t, int(now.Month()), int(c.currentTime.Month()))
 	assert.Equal(t, now.Year(), c.currentTime.Year())
@@ -25,7 +25,7 @@ func TestNewCalendar(t *testing.T) {
 
 func TestNewCalendar_ButtonDate(t *testing.T) {
 	date := time.Now()
-	c := NewCalendar(date, CalendarSingle, nil)
+	c := NewCalendar(date, nil)
 	_ = test.WidgetRenderer(c) // and render
 
 	endNextMonth := date.AddDate(0, 1, 0).AddDate(0, 0, -(date.Day() - 1))
@@ -39,7 +39,7 @@ func TestNewCalendar_ButtonDate(t *testing.T) {
 
 func TestNewCalendar_Next(t *testing.T) {
 	date := time.Now()
-	c := NewCalendar(date, CalendarSingle, nil)
+	c := NewCalendar(date, nil)
 	_ = test.WidgetRenderer(c) // and render
 
 	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
@@ -51,7 +51,7 @@ func TestNewCalendar_Next(t *testing.T) {
 
 func TestNewCalendar_Previous(t *testing.T) {
 	date := time.Now()
-	c := NewCalendar(date, CalendarSingle, nil)
+	c := NewCalendar(date, nil)
 	_ = test.WidgetRenderer(c) // and render
 
 	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
@@ -86,7 +86,7 @@ func TestNewCalendar_Resize(t *testing.T) {
 
 func TestNewCalendar_Single(t *testing.T) {
 	date := time.Date(2023, time.June, 22, 13, 48, 45, 0, time.UTC)
-	c := NewCalendar(date, CalendarSingle, nil)
+	c := NewCalendar(date, nil)
 	_ = test.WidgetRenderer(c) // and render
 
 	btn := getDateButton(c.dates, 14)
@@ -108,7 +108,8 @@ func TestNewCalendar_Single(t *testing.T) {
 
 func TestNewCalendar_Multi(t *testing.T) {
 	date := time.Date(2023, time.June, 22, 13, 48, 45, 0, time.UTC)
-	c := NewCalendar(date, CalendarMulti, nil)
+	c := NewCalendar(date, nil)
+	c.SelectionMode = CalendarMulti
 	_ = test.WidgetRenderer(c) // and render
 
 	test.Tap(getDateButton(c.dates, 4))
@@ -150,7 +151,8 @@ func TestNewCalendar_Multi(t *testing.T) {
 
 func TestNewCalendar_Range(t *testing.T) {
 	date := time.Date(2023, time.June, 22, 13, 48, 45, 0, time.UTC)
-	c := NewCalendar(date, CalendarRange, nil)
+	c := NewCalendar(date, nil)
+	c.SelectionMode = CalendarRange
 	_ = test.WidgetRenderer(c) // and render
 
 	test.Tap(getDateButton(c.dates, 5))

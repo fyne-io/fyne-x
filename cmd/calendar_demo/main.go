@@ -23,7 +23,7 @@ func main() {
 
 	// Defines which date you would like the calendar to start
 	startingDate := time.Now()
-	calendar := xwidget.NewCalendar(startingDate, xwidget.CalendarSingle, d.onChanged)
+	calendar := xwidget.NewCalendar(startingDate, d.onChanged)
 
 	selection := widget.NewRadioGroup([]string{"Single", "Multi", "Range"}, func(s string) {
 		calendar.ClearSelection()
