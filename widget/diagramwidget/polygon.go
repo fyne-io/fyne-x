@@ -274,9 +274,4 @@ func (pr *polygonRenderer) Refresh() {
 	pr.image.Resize(polygonSize)
 	pr.image.Move(offsetVector)
 	pr.image.Refresh()
-	if pr.polygon.visible {
-		pr.image.Show()
-	} else {
-		pr.image.Hide()
-	}
 }

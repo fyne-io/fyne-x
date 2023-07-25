@@ -188,11 +188,6 @@ func (ar *arrowheadRenderer) Refresh() {
 	ar.right.StrokeWidth = ar.arrowhead.StrokeWidth
 	ar.left.StrokeColor = ar.arrowhead.StrokeColor
 	ar.right.StrokeColor = ar.arrowhead.StrokeColor
-	if ar.arrowhead.visible {
-		ar.left.Show()
-		ar.right.Show()
-	} else {
-		ar.left.Hide()
-		ar.right.Hide()
-	}
+	ar.left.Refresh()
+	ar.right.Refresh()
 }

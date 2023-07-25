@@ -13,9 +13,6 @@ import (
 // Verify that interfaces are fully implemented
 var _ fyne.Tappable = (*DiagramWidget)(nil)
 
-// Default values
-var defaultPadColor = color.RGBA{121, 237, 119, 255}
-
 type linkPadPair struct {
 	link *BaseDiagramLink
 	pad  ConnectionPad
@@ -43,7 +40,6 @@ type DiagramWidget struct {
 	diagramElementLinkDependencies  map[string][]linkPadPair
 	// ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes
 	ConnectionTransaction *ConnectionTransaction
-	padColor              color.Color
 	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
 	IsConnectionAllowedCallback func(DiagramLink, LinkEnd, ConnectionPad) bool
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
@@ -88,7 +84,6 @@ func NewDiagramWidget(id string) *DiagramWidget {
 		Links:                          map[string]DiagramLink{},
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPadPair{},
-		padColor:                       defaultPadColor,
 	}
 	appTheme := fyne.CurrentApp().Settings().Theme()
 	appVariant := fyne.CurrentApp().Settings().ThemeVariant()
@@ -100,6 +95,8 @@ func NewDiagramWidget(id string) *DiagramWidget {
 	dw.DefaultDiagramElementProperties.Padding = appTheme.Size(theme.SizeNamePadding)
 	dw.DefaultDiagramElementProperties.StrokeWidth = 1
 	dw.DefaultDiagramElementProperties.HandleStrokeWidth = 1
+	dw.DefaultDiagramElementProperties.PadStrokeWidth = 3
+	dw.DefaultDiagramElementProperties.PadColor = color.RGBA{121, 237, 119, 255}
 
 	dw.ExtendBaseWidget(dw)
 
@@ -391,7 +388,7 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 // SelectDiagramElement clears the selection, makes the indicated element the primary selection, and invokes
 // the PrimaryDiagramElementSelectionChangedCallback
 func (dw *DiagramWidget) SelectDiagramElement(element DiagramElement) {
-	dw.ClearSelection()
+	dw.ClearSelectionNoCallback()
 	dw.addElementToSelection(element)
 }
 

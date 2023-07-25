@@ -11,10 +11,12 @@ type DiagramElementProperties struct {
 	ForegroundColor   color.Color
 	BackgroundColor   color.Color
 	HandleColor       color.Color
+	PadColor          color.Color
 	TextSize          float32
 	CaptionTextSize   float32
 	Padding           float32
 	StrokeWidth       float32
+	PadStrokeWidth    float32
 	HandleStrokeWidth float32
 }
 
@@ -38,6 +40,8 @@ type DiagramElement interface {
 	GetHandle(string) *Handle
 	// GetHandleColor returns the color for the element's handles
 	GetHandleColor() color.Color
+	// GetPadColor returns the color for the element's pads
+	GetPadColor() color.Color
 	// GetProperties returns the properties of the DiagramElement
 	GetProperties() DiagramElementProperties
 	// handleDragged responds to drag events
@@ -98,6 +102,10 @@ func (de *diagramElement) GetHandle(handleName string) *Handle {
 
 func (de *diagramElement) GetHandleColor() color.Color {
 	return de.properties.HandleColor
+}
+
+func (de *diagramElement) GetPadColor() color.Color {
+	return de.properties.PadColor
 }
 
 func (de *diagramElement) GetProperties() DiagramElementProperties {

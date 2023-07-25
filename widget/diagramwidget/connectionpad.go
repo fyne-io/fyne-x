@@ -13,7 +13,6 @@ import (
 
 const (
 	pointPadSize float32 = 10
-	padLineWidth float32 = 3
 )
 
 // ConnectionPad is an interface to a connection shape on a DiagramElement.
@@ -25,6 +24,7 @@ type ConnectionPad interface {
 	getConnectionPointInDiagramCoordinates(referencePoint fyne.Position) fyne.Position
 	MouseDown(*desktop.MouseEvent)
 	MouseUp(*desktop.MouseEvent)
+	SetPadColor(color.Color)
 }
 
 type connectionPad struct {
@@ -49,7 +49,7 @@ func (pp *PointPad) MouseDown(event *desktop.MouseEvent) {
 				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X+10, event.Position.Y+padOwnerPosition.Y-10),
 			}
 			// the link point has to be changed before the handle is dragged
-			connectionTransaction.LinkPoint = connectionTransaction.Link.getLinkPoints()[1]
+			connectionTransaction.LinkPoint = connectionTransaction.Link.GetLinkPoints()[1]
 			link.GetHandle(TARGET.ToString()).Dragged(pseudoEvent)
 			link.Refresh()
 			link.SetSourcePad(pp)
@@ -72,7 +72,7 @@ func (rp *RectanglePad) MouseDown(event *desktop.MouseEvent) {
 				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X, event.Position.Y+padOwnerPosition.Y),
 			}
 			// the link point has to be changed before the handle is dragged
-			connectionTransaction.LinkPoint = connectionTransaction.Link.getLinkPoints()[1]
+			connectionTransaction.LinkPoint = connectionTransaction.Link.GetLinkPoints()[1]
 			link.GetHandle(TARGET.ToString()).Dragged(pseudoEvent)
 			link.SetSourcePad(rp)
 			link.GetDiagram().SelectDiagramElement(link)
@@ -110,7 +110,7 @@ func NewPointPad(padOwner DiagramElement) *PointPad {
 	pp := &PointPad{}
 	pp.connectionPad.padOwner = padOwner
 	pp.BaseWidget.ExtendBaseWidget(pp)
-	pp.lineWidth = padLineWidth
+	pp.lineWidth = padOwner.GetProperties().PadStrokeWidth
 	pp.padColor = color.Transparent
 	return pp
 }
@@ -122,8 +122,8 @@ func (pp *PointPad) CreateRenderer() fyne.WidgetRenderer {
 		l1: canvas.NewLine(pp.padColor),
 		l2: canvas.NewLine(pp.padColor),
 	}
-	ppr.l1.StrokeWidth = padLineWidth
-	ppr.l2.StrokeWidth = padLineWidth
+	ppr.l1.StrokeWidth = pp.padOwner.GetProperties().PadStrokeWidth
+	ppr.l2.StrokeWidth = pp.padOwner.GetProperties().PadStrokeWidth
 	return ppr
 }
 
@@ -142,7 +142,7 @@ func (pp *PointPad) getConnectionPointInDiagramCoordinates(referencePoint fyne.P
 func (pp *PointPad) MouseIn(event *desktop.MouseEvent) {
 	conTrans := pp.padOwner.GetDiagram().ConnectionTransaction
 	if conTrans != nil && conTrans.Link.isConnectionAllowed(conTrans.LinkPoint, pp) {
-		pp.padColor = pp.padOwner.GetDiagram().padColor
+		pp.padColor = pp.padOwner.GetProperties().PadColor
 		conTrans.PendingPad = pp
 	} else {
 		pp.padColor = color.Transparent
@@ -161,6 +161,11 @@ func (pp *PointPad) MouseOut() {
 	if conTrans != nil && conTrans.PendingPad == pp {
 		conTrans.PendingPad = nil
 	}
+	pp.Refresh()
+}
+
+func (pp *PointPad) SetPadColor(c color.Color) {
+	pp.padColor = c
 	pp.Refresh()
 }
 
@@ -196,9 +201,11 @@ func (ppr *pointPadRenderer) Objects() []fyne.CanvasObject {
 
 func (ppr *pointPadRenderer) Refresh() {
 	ppr.l1.StrokeColor = ppr.pp.padColor
-	ppr.l1.StrokeWidth = padLineWidth
+	ppr.l1.StrokeWidth = ppr.pp.padOwner.GetProperties().PadStrokeWidth
 	ppr.l2.StrokeColor = ppr.pp.padColor
-	ppr.l2.StrokeWidth = padLineWidth
+	ppr.l2.StrokeWidth = ppr.pp.padOwner.GetProperties().PadStrokeWidth
+	ppr.l1.Refresh()
+	ppr.l2.Refresh()
 }
 
 /***********************************
@@ -220,7 +227,7 @@ func NewRectanglePad(padOwner DiagramElement) *RectanglePad {
 	rp := &RectanglePad{}
 	rp.connectionPad.padOwner = padOwner
 	rp.BaseWidget.ExtendBaseWidget(rp)
-	rp.lineWidth = padLineWidth
+	rp.lineWidth = padOwner.GetProperties().PadStrokeWidth
 	rp.padColor = color.Transparent
 	return rp
 }
@@ -231,7 +238,7 @@ func (rp *RectanglePad) CreateRenderer() fyne.WidgetRenderer {
 		rp:   rp,
 		rect: *canvas.NewRectangle(rp.padColor),
 	}
-	rpr.rect.StrokeWidth = padLineWidth
+	rpr.rect.StrokeWidth = rp.padOwner.GetProperties().PadStrokeWidth
 	return rpr
 }
 
@@ -276,8 +283,9 @@ func (rp *RectanglePad) makeBox() r2.Box {
 func (rp *RectanglePad) MouseIn(event *desktop.MouseEvent) {
 	conTrans := rp.padOwner.GetDiagram().ConnectionTransaction
 	if conTrans != nil && conTrans.Link.isConnectionAllowed(conTrans.LinkPoint, rp) {
-		rp.padColor = rp.padOwner.GetDiagram().padColor
+		rp.padColor = rp.padOwner.GetProperties().PadColor
 		conTrans.PendingPad = rp
+		rp.Show()
 	} else {
 		rp.padColor = color.Transparent
 	}
@@ -295,6 +303,11 @@ func (rp *RectanglePad) MouseOut() {
 	if conTrans != nil && conTrans.PendingPad == rp {
 		conTrans.PendingPad = nil
 	}
+	rp.Refresh()
+}
+
+func (rp *RectanglePad) SetPadColor(c color.Color) {
+	rp.padColor = c
 	rp.Refresh()
 }
 
@@ -329,4 +342,5 @@ func (rpr *rectanglePadRenderer) Refresh() {
 	rpr.rect.StrokeColor = rpr.rp.padColor
 	rpr.rect.FillColor = color.Transparent
 	rpr.rect.StrokeWidth = rpr.rp.lineWidth
+	rpr.rect.Refresh()
 }

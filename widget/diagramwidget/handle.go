@@ -89,4 +89,5 @@ func (hr *handleRenderer) Refresh() {
 	hr.rect.StrokeColor = hr.handle.getStrokeColor()
 	hr.rect.FillColor = color.Transparent
 	hr.rect.StrokeWidth = hr.handle.getStrokeWidth()
+	hr.rect.Refresh()
 }

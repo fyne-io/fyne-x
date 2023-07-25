@@ -35,7 +35,7 @@ func (le LinkEnd) ToString() string {
 type DiagramLink interface {
 	DiagramElement
 	getBaseDiagramLink() *BaseDiagramLink
-	getLinkPoints() []*LinkPoint
+	GetLinkPoints() []*LinkPoint
 	GetSourcePad() ConnectionPad
 	GetSourceHandle() *Handle
 	GetTargetPad() ConnectionPad
@@ -212,7 +212,7 @@ func (bdl *BaseDiagramLink) getHandleKey(handle *Handle) string {
 	return ""
 }
 
-func (bdl *BaseDiagramLink) getLinkPoints() []*LinkPoint {
+func (bdl *BaseDiagramLink) GetLinkPoints() []*LinkPoint {
 	return bdl.linkPoints
 }
 

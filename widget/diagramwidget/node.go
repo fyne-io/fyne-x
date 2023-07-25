@@ -13,9 +13,6 @@ import (
 type DiagramNode interface {
 	DiagramElement
 	getBaseDiagramNode() *BaseDiagramNode
-	// MouseIn(event *desktop.MouseEvent)
-	// MouseOut()
-	// MouseMoved(event *desktop.MouseEvent)
 	R2Center() r2.Vec2
 }
 
@@ -23,8 +20,6 @@ type DiagramNode interface {
 var _ DiagramElement = (*BaseDiagramNode)(nil)
 var _ fyne.Tappable = (*BaseDiagramNode)(nil)
 
-// var _ desktop.Hoverable = (*BaseDiagramNode)(nil)
-// var _ desktop.Hoverable = (DiagramNode)(nil)
 var _ fyne.Widget = (*BaseDiagramNode)(nil)
 var _ fyne.Widget = (DiagramNode)(nil)
 

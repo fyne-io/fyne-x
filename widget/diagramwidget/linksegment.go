@@ -105,4 +105,5 @@ func (lsr *linkSegmentRenderer) Refresh() {
 	lsr.line.Position2 = lsr.ls.p2.AddXY(-widgetPosition.X, -widgetPosition.Y)
 	lsr.line.StrokeColor = lsr.ls.link.properties.ForegroundColor
 	lsr.line.StrokeWidth = lsr.ls.link.properties.StrokeWidth
+	lsr.line.Refresh()
 }
