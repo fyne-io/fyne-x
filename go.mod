@@ -14,5 +14,3 @@ require (
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/image v0.3.0
 )
-
-replace fyne.io./fyne/v2 v2.3.5 => C:\GoWorkspace\src\github.com\fyne
