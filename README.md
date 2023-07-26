@@ -61,6 +61,10 @@ Community contributed widgets.
 
 A widget that will run animated gifs.
 
+<p align="center" class="align:center;margin:auto" markdown="1">
+<img src="img/gifwidget.gif" />
+</p>
+
 ```go
 gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
 gif.Start()
@@ -70,7 +74,7 @@ gif.Start()
 
 A date picker which returns a [time](https://pkg.go.dev/time) object with the selected date.
 
-<p  align="center"  class="align:center;margin:auto">
+<p align="center" class="align:center;margin:auto">
 
 <img  src="https://user-images.githubusercontent.com/45520351/179398051-a1f961fd-64be-4214-a565-0da85ce4a543.png"  style="max-width: 100%"  alt="Calendar widget"/>
 
@@ -320,4 +324,25 @@ for validation using an entropy system.
 ```go
 pw := validation.NewPassword(70) // Minimum password entropy allowed defined as 70.
 ```
+
+## Themes
+
+### Adwaita
+
+Adwaita is the theme used in new the versions of KDE and Gnome (and derivatives) on GNU/Linux.
+This theme proposes a color-schme taken from the Adwaita scpecification.
+
+Use it with:
+
+```go
+import "fyne.io/x/fyne/theme"
+//...
+
+app := app.New()
+app.Settings().SetTheme(theme.AdwaitaTheme())
+```
+
+![Adwaita Dark](./img/adwaita-theme-dark.png)
+
+![Adwaita Light](./img/adwaita-theme-light.png)
 
