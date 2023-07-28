@@ -93,7 +93,7 @@ func (bdn *BaseDiagramNode) Center() fyne.Position {
 	return fyne.Position{X: float32(bdn.R2Center().X), Y: float32(bdn.R2Center().Y)}
 }
 
-// Cursor() returns the desktop default cursor
+// Cursor returns the desktop default cursor
 func (bdn *BaseDiagramNode) Cursor() desktop.Cursor {
 	return desktop.DefaultCursor
 }

@@ -48,14 +48,13 @@ func calculateForce(dw *DiagramWidget, n1, n2 DiagramNode, targetLength float64)
 			return v.Scale(1*d*k + k*math.Pow(d, 1/(d+1)))
 		}
 		return v.Scale(-1*d*k - 0.01*k*math.Pow(d, 2))
-	} else {
-		if d > 1.2*targetLength {
-			return r2.V2(0, 0)
-		}
-		// non-adjacent nodes repel, at a rate falling of with distance.
-		return v.Scale(50 * math.Sqrt(1/(d+0.1)))
-		// return r2.V2(0, 0*math.Sqrt(1))
 	}
+	if d > 1.2*targetLength {
+		return r2.V2(0, 0)
+	}
+	// non-adjacent nodes repel, at a rate falling of with distance.
+	return v.Scale(50 * math.Sqrt(1/(d+0.1)))
+	// return r2.V2(0, 0*math.Sqrt(1))
 }
 
 // StepForceLayout calculates one step of force directed graph layout, with

@@ -52,11 +52,11 @@ func (lpr *linkPointRenderer) MinSize() fyne.Size {
 	return fyne.NewSize(1, 1)
 }
 
-func (lp *linkPointRenderer) Objects() []fyne.CanvasObject {
+func (lpr *linkPointRenderer) Objects() []fyne.CanvasObject {
 	obj := []fyne.CanvasObject{}
 	return obj
 }
 
-func (lp *linkPointRenderer) Refresh() {
+func (lpr *linkPointRenderer) Refresh() {
 
 }
