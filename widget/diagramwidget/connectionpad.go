@@ -164,6 +164,7 @@ func (pp *PointPad) MouseOut() {
 	pp.Refresh()
 }
 
+// SetPadColor sets the color to be used in rendering the pad
 func (pp *PointPad) SetPadColor(c color.Color) {
 	pp.padColor = c
 	pp.Refresh()
@@ -242,7 +243,7 @@ func (rp *RectanglePad) CreateRenderer() fyne.WidgetRenderer {
 	return rpr
 }
 
-// GetCenterInDiagramCoordinates() returns the center of the pad in the diagram's coordinate system
+// GetCenterInDiagramCoordinates returns the center of the pad in the diagram's coordinate system
 func (rp *RectanglePad) GetCenterInDiagramCoordinates() fyne.Position {
 	box := rp.makeBox()
 	r2Center := box.Center()
@@ -306,6 +307,7 @@ func (rp *RectanglePad) MouseOut() {
 	rp.Refresh()
 }
 
+// SetPadColor sets the color to be used in rendering the pad
 func (rp *RectanglePad) SetPadColor(c color.Color) {
 	rp.padColor = c
 	rp.Refresh()

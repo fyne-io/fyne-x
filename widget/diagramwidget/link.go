@@ -13,15 +13,19 @@ var _ fyne.Tappable = (*BaseDiagramLink)(nil)
 var _ desktop.Hoverable = (*BaseDiagramLink)(nil)
 var _ DiagramElement = (*BaseDiagramLink)(nil)
 
+// LinkEnd is an enumeration that identifies the ends of a link
 type LinkEnd int
 
+// LinkEnds contains the enumerated LinkEnd values
 var LinkEnds [2]LinkEnd = [2]LinkEnd{SOURCE, TARGET}
 
+// Specify the enumerated values for LinkEnd
 const (
 	SOURCE LinkEnd = iota
 	TARGET
 )
 
+// ToString returns a string indicating which end is represented by the LinkEnd value
 func (le LinkEnd) ToString() string {
 	switch le {
 	case SOURCE:
@@ -32,6 +36,7 @@ func (le LinkEnd) ToString() string {
 	return ""
 }
 
+// DiagramLink is a DiagramElement that connects two other DiagramElements
 type DiagramLink interface {
 	DiagramElement
 	getBaseDiagramLink() *BaseDiagramLink
@@ -212,6 +217,7 @@ func (bdl *BaseDiagramLink) getHandleKey(handle *Handle) string {
 	return ""
 }
 
+// GetLinkPoints returns an array of points that define the vertices of the link including the endpoints
 func (bdl *BaseDiagramLink) GetLinkPoints() []*LinkPoint {
 	return bdl.linkPoints
 }
@@ -230,22 +236,27 @@ func (bdl *BaseDiagramLink) getMidPosition() fyne.Position {
 	return midPoint
 }
 
+// GetMidpointAnchoredText returns the midpoint anchored text indexed under the supplied key
 func (bdl *BaseDiagramLink) GetMidpointAnchoredText(key string) *AnchoredText {
 	return bdl.midpointAnchoredText[key]
 }
 
+// GetSourceAnchoredText returns the source end anchored text indexed under the skupplied key
 func (bdl *BaseDiagramLink) GetSourceAnchoredText(key string) *AnchoredText {
 	return bdl.sourceAnchoredText[key]
 }
 
+// GetTargetAnchoredText returns the target tend anchored text indexed under the supplied key
 func (bdl *BaseDiagramLink) GetTargetAnchoredText(key string) *AnchoredText {
 	return bdl.targetAnchoredText[key]
 }
 
+// GetSourceHandle returns the handle associated with the source end
 func (bdl *BaseDiagramLink) GetSourceHandle() *Handle {
 	return bdl.handles[SOURCE.ToString()]
 }
 
+// GetSourcePad returns the pad (on another DiagramElement) to which the source end is connected
 func (bdl *BaseDiagramLink) GetSourcePad() ConnectionPad {
 	return bdl.sourcePad
 }
@@ -254,10 +265,12 @@ func (bdl *BaseDiagramLink) getSourcePosition() fyne.Position {
 	return bdl.linkPoints[0].Position()
 }
 
+// GetTargetHandle returns the handle associated with the target end
 func (bdl *BaseDiagramLink) GetTargetHandle() *Handle {
 	return bdl.handles[TARGET.ToString()]
 }
 
+// GetTargetPad returns the pad (on another DiagramElement) to which the target end is connected
 func (bdl *BaseDiagramLink) GetTargetPad() ConnectionPad {
 	return bdl.targetPad
 }
@@ -397,7 +410,7 @@ func (bdl *BaseDiagramLink) MouseMoved(event *desktop.MouseEvent) {
 func (bdl *BaseDiagramLink) MouseOut() {
 }
 
-// SetSourcePad sets the source pad and adds the link dependency to the diagram
+// SetSourcePad sets the source pad (belonging to another DiagramElement) and adds the link dependency to the diagram
 func (bdl *BaseDiagramLink) SetSourcePad(pad ConnectionPad) {
 	oldPad := bdl.sourcePad
 	if oldPad != pad {
@@ -413,7 +426,7 @@ func (bdl *BaseDiagramLink) SetSourcePad(pad ConnectionPad) {
 	}
 }
 
-// SetTargetPad sets the target pad and adds the link dependency to the diagram
+// SetTargetPad sets the target pad (belonging to another DiagramElement) and adds the link dependency to the diagram
 func (bdl *BaseDiagramLink) SetTargetPad(pad ConnectionPad) {
 	oldPad := bdl.targetPad
 	if oldPad != pad {
@@ -655,6 +668,7 @@ type ConnectionTransaction struct {
 	PendingPad      ConnectionPad
 }
 
+// NewConnectionTransaction returns an instance of ConnectionTransaction
 func NewConnectionTransaction(linkPoint *LinkPoint, link DiagramLink, initialPad ConnectionPad, initialPosition fyne.Position) *ConnectionTransaction {
 	ct := &ConnectionTransaction{
 		LinkPoint:       linkPoint,

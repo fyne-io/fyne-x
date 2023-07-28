@@ -10,6 +10,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
+// DiagramNode is a rectangular DiagramElement typically containing one or more widgets
 type DiagramNode interface {
 	DiagramElement
 	getBaseDiagramNode() *BaseDiagramNode
@@ -72,6 +73,7 @@ func InitializeBaseDiagramNode(diagramNode DiagramNode, diagram *DiagramWidget, 
 	diagramNode.Refresh()
 }
 
+// CreateRenderer creates the renderer for the diagram node
 func (bdn *BaseDiagramNode) CreateRenderer() fyne.WidgetRenderer {
 	dnr := diagramNodeRenderer{
 		node: bdn,
@@ -86,17 +88,21 @@ func (bdn *BaseDiagramNode) CreateRenderer() fyne.WidgetRenderer {
 	return &dnr
 }
 
+// Center reurns the position of the center of the node
 func (bdn *BaseDiagramNode) Center() fyne.Position {
 	return fyne.Position{X: float32(bdn.R2Center().X), Y: float32(bdn.R2Center().Y)}
 }
 
+// Cursor() returns the desktop default cursor
 func (bdn *BaseDiagramNode) Cursor() desktop.Cursor {
 	return desktop.DefaultCursor
 }
 
+// DragEnd is presently a no-op
 func (bdn *BaseDiagramNode) DragEnd() {
 }
 
+// Dragged passes the DragEvent to the diagram for processing
 func (bdn *BaseDiagramNode) Dragged(event *fyne.DragEvent) {
 	bdn.diagram.DiagramNodeDragged(bdn, event)
 }
@@ -205,6 +211,7 @@ func (bdn *BaseDiagramNode) IsNode() bool {
 	return true
 }
 
+// Move moves the node and invokes the callback if present.
 func (bdn *BaseDiagramNode) Move(position fyne.Position) {
 	bdn.BaseWidget.Move(position)
 	if bdn.MovedCallback != nil {
@@ -213,6 +220,7 @@ func (bdn *BaseDiagramNode) Move(position fyne.Position) {
 	bdn.Refresh()
 }
 
+// R2Box returns the bounding box in r2 coordinates
 func (bdn *BaseDiagramNode) R2Box() r2.Box {
 	inner := bdn.effectiveInnerSize()
 	s := r2.V2(
@@ -223,20 +231,24 @@ func (bdn *BaseDiagramNode) R2Box() r2.Box {
 	return r2.MakeBox(bdn.R2Position(), s)
 }
 
+// R2Center returns the r2 vector for the center of the bounding box
 func (bdn *BaseDiagramNode) R2Center() r2.Vec2 {
 	return bdn.R2Box().Center()
 }
 
+// R2Position returns the position of the node as an r2 vector
 func (bdn *BaseDiagramNode) R2Position() r2.Vec2 {
 	return r2.V2(float64(bdn.Position().X), float64(bdn.Position().Y))
 }
 
+// SetInnerObject makes the skupplied canvas object the center of the node
 func (bdn *BaseDiagramNode) SetInnerObject(obj fyne.CanvasObject) {
 	bdn.innerObject = obj
 	bdn.Refresh()
 	bdn.diagram.refreshDependentLinks(bdn)
 }
 
+// Tapped passes the tapped event on to the Diagram
 func (bdn *BaseDiagramNode) Tapped(event *fyne.PointEvent) {
 	bdn.diagram.DiagramElementTapped(bdn)
 }

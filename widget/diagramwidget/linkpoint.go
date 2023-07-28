@@ -11,6 +11,7 @@ type LinkPoint struct {
 	link DiagramLink
 }
 
+// NewLinkPoint creates an instance of a LinkPoint for a specific DiagramLink
 func NewLinkPoint(link DiagramLink) *LinkPoint {
 	lp := &LinkPoint{}
 	lp.BaseWidget.ExtendBaseWidget(lp)
@@ -18,15 +19,19 @@ func NewLinkPoint(link DiagramLink) *LinkPoint {
 	return lp
 }
 
+// CreateRenderer creates the renderere for a LinkPoint
 func (lp *LinkPoint) CreateRenderer() fyne.WidgetRenderer {
 	lpr := &linkPointRenderer{}
 	return lpr
 }
 
+// GetLink returns the Link to which the LinkPoint belongs
 func (lp *LinkPoint) GetLink() DiagramLink {
 	return lp.link
 }
 
+// IsConnectionAllowed returns true if a connection is permitted with the indicated pad. The
+// question is passed to the owning link
 func (lp *LinkPoint) IsConnectionAllowed(connectionPad ConnectionPad) bool {
 	return lp.link.isConnectionAllowed(lp, connectionPad)
 }

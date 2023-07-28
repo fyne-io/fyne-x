@@ -16,6 +16,7 @@ type Line struct {
 	S Vec2
 }
 
+// MakeLine crates an r2 Line
 func MakeLine(a, s Vec2) Line {
 	return Line{
 		A: a,
@@ -23,17 +24,19 @@ func MakeLine(a, s Vec2) Line {
 	}
 }
 
-// Return a line which has endpoints a, b
+// MakeLineFromEndpoints returns a line which has endpoints a, b
 func MakeLineFromEndpoints(a, b Vec2) Line {
 	s := b.Add(a.Scale(-1))
 
 	return MakeLine(a, s)
 }
 
+// Endpoint1 returns the first endpoint of the line
 func (l Line) Endpoint1() Vec2 {
 	return l.A
 }
 
+// Endpoint2 returns the second endpoint of the line
 func (l Line) Endpoint2() Vec2 {
 	return l.A.Add(l.S)
 }
@@ -54,11 +57,12 @@ func samesign(a, b float64) bool {
 	return false
 }
 
+// Length returns the length of the line
 func (l Line) Length() float64 {
 	return l.S.Length()
 }
 
-// This code is transliterated from here:
+// IntersectLines This code is transliterated from here:
 //
 // https://github.com/JulNadeauCA/libagar/blob/master/gui/primitive.co
 //

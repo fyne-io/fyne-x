@@ -101,7 +101,7 @@ func (at *AnchoredText) MouseMoved(event *desktop.MouseEvent) {
 
 }
 
-// MousOut is one of the required methods for a mouseable widget
+// MouseOut is one of the required methods for a mouseable widget
 func (at *AnchoredText) MouseOut() {
 	// at.textObject.TextStyle.Bold = false
 	at.Refresh()

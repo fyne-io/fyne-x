@@ -11,6 +11,7 @@ import (
 	"github.com/twpayne/go-geom/xy"
 )
 
+// LinkSegment is a widget representing a single line segment belonging to a link
 type LinkSegment struct {
 	widget.BaseWidget
 	link *BaseDiagramLink
@@ -20,6 +21,7 @@ type LinkSegment struct {
 	mouseDownPosition fyne.Position
 }
 
+// NewLinkSegment returns a LinkSegment belonging to the indicated Link
 func NewLinkSegment(link *BaseDiagramLink, p1 fyne.Position, p2 fyne.Position) *LinkSegment {
 	ls := &LinkSegment{
 		link: link,
@@ -31,6 +33,7 @@ func NewLinkSegment(link *BaseDiagramLink, p1 fyne.Position, p2 fyne.Position) *
 	return ls
 }
 
+// CreateRenderer creates the renderer for the LinkSegment
 func (ls *LinkSegment) CreateRenderer() fyne.WidgetRenderer {
 	lsr := &linkSegmentRenderer{
 		ls:   ls,
@@ -65,6 +68,7 @@ func (ls *LinkSegment) MouseUp(event *desktop.MouseEvent) {
 	}
 }
 
+// SetPoints sets the endpoints of the LinkSegment
 func (ls *LinkSegment) SetPoints(p1 fyne.Position, p2 fyne.Position) {
 	ls.p1 = p1
 	ls.p2 = p2

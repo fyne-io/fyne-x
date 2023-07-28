@@ -298,7 +298,7 @@ func (dw *DiagramWidget) MouseOut() {
 	}
 }
 
-// MouseDown responds to MouseDown events. It invokes the callback, if present
+// MouseUp responds to MouseUp events. It invokes the callback, if present
 func (dw *DiagramWidget) MouseUp(event *desktop.MouseEvent) {
 	if dw.MouseUpCallback != nil {
 		dw.MouseUpCallback(event)

@@ -25,6 +25,7 @@ type Box struct {
 	S Vec2
 }
 
+// MakeBox creates an r2 Box
 func MakeBox(a, s Vec2) Box {
 	return Box{
 		A: a,
@@ -32,11 +33,13 @@ func MakeBox(a, s Vec2) Box {
 	}
 }
 
+// Area returns the area of the Box
 func (b Box) Area() float64 {
 	return b.S.X * b.S.Y
 }
 
-// FindPerimeterPointNearestContainedPoint
+// FindPerimeterPointNearestContainedPoint returns the perimiter point closest to the contained point.
+// If the point is not actually within the Box, it returns a (0,0) vector
 func (b Box) FindPerimeterPointNearestContainedPoint(containedPoint Vec2) Vec2 {
 	if !b.Contains(containedPoint) {
 		return MakeVec2(0, 0)
@@ -56,19 +59,17 @@ func (b Box) FindPerimeterPointNearestContainedPoint(containedPoint Vec2) Vec2 {
 			if leftDistance > topDistance {
 				// top is the closest
 				return MakeVec2(containedPoint.X, top)
-			} else {
-				// left is the closest
-				return MakeVec2(left, containedPoint.Y)
 			}
+			// left is the closest
+			return MakeVec2(left, containedPoint.Y)
 		} else {
 			// right is closer
 			if rightDistance > topDistance {
 				// top is the closest
 				return MakeVec2(containedPoint.X, top)
-			} else {
-				// right is the closest
-				return MakeVec2(right, containedPoint.Y)
 			}
+			// right is the closest
+			return MakeVec2(right, containedPoint.Y)
 		}
 	} else {
 		// bottom is closer
@@ -77,19 +78,17 @@ func (b Box) FindPerimeterPointNearestContainedPoint(containedPoint Vec2) Vec2 {
 			if leftDistance > bottomDistance {
 				// bottom is the closest
 				return MakeVec2(containedPoint.X, bottom)
-			} else {
-				// left is the closest
-				return MakeVec2(left, containedPoint.Y)
 			}
+			// left is the closest
+			return MakeVec2(left, containedPoint.Y)
 		} else {
 			// right is closer
 			if rightDistance > bottomDistance {
 				// bottom is the closest
 				return MakeVec2(containedPoint.X, bottom)
-			} else {
-				// right is the closest
-				return MakeVec2(right, containedPoint.Y)
 			}
+			// right is the closest
+			return MakeVec2(right, containedPoint.Y)
 		}
 	}
 }
@@ -114,7 +113,7 @@ func (b Box) GetCorner4() Vec2 {
 	return b.A.Add(V2(b.S.X, b.S.Y))
 }
 
-// Returns the intersection of the box and the line, and a Boolean indicating
+// Intersect returns the intersection of the box and the line, and a Boolean indicating
 // if the box and vector intersect. If they do not collide, the zero vector is
 // returned.
 func (b Box) Intersect(l Line) (Vec2, bool) {
@@ -133,7 +132,7 @@ func (b Box) Intersect(l Line) (Vec2, bool) {
 	intersects := []bool{false, false, false, false}
 	intersectPoints := make([]Vec2, 4)
 
-	shortest_dist := float64(-1.0)
+	shortestDist := float64(-1.0)
 	best := -1
 
 	for i := range faces {
@@ -145,13 +144,13 @@ func (b Box) Intersect(l Line) (Vec2, bool) {
 		intersects[i] = ok
 		intersectPoints[i] = in
 
-		if (dists[i] < shortest_dist) || (shortest_dist == float64(-1)) {
-			shortest_dist = dists[i]
+		if (dists[i] < shortestDist) || (shortestDist == float64(-1)) {
+			shortestDist = dists[i]
 			best = i
 		}
 	}
 
-	if shortest_dist < 0 {
+	if shortestDist < 0 {
 		return V2(0, 0), false
 	}
 
@@ -178,6 +177,7 @@ func (b Box) Bottom() Line {
 	return MakeLineFromEndpoints(b.GetCorner3(), b.GetCorner4())
 }
 
+// Center returns the center of the Box as an r2 vector
 func (b Box) Center() Vec2 {
 	return b.A.Add(b.S.Scale(0.5))
 }
@@ -227,10 +227,12 @@ func BoundingBox(points []Vec2) Box {
 	return MakeBox(V2(xMin, yMax), V2(xMax-xMin, yMin-yMax))
 }
 
+// Width returns the width of the Box
 func (b Box) Width() float64 {
 	return b.Top().Length()
 }
 
+// Height returns the height of the box
 func (b Box) Height() float64 {
 	return b.Left().Length()
 }

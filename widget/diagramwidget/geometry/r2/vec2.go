@@ -39,7 +39,7 @@ func (v Vec2) Add(u Vec2) Vec2 {
 	return Vec2{X: v.X + u.X, Y: v.Y + u.Y}
 }
 
-// Add angle adds two angles in radians. The inputs are assumed to be in the
+// AddAngles adds two angles in radians. The inputs are assumed to be in the
 // range of +Pi to -Pi radians. The range of the result is +Pi to -Pi radians
 func AddAngles(a1 float64, a2 float64) float64 {
 	angleSum := a1 + a2

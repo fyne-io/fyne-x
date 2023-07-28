@@ -46,9 +46,8 @@ func calculateForce(dw *DiagramWidget, n1, n2 DiagramNode, targetLength float64)
 
 		if d < targetLength {
 			return v.Scale(1*d*k + k*math.Pow(d, 1/(d+1)))
-		} else {
-			return v.Scale(-1*d*k - 0.01*k*math.Pow(d, 2))
 		}
+		return v.Scale(-1*d*k - 0.01*k*math.Pow(d, 2))
 	} else {
 		if d > 1.2*targetLength {
 			return r2.V2(0, 0)

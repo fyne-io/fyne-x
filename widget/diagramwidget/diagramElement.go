@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// DiagramElementProperties are the rendering properties of a DiagramElement
 type DiagramElementProperties struct {
 	ForegroundColor   color.Color
 	BackgroundColor   color.Color
@@ -20,7 +21,7 @@ type DiagramElementProperties struct {
 	HandleStrokeWidth float32
 }
 
-// A DiagramElement is a widget that can be placed directly in a diagram. The most common
+// DiagramElement is a widget that can be placed directly in a diagram. The most common
 // elements are Node and Link widgets.
 type DiagramElement interface {
 	fyne.Widget
