@@ -75,9 +75,7 @@ type DiagramWidget struct {
 // to data structures within the of the application. It is expected to  be unique within the application
 func NewDiagramWidget(id string) *DiagramWidget {
 	dw := &DiagramWidget{
-		ID: id,
-		// DiagramTheme:                   fyne.CurrentApp().Settings().Theme(),
-		// ThemeVariant:                   fyne.CurrentApp().Settings().ThemeVariant(),
+		ID:                             id,
 		DesiredSize:                    fyne.Size{Width: 800, Height: 600},
 		Offset:                         fyne.Position{X: 0, Y: 0},
 		Nodes:                          map[string]DiagramNode{},
@@ -186,8 +184,28 @@ func (dw *DiagramWidget) DiagramElementTapped(de DiagramElement) {
 	}
 }
 
+// DiagramNodeDragged moves the indicated node and refreshes any links that may be attached
+// to it
+func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.DragEvent) {
+	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
+	dw.DisplaceNode(node, delta)
+}
+
+// DisplaceNode moves the indicated node and refreshes any links that may be attached
+// to it
+func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
+	node.Move(node.Position().Add(delta))
+	dw.refreshDependentLinks(node)
+}
+
 // DragEnd is called when the drag comes to an end. It refreshes the widget
 func (dw *DiagramWidget) DragEnd() {
+	dw.Refresh()
+}
+
+// Dragged responds to a drag movement in the background of the diagram. It moves the widget itself.
+func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
+	dw.Move(dw.Position().Add(event.Dragged))
 	dw.Refresh()
 }
 
@@ -212,30 +230,6 @@ func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
 // be different from the application's theme
 func (dw *DiagramWidget) GetForegroundColor() color.Color {
 	return dw.DefaultDiagramElementProperties.ForegroundColor
-}
-
-// DiagramNodeDragged moves the indicated node and refreshes any links that may be attached
-// to it
-func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.DragEvent) {
-	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
-	dw.DisplaceNode(node, delta)
-}
-
-// DisplaceNode moves the indicated node and refreshes any links that may be attached
-// to it
-func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
-	node.Move(node.Position().Add(delta))
-	dw.refreshDependentLinks(node)
-}
-
-// Dragged responds to a drag movement in the background of the diagram. It moves all nodes
-// in the diagram and refreshes all links.
-func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
-	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
-	for _, n := range dw.Nodes {
-		dw.DisplaceNode(n, delta)
-	}
-	dw.Refresh()
 }
 
 // GetDiagramElements returns a map of all of the diagram's DiagramElements

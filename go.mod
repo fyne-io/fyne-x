@@ -10,7 +10,7 @@ require (
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
 	github.com/srwiley/rasterx v0.0.0-20210519020934-456a8d69b780
 	github.com/stretchr/testify v1.8.1
-	github.com/twpayne/go-geom v1.5.2
+	github.com/twpayne/go-geom v1.0.0
 	github.com/wagslane/go-password-validator v0.3.0
 	golang.org/x/image v0.3.0
 )
