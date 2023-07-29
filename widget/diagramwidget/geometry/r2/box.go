@@ -70,25 +70,24 @@ func (b Box) FindPerimeterPointNearestContainedPoint(containedPoint Vec2) Vec2 {
 		}
 		// right is the closest
 		return MakeVec2(right, containedPoint.Y)
-	} else {
-		// bottom is closer
-		if rightDistance > leftDistance {
-			// left is closer
-			if leftDistance > bottomDistance {
-				// bottom is the closest
-				return MakeVec2(containedPoint.X, bottom)
-			}
-			// left is the closest
-			return MakeVec2(left, containedPoint.Y)
-		}
-		// right is closer
-		if rightDistance > bottomDistance {
+	}
+	// bottom is closer
+	if rightDistance > leftDistance {
+		// left is closer
+		if leftDistance > bottomDistance {
 			// bottom is the closest
 			return MakeVec2(containedPoint.X, bottom)
 		}
-		// right is the closest
-		return MakeVec2(right, containedPoint.Y)
+		// left is the closest
+		return MakeVec2(left, containedPoint.Y)
 	}
+	// right is closer
+	if rightDistance > bottomDistance {
+		// bottom is the closest
+		return MakeVec2(containedPoint.X, bottom)
+	}
+	// right is the closest
+	return MakeVec2(right, containedPoint.Y)
 }
 
 // GetCorner1 returns the top left corner of the box
