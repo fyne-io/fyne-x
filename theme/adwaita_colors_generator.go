@@ -14,7 +14,7 @@ import (
 	"fmt"
 	"go/format"
 	"image/color"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -108,7 +108,7 @@ func main() {
 		log.Fatal(err)
 	}
 	defer reps.Body.Close()
-	htpage, err := ioutil.ReadAll(reps.Body)
+	htpage, err := io.ReadAll(reps.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
