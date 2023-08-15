@@ -104,9 +104,9 @@ This collection should be considered a work in progress. When changes are made,
 serious consideration will be given to backward compatibility, but compatibility
 is not guaranteed. 
 
-The DiagramWidget itself is intended to be incorporated into a Fyne application. It provides a
-drawing area within which a diagram can be created. The diagram itself is a collection of 
-DiagramElement widgets (an interface). There are two types of DiagramElements: DiagramNode widgets and DiagramLink widgets. DiagramNode widgets are thin wrappers around a user-supplied CanvasObject.
+The DiagramWidget provides a drawing area within which a diagram can be created. The diagram itself is a collection of 
+DiagramElement widgets (an interface). There are two types of DiagramElements: DiagramNode widgets and DiagramLink widgets. 
+DiagramNode widgets are thin wrappers around a user-supplied CanvasObject.
 Any valid CanvasObject can be used. DiagramLinks are line-based connections between DiagramElements.
 Note that links can connect to other links as well as nodes.
 
@@ -125,7 +125,7 @@ or resized.
   <img src="img/DiagramWidget.png" width="1024" height="880" alt="Diagram Widget" style="max-width: 100%" />
 </p>
 
-**DiagramElement Interface**
+### DiagramElement Interface
 
 A DiagramElement is the base interface for any element of the diagram being managed by the 
 DiagramWidget. It provides a common interface for DiagramNode and DiagramLink widgets. The DiagramElement
@@ -134,12 +134,12 @@ for showing and hiding the handles that are used for graphically manipulating th
 The specifics of what handles do are different for nodes and links - these are described below in the
 sections for their respective widgets.
 
-**DiagramNode Widget**
+### DiagramNode Widget
 
 The DiagramNode widget is a wrapper around a user-supplied CanvasObject. In addition to the user-supplied
 CanvasObject, the node displays a border and, when selected, handles at the corners and edge mid-points that can be used to manipulate the size of the node. The node can be selected and dragged to a new position with a mouse by clicking in the border area around the canvas object. 
 
-**DiagramLink Widget**
+### DiagramLink Widget
 
 The DiagramLink widget provides a directed line-based connection between two DiagramElements. 
 The link is defined in terms of LinkPoints that are connected by LinkSegments (both of which

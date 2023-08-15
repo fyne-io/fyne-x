@@ -40,7 +40,6 @@ func NewAnchoredText(text string) *AnchoredText {
 	at.textEntry = widget.NewEntryWithData(at.displayedTextBinding)
 	at.textEntry.Wrapping = fyne.TextWrapOff
 	at.textEntry.Validator = nil
-	at.textEntry.Enable()
 	at.ExtendBaseWidget(at)
 	return at
 }

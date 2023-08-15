@@ -17,9 +17,6 @@ var forceticks int = 0
 
 func forceanim(diagramWidget *diagramwidget.DiagramWidget) {
 
-	// XXX: very naughty -- accesses shared memory in potentially unsafe
-	// ways, this almost certainly has race conditions... don't do this!
-
 	for {
 		if forceticks > 0 {
 			diagramwidget.StepForceLayout(diagramWidget, 300)

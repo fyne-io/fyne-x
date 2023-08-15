@@ -31,7 +31,7 @@ func (v Vec2) Length() float64 {
 
 // Dot returns the dot product of vector v and u
 func (v Vec2) Dot(u Vec2) float64 {
-	return v.X*u.X + v.Y + u.Y
+	return v.X*u.X + v.Y*u.Y
 }
 
 // Add returns the sum of vector v and u

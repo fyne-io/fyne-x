@@ -68,8 +68,7 @@ func (rp *RectanglePad) MouseDown(event *desktop.MouseEvent) {
 		if link.isConnectionAllowed(connectionTransaction.LinkPoint, rp) {
 			padOwnerPosition := rp.padOwner.Position()
 			pseudoEvent := &fyne.DragEvent{
-				PointEvent: fyne.PointEvent{},
-				Dragged:    fyne.NewDelta(event.Position.X+padOwnerPosition.X, event.Position.Y+padOwnerPosition.Y),
+				Dragged: fyne.NewDelta(event.Position.X+padOwnerPosition.X, event.Position.Y+padOwnerPosition.Y),
 			}
 			// the link point has to be changed before the handle is dragged
 			connectionTransaction.LinkPoint = connectionTransaction.Link.GetLinkPoints()[1]
