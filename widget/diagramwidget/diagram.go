@@ -1,8 +1,8 @@
 package diagramwidget
 
 import (
+	"container/list"
 	"image/color"
-	"reflect"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver/desktop"
@@ -33,11 +33,12 @@ type DiagramWidget struct {
 	DesiredSize fyne.Size
 
 	DefaultDiagramElementProperties DiagramElementProperties
-	Nodes                           map[string]DiagramNode
-	Links                           map[string]DiagramLink
-	primarySelection                DiagramElement
-	selection                       map[string]DiagramElement
-	diagramElementLinkDependencies  map[string][]linkPadPair
+	DiagramElements                 *list.List
+	// Nodes                           map[string]DiagramNode
+	// Links                           map[string]DiagramLink
+	primarySelection               DiagramElement
+	selection                      map[string]DiagramElement
+	diagramElementLinkDependencies map[string][]linkPadPair
 	// ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes
 	ConnectionTransaction *ConnectionTransaction
 	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
@@ -75,11 +76,12 @@ type DiagramWidget struct {
 // to data structures within the of the application. It is expected to  be unique within the application
 func NewDiagramWidget(id string) *DiagramWidget {
 	dw := &DiagramWidget{
-		ID:                             id,
-		DesiredSize:                    fyne.Size{Width: 800, Height: 600},
-		Offset:                         fyne.Position{X: 0, Y: 0},
-		Nodes:                          map[string]DiagramNode{},
-		Links:                          map[string]DiagramLink{},
+		ID:              id,
+		DesiredSize:     fyne.Size{Width: 800, Height: 600},
+		Offset:          fyne.Position{X: 0, Y: 0},
+		DiagramElements: list.New(),
+		// Nodes:                          map[string]DiagramNode{},
+		// Links:                          map[string]DiagramLink{},
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPadPair{},
 	}
@@ -116,7 +118,8 @@ func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
 
 // addLink adds a link to the diagram
 func (dw *DiagramWidget) addLink(link DiagramLink) {
-	dw.Links[link.GetDiagramElementID()] = link
+	dw.DiagramElements.PushBack(link)
+	// dw.Links[link.GetDiagramElementID()] = link
 	link.Refresh()
 	// TODO add logic to rezise diagram if necessary
 }
@@ -139,7 +142,8 @@ func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *
 
 // addNode adds a node to the diagram
 func (dw *DiagramWidget) addNode(node DiagramNode) {
-	dw.Nodes[node.GetDiagramElementID()] = node
+	dw.DiagramElements.PushBack(node)
+	// dw.Nodes[node.GetDiagramElementID()] = node
 	node.Refresh()
 	// TODO add logic to rezise diagram if necessary
 }
@@ -218,12 +222,14 @@ func (dw *DiagramWidget) GetBackgroundColor() color.Color {
 // GetDiagramElement returns the diagram element with the specified ID, whether
 // it is a node or a link
 func (dw *DiagramWidget) GetDiagramElement(elementID string) DiagramElement {
-	var de DiagramElement
-	de = dw.Nodes[elementID]
-	if de == nil || reflect.ValueOf(de).IsNil() {
-		de = dw.Links[elementID]
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		value := listElement.Value
+		diagramElement := value.(DiagramElement)
+		if diagramElement.GetDiagramElementID() == elementID {
+			return diagramElement
+		}
 	}
-	return de
+	return nil
 }
 
 // GetForegroundColor returns the foreground color from the diagram's theme, which may
@@ -232,16 +238,60 @@ func (dw *DiagramWidget) GetForegroundColor() color.Color {
 	return dw.DefaultDiagramElementProperties.ForegroundColor
 }
 
-// GetDiagramElements returns a map of all of the diagram's DiagramElements
-func (dw *DiagramWidget) GetDiagramElements() map[string]DiagramElement {
-	diagramElements := map[string]DiagramElement{}
-	for key, node := range dw.Nodes {
-		diagramElements[key] = node
-	}
-	for key, link := range dw.Links {
-		diagramElements[key] = link
+// GetDiagramElements returns an array all of the diagram's DiagramElements
+func (dw *DiagramWidget) GetDiagramElements() []DiagramElement {
+	diagramElements := []DiagramElement{}
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		diagramElement := listElement.Value.(DiagramElement)
+		diagramElements = append(diagramElements, diagramElement)
 	}
 	return diagramElements
+}
+
+// GetDiagramLink returns the diagram link with the indicated ID
+func (dw *DiagramWidget) GetDiagramLink(id string) DiagramLink {
+	{
+		diagramElement := dw.GetDiagramElement(id)
+		if diagramElement != nil && diagramElement.IsLink() {
+			return diagramElement.(DiagramLink)
+		}
+		return nil
+	}
+}
+
+// GetDiagramLinks returns a map of all of the diagram's DiagramElements
+func (dw *DiagramWidget) GetDiagramLinks() []DiagramLink {
+	diagramLinks := []DiagramLink{}
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		diagramElement := listElement.Value.(DiagramElement)
+		if diagramElement.IsLink() {
+			diagramLinks = append(diagramLinks, diagramElement.(DiagramLink))
+		}
+	}
+	return diagramLinks
+}
+
+// GetDiagramNode returns the diagram node with the indicated ID
+func (dw *DiagramWidget) GetDiagramNode(id string) DiagramNode {
+	{
+		diagramElement := dw.GetDiagramElement(id)
+		if diagramElement != nil && diagramElement.IsNode() {
+			return diagramElement.(DiagramNode)
+		}
+		return nil
+	}
+}
+
+// GetDiagramNodes returns a map of all of the diagram's DiagramElements
+func (dw *DiagramWidget) GetDiagramNodes() []DiagramNode {
+	diagramNodes := []DiagramNode{}
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		diagramElement := listElement.Value.(DiagramElement)
+		if diagramElement.IsNode() {
+			diagramNodes = append(diagramNodes, diagramElement.(DiagramNode))
+		}
+	}
+	return diagramNodes
 }
 
 // GetPrimarySelection returns the diagram element that is currently selected
@@ -253,13 +303,9 @@ func (dw *DiagramWidget) GetPrimarySelection() DiagramElement {
 // (i.e. the pad) masks the parent's Tappable interface. This function (and all references to
 // it) should be removed when this issue has been resolved
 func (dw *DiagramWidget) hideAllPads() {
-	for _, node := range dw.Nodes {
-		for _, pad := range node.GetConnectionPads() {
-			pad.Hide()
-		}
-	}
-	for _, link := range dw.Links {
-		for _, pad := range link.GetConnectionPads() {
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		diagramElement := listElement.Value.(DiagramElement)
+		for _, pad := range diagramElement.GetConnectionPads() {
 			pad.Hide()
 		}
 	}
@@ -370,10 +416,13 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 		dw.RemoveElement(pair.link.id)
 	}
 	delete(dw.diagramElementLinkDependencies, elementID)
-	if element.IsNode() {
-		delete(dw.Nodes, elementID)
-	} else if element.IsLink() {
-		delete(dw.Links, elementID)
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		diagramElement := listElement.Value.(DiagramElement)
+		if diagramElement.GetDiagramElementID() == elementID {
+			dw.DiagramElements.Remove(listElement)
+		}
+	}
+	if element.IsLink() {
 		dw.removeDependenciesInvolvingLink(elementID)
 	}
 	dw.Refresh()
@@ -402,13 +451,9 @@ func (dw *DiagramWidget) SelectDiagramElementNoCallback(id string) {
 // (i.e. the pad) masks the parent's Tappable interface. This function (and all references to
 // it) should be removed when this issue has been resolved
 func (dw *DiagramWidget) showAllPads() {
-	for _, node := range dw.Nodes {
-		for _, pad := range node.GetConnectionPads() {
-			pad.Show()
-		}
-	}
-	for _, link := range dw.Links {
-		for _, pad := range link.GetConnectionPads() {
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		diagramElement := listElement.Value.(DiagramElement)
+		for _, pad := range diagramElement.GetConnectionPads() {
 			pad.Show()
 		}
 	}
@@ -447,20 +492,14 @@ func (r *diagramWidgetRenderer) MinSize() fyne.Size {
 
 func (r *diagramWidgetRenderer) Objects() []fyne.CanvasObject {
 	obj := make([]fyne.CanvasObject, 0)
-	for _, n := range r.diagramWidget.Nodes {
+	for _, n := range r.diagramWidget.GetDiagramElements() {
 		obj = append(obj, n)
-	}
-	for _, e := range r.diagramWidget.Links {
-		obj = append(obj, e)
 	}
 	return obj
 }
 
 func (r *diagramWidgetRenderer) Refresh() {
-	for _, e := range r.diagramWidget.Links {
-		e.Refresh()
-	}
-	for _, n := range r.diagramWidget.Nodes {
-		n.Refresh()
+	for _, obj := range r.diagramWidget.GetDiagramElements() {
+		obj.Refresh()
 	}
 }

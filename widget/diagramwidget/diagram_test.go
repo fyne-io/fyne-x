@@ -21,25 +21,25 @@ func TestDependencies(t *testing.T) {
 	assert.Equal(t, 0, len(diagram.diagramElementLinkDependencies))
 	linkID := "Link1"
 	link := NewDiagramLink(diagram, linkID)
-	link.SetSourcePad(node1.pads["default"])
-	link.SetTargetPad(node2.pads["default"])
+	link.SetSourcePad(node1.GetDefaultConnectionPad())
+	link.SetTargetPad(node2.GetDefaultConnectionPad())
 	assert.NotNil(t, link)
 	assert.Equal(t, 2, len(diagram.diagramElementLinkDependencies))
 
 	node1Dependencies := diagram.diagramElementLinkDependencies[node1ID]
 	assert.Equal(t, 1, len(node1Dependencies))
 	assert.Equal(t, link, node1Dependencies[0].link)
-	assert.Equal(t, node1.pads["default"], node1Dependencies[0].pad)
+	assert.Equal(t, node1.GetDefaultConnectionPad(), node1Dependencies[0].pad)
 
 	node2Dependencies := diagram.diagramElementLinkDependencies[node2ID]
 	assert.Equal(t, 1, len(node2Dependencies))
 	assert.Equal(t, link, node2Dependencies[0].link)
-	assert.Equal(t, node2.pads["default"], node2Dependencies[0].pad)
+	assert.Equal(t, node2.GetDefaultConnectionPad(), node2Dependencies[0].pad)
 
 	// Now test the dependency management when a node is deleted
 	diagram.RemoveElement(node2ID)
-	assert.Nil(t, diagram.Nodes[node2ID])
-	assert.Nil(t, diagram.Links[linkID])
+	assert.Nil(t, diagram.GetDiagramElement(node2ID))
+	assert.Nil(t, diagram.GetDiagramElement(linkID))
 	assert.Equal(t, 0, len(diagram.diagramElementLinkDependencies))
 
 }

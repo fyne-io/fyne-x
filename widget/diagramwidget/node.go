@@ -14,7 +14,9 @@ import (
 type DiagramNode interface {
 	DiagramElement
 	getBaseDiagramNode() *BaseDiagramNode
+	GetEdgePad() ConnectionPad
 	R2Center() r2.Vec2
+	SetInnerObject(fyne.CanvasObject)
 }
 
 // Validate that BaseDiagramNode implements DiagramElement and Tappable
@@ -49,10 +51,11 @@ type BaseDiagramNode struct {
 // nodeID string must be unique across all of the DiagramElements in the diagram. It can be used
 // to retrieve the DiagramNode from the DiagramWidget. It is permissible for the canvas object to
 // be nil when this function is called and then add the canvas object later.
-func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) *BaseDiagramNode {
-	bdn := &BaseDiagramNode{}
-	InitializeBaseDiagramNode(bdn, diagram, obj, nodeID)
-	return bdn
+func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) DiagramNode {
+	var diagramNode DiagramNode
+	diagramNode = &BaseDiagramNode{}
+	InitializeBaseDiagramNode(diagramNode, diagram, obj, nodeID)
+	return diagramNode
 }
 
 // InitializeBaseDiagramNode is used to initailize the BaseDiagramNode. It must be called by any extensions to the BaseDiagramNode

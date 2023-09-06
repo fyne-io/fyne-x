@@ -11,7 +11,7 @@ import (
 // adjacent returns true if there is at least one edge between n1 and n2
 func adjacent(dw *DiagramWidget, n1, n2 DiagramNode) bool {
 	// TODO: expensive, may be worth caching?
-	for _, e := range dw.Links {
+	for _, e := range dw.GetDiagramLinks() {
 		if ((e.GetSourcePad().GetPadOwner() == n1) && (e.GetTargetPad().GetPadOwner() == n2)) || ((e.GetSourcePad().GetPadOwner() == n2) && (e.GetTargetPad().GetPadOwner() == n1)) {
 			return true
 		}
@@ -60,13 +60,13 @@ func calculateForce(dw *DiagramWidget, n1, n2 DiagramNode, targetLength float64)
 // StepForceLayout calculates one step of force directed graph layout, with
 // the target distance between adjacent nodes being targetLength.
 func StepForceLayout(dw *DiagramWidget, targetLength float64) {
-	deltas := make(map[string]r2.Vec2)
+	deltas := make(map[int]r2.Vec2)
 
 	// calculate all the deltas from the current state
-	for k, nk := range dw.Nodes {
+	for k, nk := range dw.GetDiagramNodes() {
 		deltas[k] = r2.V2(0, 0)
 
-		for j, nj := range dw.Nodes {
+		for j, nj := range dw.GetDiagramNodes() {
 			if j == k {
 				continue
 			}
@@ -75,7 +75,7 @@ func StepForceLayout(dw *DiagramWidget, targetLength float64) {
 	}
 
 	// flip into current state
-	for k, nk := range dw.Nodes {
+	for k, nk := range dw.GetDiagramNodes() {
 		dw.DisplaceNode(nk, fyne.Position{X: float32(deltas[k].X), Y: float32(deltas[k].Y)})
 	}
 

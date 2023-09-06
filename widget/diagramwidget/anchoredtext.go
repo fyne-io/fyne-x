@@ -38,6 +38,7 @@ func NewAnchoredText(text string) *AnchoredText {
 	at.displayedTextBinding = binding.NewString()
 	at.displayedTextBinding.Set(text)
 	at.textEntry = widget.NewEntryWithData(at.displayedTextBinding)
+	at.displayedTextBinding.AddListener(at)
 	at.textEntry.Wrapping = fyne.TextWrapOff
 	at.textEntry.Validator = nil
 	at.ExtendBaseWidget(at)
@@ -52,6 +53,11 @@ func (at *AnchoredText) CreateRenderer() fyne.WidgetRenderer {
 	atr.Refresh()
 
 	return atr
+}
+
+// DataChanged is the callback function for the displayedTextBinding.
+func (at *AnchoredText) DataChanged() {
+	at.Refresh()
 }
 
 // Displace moves the anchored text relative to its reference position.
@@ -91,8 +97,6 @@ func (at *AnchoredText) MinSize() fyne.Size {
 
 // MouseIn is one of the required methods for a mouseable widget.
 func (at *AnchoredText) MouseIn(event *desktop.MouseEvent) {
-	// at.textObject.TextStyle.Bold = true
-	at.Refresh()
 }
 
 // MouseMoved is one of the required methods for a mouseable widget
@@ -102,8 +106,6 @@ func (at *AnchoredText) MouseMoved(event *desktop.MouseEvent) {
 
 // MouseOut is one of the required methods for a mouseable widget
 func (at *AnchoredText) MouseOut() {
-	// at.textObject.TextStyle.Bold = false
-	at.Refresh()
 }
 
 // Move overrides the BaseWidget's Move method. It updates the anchored text's offset
