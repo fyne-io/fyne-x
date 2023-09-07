@@ -153,5 +153,6 @@ func (de *diagramElement) SetProperties(properties DiagramElementProperties) {
 func (de *diagramElement) ShowHandles() {
 	for _, handle := range de.handles {
 		handle.Show()
+		de.Refresh()
 	}
 }

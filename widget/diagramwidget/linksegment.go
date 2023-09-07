@@ -60,7 +60,7 @@ func (ls *LinkSegment) MouseUp(event *desktop.MouseEvent) {
 		clickPoint := geom.Coord{float64(event.Position.X), float64(event.Position.Y)}
 		p1 := geom.Coord{float64(ls.p1.X), float64(ls.p1.Y)}
 		p2 := geom.Coord{float64(ls.p2.X), float64(ls.p2.Y)}
-		if xy.DistanceFromPointToLine(clickPoint, p1, p2) <= float64(ls.link.properties.StrokeWidth/2)+1 {
+		if xy.DistanceFromPointToLine(clickPoint, p1, p2) <= float64(ls.link.properties.StrokeWidth/2)+3 {
 			ls.link.diagram.DiagramElementTapped(ls.link)
 		}
 	} else if ls.link.diagram.LinkSegmentMouseUpCallback != nil {

@@ -9,7 +9,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 )
 
-var _ fyne.Tappable = (*BaseDiagramLink)(nil)
+// var _ fyne.Tappable = (*BaseDiagramLink)(nil)
 var _ desktop.Hoverable = (*BaseDiagramLink)(nil)
 var _ DiagramElement = (*BaseDiagramLink)(nil)
 
@@ -68,10 +68,8 @@ type DiagramLink interface {
 // Link can connect to another Link using this ConnectionPad.
 type BaseDiagramLink struct {
 	diagramElement
-	linkPoints   []*LinkPoint
-	linkSegments []*LinkSegment
-	// LinkColor            color.Color
-	// strokeWidth          float32
+	linkPoints           []*LinkPoint
+	linkSegments         []*LinkSegment
 	sourcePad            ConnectionPad
 	targetPad            ConnectionPad
 	SourceDecorations    []Decoration
@@ -442,9 +440,9 @@ func (bdl *BaseDiagramLink) SetTargetPad(pad ConnectionPad) {
 	}
 }
 
-// Tapped handles tap events
-func (bdl *BaseDiagramLink) Tapped(event *fyne.PointEvent) {
-}
+// // Tapped handles tap events
+// func (bdl *BaseDiagramLink) Tapped(event *fyne.PointEvent) {
+// }
 
 // diagramLinkRenderer
 type diagramLinkRenderer struct {

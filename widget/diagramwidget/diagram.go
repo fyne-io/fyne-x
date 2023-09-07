@@ -114,6 +114,7 @@ func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
 	if !dw.IsSelected(de) {
 		if dw.primarySelection == nil {
 			dw.primarySelection = de
+			dw.BringToFront(de.GetDiagramElementID())
 			if dw.PrimaryDiagramElementSelectionChangedCallback != nil {
 				dw.PrimaryDiagramElementSelectionChangedCallback(de.GetDiagramElementID())
 			}
@@ -126,9 +127,7 @@ func (dw *DiagramWidget) addElementToSelection(de DiagramElement) {
 // addLink adds a link to the diagram
 func (dw *DiagramWidget) addLink(link DiagramLink) {
 	dw.DiagramElements.PushBack(link)
-	// dw.Links[link.GetDiagramElementID()] = link
 	link.Refresh()
-	// TODO add logic to rezise diagram if necessary
 }
 
 func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *BaseDiagramLink, pad ConnectionPad) {
@@ -150,9 +149,8 @@ func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *
 // addNode adds a node to the diagram
 func (dw *DiagramWidget) addNode(node DiagramNode) {
 	dw.DiagramElements.PushBack(node)
-	// dw.Nodes[node.GetDiagramElementID()] = node
+	dw.adjustBounds()
 	node.Refresh()
-	// TODO add logic to rezise diagram if necessary
 }
 
 // adjustBounds calculates the bounds of the diagram elements and adjusts the size of the drawing area accordingly
@@ -204,6 +202,30 @@ func (dw *DiagramWidget) adjustBounds() {
 	dw.DesiredSize = fyne.NewSize(right-left, bottom-top)
 	dw.drawingArea.Resize(dw.DesiredSize)
 	dw.scrollingContainer.Refresh()
+}
+
+// BringToFront moves the diagram element to the top of the display list (which is the back of the DiagramElements list)
+func (dw *DiagramWidget) BringToFront(elementID string) {
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		value := listElement.Value
+		diagramElement := value.(DiagramElement)
+		if diagramElement.GetDiagramElementID() == elementID {
+			dw.DiagramElements.MoveToBack(listElement)
+			dw.drawingArea.Refresh()
+		}
+	}
+}
+
+// BringForward moves the diagram element on top of the next element of the display list
+func (dw *DiagramWidget) BringForward(elementID string) {
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		value := listElement.Value
+		diagramElement := value.(DiagramElement)
+		if diagramElement.GetDiagramElementID() == elementID {
+			dw.DiagramElements.MoveAfter(listElement, listElement.Next())
+			dw.drawingArea.Refresh()
+		}
+	}
 }
 
 // CreateRenderer creates the renderer for the diagram
@@ -445,7 +467,7 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 	if element.IsLink() {
 		dw.removeDependenciesInvolvingLink(elementID)
 	}
-	dw.Refresh()
+	dw.drawingArea.Refresh()
 }
 
 // SelectDiagramElement clears the selection, makes the indicated element the primary selection, and invokes
@@ -464,6 +486,30 @@ func (dw *DiagramWidget) SelectDiagramElementNoCallback(id string) {
 		dw.primarySelection = element
 		dw.selection[id] = element
 		element.ShowHandles()
+	}
+}
+
+// SendToBack moves the diagram element to the top of the display list (which is the front of the DiagramElements list)
+func (dw *DiagramWidget) SendToBack(elementID string) {
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		value := listElement.Value
+		diagramElement := value.(DiagramElement)
+		if diagramElement.GetDiagramElementID() == elementID {
+			dw.DiagramElements.MoveToFront(listElement)
+			dw.drawingArea.Refresh()
+		}
+	}
+}
+
+// SendBackward moves the diagram element on top of the next element of the display list
+func (dw *DiagramWidget) SendBackward(elementID string) {
+	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
+		value := listElement.Value
+		diagramElement := value.(DiagramElement)
+		if diagramElement.GetDiagramElementID() == elementID {
+			dw.DiagramElements.MoveBefore(listElement, listElement.Prev())
+			dw.drawingArea.Refresh()
+		}
 	}
 }
 
@@ -508,7 +554,7 @@ func (r *diagramWidgetRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (r *diagramWidgetRenderer) Refresh() {
-	r.diagramWidget.scrollingContainer.Refresh()
+	r.diagramWidget.drawingArea.Refresh()
 }
 
 type drawingArea struct {
