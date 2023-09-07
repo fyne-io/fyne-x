@@ -3,15 +3,17 @@ package diagramwidget
 import (
 	"container/list"
 	"image/color"
+	"math"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
 // Verify that interfaces are fully implemented
-var _ fyne.Tappable = (*DiagramWidget)(nil)
+var _ fyne.Tappable = (*drawingArea)(nil)
 
 type linkPadPair struct {
 	link *BaseDiagramLink
@@ -23,6 +25,8 @@ type linkPadPair struct {
 // manually (interactively) or programmatically.
 type DiagramWidget struct {
 	widget.BaseWidget
+	scrollingContainer *container.Scroll
+	drawingArea        *drawingArea
 
 	// ID is expected to be unique across all DiagramWidgets in the application.
 	ID string
@@ -85,6 +89,9 @@ func NewDiagramWidget(id string) *DiagramWidget {
 		selection:                      map[string]DiagramElement{},
 		diagramElementLinkDependencies: map[string][]linkPadPair{},
 	}
+	dw.drawingArea = newDrawingArea(dw)
+	dw.drawingArea.Resize(dw.DesiredSize)
+	dw.scrollingContainer = container.NewScroll(dw.drawingArea)
 	appTheme := fyne.CurrentApp().Settings().Theme()
 	appVariant := fyne.CurrentApp().Settings().ThemeVariant()
 	dw.DefaultDiagramElementProperties.ForegroundColor = appTheme.Color(theme.ColorNameForeground, appVariant)
@@ -148,6 +155,57 @@ func (dw *DiagramWidget) addNode(node DiagramNode) {
 	// TODO add logic to rezise diagram if necessary
 }
 
+// adjustBounds calculates the bounds of the diagram elements and adjusts the size of the drawing area accordingly
+// If necessary, it also moves all the diagram elements so that their position coordinates are all positive
+func (dw *DiagramWidget) adjustBounds() {
+	position := dw.drawingArea.Position()
+	size := dw.drawingArea.Size()
+	left := position.X
+	right := position.X + size.Width
+	top := position.Y
+	bottom := position.Y + size.Height
+	for _, diagramElement := range dw.GetDiagramElements() {
+		position = diagramElement.Position()
+		size = diagramElement.Size()
+		left = float32(math.Min(float64(left), float64(position.X)))
+		right = float32(math.Max(float64(right), float64(position.X+size.Width)))
+		top = float32(math.Min(float64(top), float64(position.Y)))
+		bottom = float32(math.Max(float64(bottom), float64(position.Y+size.Height)))
+	}
+	moveDelta := fyne.NewPos(0, 0)
+	moveDeltaChanged := false
+	if left < dw.drawingArea.Position().X {
+		moveDelta.X = -left
+		moveDeltaChanged = true
+	}
+	if top < dw.drawingArea.Position().Y {
+		moveDelta.Y = -top
+		moveDeltaChanged = true
+	}
+	if moveDeltaChanged {
+		dw.moveDiagramElements(moveDelta)
+		// moving the elements might have pushed an element beyond the newly computed bounds.
+		// we have to recompute
+		position = dw.drawingArea.Position()
+		size = dw.drawingArea.Size()
+		left = position.X
+		right = position.X + size.Width
+		top = position.Y
+		bottom = position.Y + size.Height
+		for _, diagramElement := range dw.GetDiagramElements() {
+			position = diagramElement.Position()
+			size = diagramElement.Size()
+			left = float32(math.Min(float64(left), float64(position.X)))
+			right = float32(math.Max(float64(right), float64(position.X+size.Width)))
+			top = float32(math.Min(float64(top), float64(position.Y)))
+			bottom = float32(math.Max(float64(bottom), float64(position.Y+size.Height)))
+		}
+	}
+	dw.DesiredSize = fyne.NewSize(right-left, bottom-top)
+	dw.drawingArea.Resize(dw.DesiredSize)
+	dw.scrollingContainer.Refresh()
+}
+
 // CreateRenderer creates the renderer for the diagram
 func (dw *DiagramWidget) CreateRenderer() fyne.WidgetRenderer {
 	r := diagramWidgetRenderer{
@@ -195,22 +253,12 @@ func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.D
 	dw.DisplaceNode(node, delta)
 }
 
-// DisplaceNode moves the indicated node and refreshes any links that may be attached
-// to it
+// DisplaceNode moves the indicated node, refreshes any links that may be attached
+// to it, and adjusts the bounds of the drawing area
 func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
-}
-
-// DragEnd is called when the drag comes to an end. It refreshes the widget
-func (dw *DiagramWidget) DragEnd() {
-	dw.Refresh()
-}
-
-// Dragged responds to a drag movement in the background of the diagram. It moves the widget itself.
-func (dw *DiagramWidget) Dragged(event *fyne.DragEvent) {
-	dw.Move(dw.Position().Add(event.Dragged))
-	dw.Refresh()
+	dw.adjustBounds()
 }
 
 // GetBackgroundColor returns the background color for the widget from the diagram's theme, which
@@ -316,38 +364,10 @@ func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
 	return dw.selection[de.GetDiagramElementID()] != nil
 }
 
-// MouseDown responds to MouseDown events. It invokes the callback, if present
-func (dw *DiagramWidget) MouseDown(event *desktop.MouseEvent) {
-	if dw.MouseDownCallback != nil {
-		dw.MouseDownCallback(event)
-	}
-}
-
-// MouseIn responds to the mouse moving into the diagram. It presently is a noop
-func (dw *DiagramWidget) MouseIn(event *desktop.MouseEvent) {
-	if dw.MouseInCallback != nil {
-		dw.MouseInCallback(event)
-	}
-}
-
-// MouseMoved responds to mouse movements in the diagram. It presently is a noop
-func (dw *DiagramWidget) MouseMoved(event *desktop.MouseEvent) {
-	if dw.MouseMovedCallback != nil {
-		dw.MouseMovedCallback(event)
-	}
-}
-
-// MouseOut responds to the mouse leaving the diagram. It presently is a noop
-func (dw *DiagramWidget) MouseOut() {
-	if dw.MouseOutCallback != nil {
-		dw.MouseOutCallback()
-	}
-}
-
-// MouseUp responds to MouseUp events. It invokes the callback, if present
-func (dw *DiagramWidget) MouseUp(event *desktop.MouseEvent) {
-	if dw.MouseUpCallback != nil {
-		dw.MouseUpCallback(event)
+// moveDiagramElements moves all of the diagram elements
+func (dw *DiagramWidget) moveDiagramElements(delta fyne.Position) {
+	for _, diagramElement := range dw.GetDiagramElements() {
+		diagramElement.Move(diagramElement.Position().Add(delta))
 	}
 }
 
@@ -465,16 +485,6 @@ func (dw *DiagramWidget) StartNewLinkConnectionTransaction(link DiagramLink) {
 	dw.showAllPads()
 }
 
-// Tapped  respondss to taps in the diagram background. It removes all diagram elements
-// from the selection
-func (dw *DiagramWidget) Tapped(event *fyne.PointEvent) {
-	if dw.OnTappedCallback != nil {
-		dw.OnTappedCallback(dw, event)
-	} else {
-		dw.ClearSelection()
-	}
-}
-
 // diagramWidgetRenderer
 type diagramWidgetRenderer struct {
 	diagramWidget *DiagramWidget
@@ -484,6 +494,7 @@ func (r *diagramWidgetRenderer) Destroy() {
 }
 
 func (r *diagramWidgetRenderer) Layout(size fyne.Size) {
+	r.diagramWidget.scrollingContainer.Resize(r.diagramWidget.Size())
 }
 
 func (r *diagramWidgetRenderer) MinSize() fyne.Size {
@@ -492,14 +503,116 @@ func (r *diagramWidgetRenderer) MinSize() fyne.Size {
 
 func (r *diagramWidgetRenderer) Objects() []fyne.CanvasObject {
 	obj := make([]fyne.CanvasObject, 0)
-	for _, n := range r.diagramWidget.GetDiagramElements() {
+	obj = append(obj, r.diagramWidget.scrollingContainer)
+	return obj
+}
+
+func (r *diagramWidgetRenderer) Refresh() {
+	r.diagramWidget.scrollingContainer.Refresh()
+}
+
+type drawingArea struct {
+	widget.BaseWidget
+	diagram *DiagramWidget
+}
+
+func newDrawingArea(diagram *DiagramWidget) *drawingArea {
+	drawingArea := &drawingArea{
+		diagram: diagram,
+	}
+	drawingArea.ExtendBaseWidget(drawingArea)
+	return drawingArea
+}
+
+func (da *drawingArea) CreateRenderer() fyne.WidgetRenderer {
+	dar := &drawingAreaRenderer{}
+	dar.da = da
+	return dar
+}
+
+// DragEnd is called when the drag comes to an end. It refreshes the widget
+func (da *drawingArea) DragEnd() {
+	da.Refresh()
+}
+
+// Dragged responds to a drag movement in the background of the diagram. It moves the widget itself.
+func (da *drawingArea) Dragged(event *fyne.DragEvent) {
+	delta := fyne.NewPos(event.Dragged.DX, event.Dragged.DY)
+	da.diagram.moveDiagramElements(delta)
+	da.diagram.adjustBounds()
+}
+
+// MouseDown responds to MouseDown events. It invokes the callback, if present
+func (da *drawingArea) MouseDown(event *desktop.MouseEvent) {
+	if da.diagram.MouseDownCallback != nil {
+		da.diagram.MouseDownCallback(event)
+	}
+}
+
+// MouseIn responds to the mouse moving into the diagram. It presently is a noop
+func (da *drawingArea) MouseIn(event *desktop.MouseEvent) {
+	if da.diagram.MouseInCallback != nil {
+		da.diagram.MouseInCallback(event)
+	}
+}
+
+// MouseMoved responds to mouse movements in the diagram. It presently is a noop
+func (da *drawingArea) MouseMoved(event *desktop.MouseEvent) {
+	if da.diagram.MouseMovedCallback != nil {
+		da.diagram.MouseMovedCallback(event)
+	}
+}
+
+// MouseOut responds to the mouse leaving the diagram. It presently is a noop
+func (da *drawingArea) MouseOut() {
+	if da.diagram.MouseOutCallback != nil {
+		da.diagram.MouseOutCallback()
+	}
+}
+
+// MouseUp responds to MouseUp events. It invokes the callback, if present
+func (da *drawingArea) MouseUp(event *desktop.MouseEvent) {
+	if da.diagram.MouseUpCallback != nil {
+		da.diagram.MouseUpCallback(event)
+	}
+}
+
+// Tapped  respondss to taps in the diagram background. It removes all diagram elements
+// from the selection
+func (da *drawingArea) Tapped(event *fyne.PointEvent) {
+	if da.diagram.OnTappedCallback != nil {
+		da.diagram.OnTappedCallback(da.diagram, event)
+	} else {
+		da.diagram.ClearSelection()
+	}
+}
+
+type drawingAreaRenderer struct {
+	da *drawingArea
+}
+
+func (dar *drawingAreaRenderer) Destroy() {
+
+}
+
+func (dar *drawingAreaRenderer) Layout(fyne.Size) {
+
+}
+
+func (dar *drawingAreaRenderer) MinSize() fyne.Size {
+	return dar.da.diagram.DesiredSize
+}
+
+func (dar *drawingAreaRenderer) Objects() []fyne.CanvasObject {
+	obj := []fyne.CanvasObject{}
+	for _, n := range dar.da.diagram.GetDiagramElements() {
 		obj = append(obj, n)
 	}
 	return obj
 }
 
-func (r *diagramWidgetRenderer) Refresh() {
-	for _, obj := range r.diagramWidget.GetDiagramElements() {
+func (dar *drawingAreaRenderer) Refresh() {
+	for _, obj := range dar.da.diagram.GetDiagramElements() {
 		obj.Refresh()
 	}
 }

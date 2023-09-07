@@ -55,14 +55,18 @@ type DiagramElement interface {
 	IsLink() bool
 	// IsNode returns true of the diagram element is a node
 	IsNode() bool
-	// ShowHandles shows the handles on the DiagramElement
-	ShowHandles()
+	// Position returns the position of the diagram element
+	Position() fyne.Position
 	// SetForegroundColor sets the foreground color for the widget
 	SetForegroundColor(color.Color)
 	// SetBackgroundColor sets the background color for the widget
 	SetBackgroundColor(color.Color)
 	// SetProperties sets the foreground, background, and handle colors
 	SetProperties(DiagramElementProperties)
+	// ShowHandles shows the handles on the DiagramElement
+	ShowHandles()
+	// Size returns the size of the diagram element
+	Size() fyne.Size
 }
 
 type diagramElement struct {
