@@ -52,8 +52,7 @@ type BaseDiagramNode struct {
 // to retrieve the DiagramNode from the DiagramWidget. It is permissible for the canvas object to
 // be nil when this function is called and then add the canvas object later.
 func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) DiagramNode {
-	var diagramNode DiagramNode
-	diagramNode = &BaseDiagramNode{}
+	var diagramNode DiagramNode = &BaseDiagramNode{}
 	InitializeBaseDiagramNode(diagramNode, diagram, obj, nodeID)
 	return diagramNode
 }
