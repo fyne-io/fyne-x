@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"fyne.io/fyne/v2"
+	// "fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
@@ -40,6 +41,8 @@ func NewAnchoredText(text string) *AnchoredText {
 	at.textEntry = widget.NewEntryWithData(at.displayedTextBinding)
 	at.displayedTextBinding.AddListener(at)
 	at.textEntry.Wrapping = fyne.TextWrapOff
+	// TODO After upgrade to fyne 2.4.0, uncomment the following line and add container as an imported package
+	// at.textEntry.Scroll = container.ScrollNone
 	at.textEntry.Validator = nil
 	at.ExtendBaseWidget(at)
 	return at
