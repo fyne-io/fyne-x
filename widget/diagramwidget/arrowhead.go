@@ -188,10 +188,6 @@ func (ar *arrowheadRenderer) Refresh() {
 	ar.right.StrokeWidth = ar.arrowhead.StrokeWidth
 	ar.left.StrokeColor = ar.arrowhead.StrokeColor
 	ar.right.StrokeColor = ar.arrowhead.StrokeColor
-	ar.left.Position1 = fyne.Position{X: 0, Y: 0}
-	ar.left.Position2 = ar.arrowhead.LeftPoint()
-	ar.right.Position1 = fyne.Position{X: 0, Y: 0}
-	ar.right.Position2 = ar.arrowhead.RightPoint()
 	ar.left.Refresh()
 	ar.right.Refresh()
 }
