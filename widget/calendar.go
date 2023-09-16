@@ -16,35 +16,53 @@ import (
 // Declare conformity with Layout interface
 var _ fyne.Layout = (*calendarLayout)(nil)
 
-const daysPerWeek int = 7
+const (
+	daysPerWeek      = 7
+	maxWeeksPerMonth = 6
+)
 
 type calendarLayout struct {
-	cellSize float32
+	cellSize fyne.Size
 }
 
 func newCalendarLayout() fyne.Layout {
 	return &calendarLayout{}
 }
 
-// Get the leading (top or left) edge of a grid cell.
-// size is the ideal cell size and the offset is which col or row its on.
-func (g *calendarLayout) getLeading(offset int) float32 {
-	ret := (g.cellSize) * float32(offset)
+// Get the leading edge position of a grid cell.
+// The row and col specify where the cell is in the calendar.
+func (g *calendarLayout) getLeading(row, col int) fyne.Position {
+	x := (g.cellSize.Width) * float32(col)
+	y := (g.cellSize.Height) * float32(row)
 
-	return float32(math.Round(float64(ret)))
+	return fyne.NewPos(float32(math.Round(float64(x))), float32(math.Round(float64(y))))
 }
 
-// Get the trailing (bottom or right) edge of a grid cell.
-// size is the ideal cell size and the offset is which col or row its on.
-func (g *calendarLayout) getTrailing(offset int) float32 {
-	return g.getLeading(offset + 1)
+// Get the trailing edge position of a grid cell.
+// The row and col specify where the cell is in the calendar.
+func (g *calendarLayout) getTrailing(row, col int) fyne.Position {
+	return g.getLeading(row + 1, col+1)
 }
 
 // Layout is called to pack all child objects into a specified size.
 // For a GridLayout this will pack objects into a table format with the number
 // of columns specified in our constructor.
 func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
-	g.cellSize = size.Width / float32(daysPerWeek)
+	weeks := 1
+	day := 0
+	for i, child := range objects {
+		if !child.Visible() {
+			continue
+		}
+
+		if day%daysPerWeek == 0 && i >= daysPerWeek {
+			weeks++
+		}
+		day++
+	}
+
+	g.cellSize = fyne.NewSize(size.Width / float32(daysPerWeek),
+		size.Height / float32(weeks))
 	row, col := 0, 0
 	i := 0
 	for _, child := range objects {
@@ -52,13 +70,10 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 			continue
 		}
 
-		x1 := g.getLeading(col)
-		y1 := g.getLeading(row)
-		x2 := g.getTrailing(col)
-		y2 := g.getTrailing(row)
-
-		child.Move(fyne.NewPos(x1, y1))
-		child.Resize(fyne.NewSize(x2-x1, y2-y1))
+		lead := g.getLeading(row, col)
+		trail := g.getTrailing(row, col)
+		child.Move(lead)
+		child.Resize(fyne.NewSize(trail.X, trail.Y).Subtract(lead))
 
 		if (i+1)%daysPerWeek == 0 {
 			row++
@@ -71,8 +86,11 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 }
 
 //MinSize sets the minimum size for the calendar
-func (g *calendarLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
-	return fyne.NewSize(250, 250)
+func (g *calendarLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
+	pad := theme.Padding()
+	largestMin := widget.NewLabel("22").MinSize()
+	return fyne.NewSize(largestMin.Width * daysPerWeek + pad * (daysPerWeek-1),
+		largestMin.Height * maxWeeksPerMonth + pad * (maxWeeksPerMonth - 1))
 }
 
 // Calendar creates a new date time picker which returns a time object
@@ -174,7 +192,7 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 
 	c.dates = container.New(newCalendarLayout(), c.calendarObjects()...)
 
-	dateContainer := container.NewVBox(nav, c.dates)
+	dateContainer := container.NewBorder(nav, nil, nil, nil, c.dates)
 
 	return widget.NewSimpleRenderer(dateContainer)
 }
