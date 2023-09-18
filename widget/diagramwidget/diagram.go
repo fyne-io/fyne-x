@@ -285,47 +285,6 @@ func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
 	dw.adjustBounds()
 }
 
-// SimulateDragEnd is provided to support application-level testing. It calls DragEnd on the drawingArea
-func (dw *DiagramWidget) SimulateDragEnd() {
-	dw.drawingArea.DragEnd()
-}
-
-// SimulateDragged is provided to support application-level testing. It calls Dragged on the drawingArea
-func (dw *DiagramWidget) SimulateDragged(event *fyne.DragEvent) {
-	dw.drawingArea.Dragged(event)
-}
-
-// SimulateMouseDown is provided to support application-level testing. It calls MouseDown on the drawingArea
-func (dw *DiagramWidget) SimulateMouseDown(event *desktop.MouseEvent) {
-	dw.drawingArea.MouseDown((event))
-}
-
-// SimulateMouseIn is provided to support application-level testing. It calls MouseIn on the drawingArea
-func (dw *DiagramWidget) SimulateMouseIn(event *desktop.MouseEvent) {
-	dw.drawingArea.MouseIn(event)
-}
-
-// SimulateMouseMoved is provided to support application-level testing. It calls MouseMoved on the drawingArea
-func (dw *DiagramWidget) SimulateMouseMoved(event *desktop.MouseEvent) {
-	dw.drawingArea.MouseMoved(event)
-}
-
-// SimulateMouseOut is provided to support application-level testing. It calls MouseOut on the drawingArea
-func (dw *DiagramWidget) SimulateMouseOut() {
-	dw.drawingArea.MouseOut()
-}
-
-// SimulateMouseUp is provided to support application-level testing. It calls MouseUp on the drawingArea
-func (dw *DiagramWidget) SimulateMouseUp(event *desktop.MouseEvent) {
-	dw.drawingArea.MouseUp(event)
-}
-
-// SimulateTapped is provided to support application-level testing. It calls Tapped on the drawingArea
-// from the selection
-func (dw *DiagramWidget) SimulateTapped(event *fyne.PointEvent) {
-	dw.drawingArea.Tapped(event)
-}
-
 // GetBackgroundColor returns the background color for the widget from the diagram's theme, which
 // may be different from the application's theme.
 func (dw *DiagramWidget) GetBackgroundColor() color.Color {
