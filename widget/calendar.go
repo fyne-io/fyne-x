@@ -85,7 +85,7 @@ func (g *calendarLayout) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 	}
 }
 
-//MinSize sets the minimum size for the calendar
+// MinSize sets the minimum size for the calendar
 func (g *calendarLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
 	pad := theme.Padding()
 	largestMin := widget.NewLabel("22").MinSize()
