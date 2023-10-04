@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestNewCalendar(t *testing.T) {
@@ -58,6 +59,29 @@ func TestNewCalendar_Previous(t *testing.T) {
 	test.Tap(c.monthPrevious)
 	date = date.AddDate(0, -1, 0)
 	assert.Equal(t, date.Format("January 2006"), c.monthLabel.Text)
+}
+
+func TestNewCalendar_Resize(t *testing.T) {
+	date := time.Now()
+	c := NewCalendar(date, func(time.Time) {})
+	r := test.WidgetRenderer(c) // and render
+	layout := c.dates.Layout.(*calendarLayout)
+
+	baseSize := c.MinSize()
+	r.Layout(baseSize)
+	min := layout.cellSize
+
+	r.Layout(baseSize.AddWidthHeight(100, 0))
+	assert.Greater(t, layout.cellSize.Width, min.Width)
+	assert.Equal(t, layout.cellSize.Height, min.Height)
+
+	r.Layout(baseSize.AddWidthHeight(0, 100))
+	assert.Equal(t, layout.cellSize.Width, min.Width)
+	assert.Greater(t, layout.cellSize.Height, min.Height)
+
+	r.Layout(baseSize.AddWidthHeight(100, 100))
+	assert.Greater(t, layout.cellSize.Width, min.Width)
+	assert.Greater(t, layout.cellSize.Height, min.Height)
 }
 
 func firstDateButton(c *fyne.Container) *widget.Button {
