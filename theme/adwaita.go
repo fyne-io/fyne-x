@@ -50,13 +50,5 @@ func (a *Adwaita) Icon(name fyne.ThemeIconName) fyne.Resource {
 
 // Size returns the size of the named resource for the current theme.
 func (a *Adwaita) Size(name fyne.ThemeSizeName) float32 {
-	switch name {
-	case theme.SizeNamePadding:
-		return 8
-	case theme.SizeNameInlineIcon:
-		return 16
-	case theme.SizeNameText:
-		return 12
-	}
 	return theme.DefaultTheme().Size(name)
 }
