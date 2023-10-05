@@ -1,195 +1,208 @@
 package widget
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
-	"strconv"
-	"strings"
 	"time"
 )
 
-const defaultDateFormat = "02-Jan-2006"
+var _ fyne.Focusable = (*JDateInputWidget)(nil)
+var _ fyne.Tappable = (*JDateInputWidget)(nil)
 
-var dayPos = []int{0, 2}
-var monthPos = []int{3, 6}
-var yearPos = []int{7, 11}
+// Custom Date Input Widget using RichText
+type JDateInputWidget struct {
+	widget.BaseWidget
 
-type MyDateEntry struct {
-	widget.Entry
-	currentDateValue time.Time
+	// currently selected item data
+	currentDate time.Time
+
+	// current selected section
+	curSection string
+
+	// select section yes/no
+	selectSection int
+
+	// rich-text widget
+	richText *widget.RichText
+
+	// textSegments
+	daySeg   *widget.TextSegment
+	monthSeg *widget.TextSegment
+	yearSeg  *widget.TextSegment
+
+	// border
+	border *canvas.Rectangle
+
+	// layout
+	gl *fyne.Container
+
+	// app
+	fyneApp fyne.App
+
+	// main window
+	mainWindow fyne.Window
 }
 
-func NewMyDateEntry() *MyDateEntry {
-	entry := new(MyDateEntry)
-	entry.ExtendBaseWidget(entry)
-	entry.SetPlaceHolder("DD-MMM-YYYY")
-	return entry
+func (t *JDateInputWidget) addTime(secName string, v int) {
+	if secName == "d" {
+		t.currentDate = t.currentDate.AddDate(0, 0, v)
+	}
+
+	if secName == "m" {
+		t.currentDate = t.currentDate.AddDate(0, v, 0)
+	}
+
+	if secName == "y" {
+		t.currentDate = t.currentDate.AddDate(v, 0, 0)
+	}
+	t.updateDisplay()
 }
 
-// Get current cursor position to Section (Day Month year)
-func (e *MyDateEntry) cursorPosToSection() string {
-	if e.CursorColumn >= dayPos[0] && e.CursorColumn <= dayPos[1] {
-		return "d"
-	}
-	if e.CursorColumn >= monthPos[0] && e.CursorColumn <= monthPos[1] {
-		return "m"
-	}
-	if e.CursorColumn >= yearPos[0] && e.CursorColumn <= yearPos[1] {
-		return "y"
-	}
-	return ""
-}
+func (t *JDateInputWidget) updateDisplay() {
 
-// Get Day Month year to cursor postion
-func (e *MyDateEntry) sectionToCursorPos(lsec string) int {
-	if lsec == "d" {
-		return dayPos[0]
-	}
+	t.daySeg.Text = t.currentDate.Format("02-")
+	t.monthSeg.Text = t.currentDate.Format("Jan-")
+	t.yearSeg.Text = t.currentDate.Format("2006")
 
-	if lsec == "m" {
-		return monthPos[0]
-	}
+	t.daySeg.Style.TextStyle.Bold = false
+	t.monthSeg.Style.TextStyle.Bold = false
+	t.yearSeg.Style.TextStyle.Bold = false
 
-	if lsec == "y" {
-		return yearPos[0]
-	}
-	return -1
-}
-
-// add year, month, day to current date
-func (e *MyDateEntry) addTime(v int, cur_section string) {
-	if e.currentDateValue.IsZero() == true {
-		return
-	}
-
-	if cur_section == "d" {
-		e.currentDateValue = e.currentDateValue.AddDate(0, 0, v)
-	}
-
-	if cur_section == "m" {
-		e.currentDateValue = e.currentDateValue.AddDate(0, v, 0)
-	}
-
-	if cur_section == "y" {
-		e.currentDateValue = e.currentDateValue.AddDate(v, 0, 0)
-	}
-	e.updateDisplay()
-}
-
-// set current date on space key
-func (e *MyDateEntry) setCurrentDate() {
-	e.currentDateValue = time.Now()
-	e.updateDisplay()
-}
-
-// update current display
-func (e *MyDateEntry) updateDisplay() {
-	e.SetText(e.currentDateValue.Format(defaultDateFormat))
-}
-
-// handle key events
-func (e *MyDateEntry) TypedKey(key *fyne.KeyEvent) {
-
-	if key.Name == fyne.KeyDelete {
-		e.SetText("")
-		return
-	}
-
-	if key.Name == fyne.KeyUp {
-		e.addTime(1, e.cursorPosToSection())
-		return
-	}
-
-	if key.Name == fyne.KeyDown {
-		e.addTime(-1, e.cursorPosToSection())
-		return
-	}
-
-	if key.Name == fyne.KeySpace {
-		e.setCurrentDate()
-		return
-	}
-
-	if key.Name == fyne.KeyEnter {
-		e.parseAndUpdateDate()
-		e.addTime(0, e.cursorPosToSection())
-		return
-	}
-
-	if key.Name == fyne.KeyReturn {
-		e.parseAndUpdateDate()
-		e.addTime(0, e.cursorPosToSection())
-		return
-	}
-
-	e.Entry.TypedKey(key)
-}
-
-// this where we are converting current text to date
-func (e *MyDateEntry) FocusLost() {
-	e.parseAndUpdateDate()
-	e.Entry.FocusLost()
-}
-
-// Date string to time.Time conversion
-// we assume 1st part is always Day
-// input = 1 -> 1-CurMonth-CurYear
-// input = 1.5, 1/5, 1-5 -> 1-5-CurYear
-func (e *MyDateEntry) parseAndUpdateDate() {
-	var date_str = e.Text
-
-	e.TextStyle.Bold = false
-
-	if len(date_str) == 0 {
-		e.SetText("")
-		return
-	}
-
-	var y, m int
-
-	y = time.Now().Year()
-	m = int(time.Now().Month())
-
-	date_str = strings.Replace(date_str, ".", "-", -1)
-	date_str = strings.Replace(date_str, "/", "-", -1)
-	dt := strings.Split(date_str, "-")
-
-	if len(dt) == 1 {
-		dt[0] = strings.TrimSpace(dt[0])
-		date_str = fmt.Sprintf("%s-%d-%d", dt[0], m, y)
-	}
-
-	if len(dt) == 2 {
-		dt[0] = strings.TrimSpace(dt[0])
-		dt[1] = strings.TrimSpace(dt[1])
-
-		if len(dt[1]) == 0 {
-			dt[1] = strconv.Itoa(m)
-		}
-
-		date_str = fmt.Sprintf("%s-%s-%d", dt[0], dt[1], y)
-	}
-
-	date_str = strings.TrimSpace(date_str)
-
-	var allowed_formats = []string{"02-01-2006", "2-1-2006", "2006-01-02", "2006-1-2", "2-Jan-2006"}
-	for _, v := range allowed_formats {
-		e.currentDateValue, _ = time.Parse(v, date_str)
-		if e.currentDateValue.IsZero() == false {
-			break
+	if t.selectSection == 1 {
+		if t.curSection == "d" {
+			t.daySeg.Style.TextStyle.Bold = true
+		} else if t.curSection == "m" {
+			t.monthSeg.Style.TextStyle.Bold = true
+		} else if t.curSection == "y" {
+			t.yearSeg.Style.TextStyle.Bold = true
 		}
 	}
+	t.richText.Refresh()
+}
 
-	if e.currentDateValue.IsZero() == true {
-		e.SetText("")
-	} else {
-		e.SetText(e.currentDateValue.Format(defaultDateFormat))
-		e.TextStyle.Bold = true
+// Start: implement focusable interface
+func (t *JDateInputWidget) FocusGained() {
+	t.border.FillColor = theme.FocusColor()
+	t.border.StrokeColor = theme.PrimaryColor()
+	t.updateDisplay()
+	t.Refresh()
+}
+
+func (t *JDateInputWidget) FocusLost() {
+	t.border.FillColor = theme.BackgroundColor()
+	t.border.StrokeColor = theme.InputBorderColor()
+	t.daySeg.Style.TextStyle.Bold = false
+	t.monthSeg.Style.TextStyle.Bold = false
+	t.yearSeg.Style.TextStyle.Bold = false
+	t.Refresh()
+}
+
+func (t *JDateInputWidget) TypedRune(k rune) {
+	// needed
+}
+
+func (t *JDateInputWidget) TypedKey(e *fyne.KeyEvent) {
+	if e.Name == fyne.KeyUp || e.Name == fyne.KeyU {
+		t.addTime(t.curSection, 1)
+		t.updateDisplay()
+	} else if e.Name == fyne.KeyDown || e.Name == fyne.KeyD {
+		t.addTime(t.curSection, -1)
+		t.updateDisplay()
+	} else if e.Name == fyne.KeyRight || e.Name == fyne.KeyR {
+		if t.curSection == "d" {
+			t.curSection = "m"
+		} else if t.curSection == "m" {
+			t.curSection = "y"
+		} else if t.curSection == "y" {
+			t.curSection = "d"
+		}
+		t.updateDisplay()
+	} else if e.Name == fyne.KeyLeft || e.Name == fyne.KeyL {
+		if t.curSection == "d" {
+			t.curSection = "y"
+		} else if t.curSection == "m" {
+			t.curSection = "d"
+		} else if t.curSection == "y" {
+			t.curSection = "m"
+		}
+		t.updateDisplay()
+	} else if e.Name == fyne.KeySpace {
+		t.currentDate = time.Now()
+		t.updateDisplay()
+	} else if e.Name == fyne.KeyPageDown {
+		t.addTime("d", -10)
+		t.updateDisplay()
+	} else if e.Name == fyne.KeyPageUp {
+		t.addTime("d", 10)
+		t.updateDisplay()
 	}
 }
 
-// return current date
-func (e *MyDateEntry) ToDate() time.Time {
-	return e.currentDateValue
+// End: implement focusable interface
+
+// Start: implemnet Tappable
+func (t *JDateInputWidget) Tapped(p *fyne.PointEvent) {
+	t.mainWindow.Canvas().Focus(t)
+}
+
+// End: implemnet Tappable
+
+// helper functions
+func newTextSegment() *widget.TextSegment {
+	t := new(widget.TextSegment)
+	t.Style.Inline = true
+	return t
+}
+
+// public interface
+func (t *JDateInputWidget) SetDate(newDate time.Time) {
+	t.currentDate = newDate
+	t.updateDisplay()
+}
+
+func (t *JDateInputWidget) GetDate() time.Time {
+	return t.currentDate
+}
+
+func (t *JDateInputWidget) GetDateString() string {
+	return t.currentDate.Format("02-Jan-2006")
+}
+
+// widget render
+func (t *JDateInputWidget) CreateRenderer() fyne.WidgetRenderer {
+	t.ExtendBaseWidget(t)
+	return widget.NewSimpleRenderer(t.gl)
+}
+
+// constructor
+func NewJDateInputWidget(app fyne.App, window fyne.Window) *JDateInputWidget {
+	t := new(JDateInputWidget)
+	t.ExtendBaseWidget(t)
+
+	t.fyneApp = app
+	t.mainWindow = window
+
+	t.curSection = "d"
+	t.currentDate = time.Now()
+
+	t.daySeg = newTextSegment()
+	t.monthSeg = newTextSegment()
+	t.yearSeg = newTextSegment()
+
+	t.richText = widget.NewRichText(t.daySeg, t.monthSeg, t.yearSeg)
+
+	t.border = canvas.NewRectangle(theme.BackgroundColor())
+	t.border.StrokeWidth = float32(0.4)
+	t.border.StrokeColor = theme.InputBorderColor()
+
+	t.gl = container.NewHBox(container.NewMax(t.border, t.richText))
+
+	t.selectSection = 0
+	t.updateDisplay()
+	t.selectSection = 1
+
+	return t
 }
