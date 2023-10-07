@@ -36,7 +36,7 @@ func CreateDateInputWidget(app fyne.App, win fyne.Window) *fyne.Container {
 
 }
 
-func on_show_click(d *xwidget.JDateInputWidget, l *widget.Label) {
+func on_show_click(d *xwidget.JDateEntry, l *widget.Label) {
 	var msg string
 	if d.GetDate().IsZero() == true {
 		msg = "No Input"

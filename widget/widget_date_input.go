@@ -9,11 +9,11 @@ import (
 	"time"
 )
 
-var _ fyne.Focusable = (*JDateInputWidget)(nil)
-var _ fyne.Tappable = (*JDateInputWidget)(nil)
+var _ fyne.Focusable = (*JDateEntry)(nil)
+var _ fyne.Tappable = (*JDateEntry)(nil)
 
-// Custom Date Input Widget using RichText
-type JDateInputWidget struct {
+// Custom Date Entry using RichText
+type JDateEntry struct {
 	widget.BaseWidget
 
 	// currently selected item data
@@ -46,7 +46,8 @@ type JDateInputWidget struct {
 	mainWindow fyne.Window
 }
 
-func (t *JDateInputWidget) addTime(secName string, v int) {
+
+func (t *JDateEntry) addTime(secName string, v int) {
 	if secName == "d" {
 		t.currentDate = t.currentDate.AddDate(0, 0, v)
 	}
@@ -61,7 +62,7 @@ func (t *JDateInputWidget) addTime(secName string, v int) {
 	t.updateDisplay()
 }
 
-func (t *JDateInputWidget) updateDisplay() {
+func (t *JDateEntry) updateDisplay() {
 
 	t.daySeg.Text = t.currentDate.Format("02-")
 	t.monthSeg.Text = t.currentDate.Format("Jan-")
@@ -83,15 +84,15 @@ func (t *JDateInputWidget) updateDisplay() {
 	t.richText.Refresh()
 }
 
-// Start: implement focusable interface
-func (t *JDateInputWidget) FocusGained() {
+// implement : focusable interface
+func (t *JDateEntry) FocusGained() {
 	t.border.FillColor = theme.FocusColor()
 	t.border.StrokeColor = theme.PrimaryColor()
 	t.updateDisplay()
 	t.Refresh()
 }
 
-func (t *JDateInputWidget) FocusLost() {
+func (t *JDateEntry) FocusLost() {
 	t.border.FillColor = theme.BackgroundColor()
 	t.border.StrokeColor = theme.InputBorderColor()
 	t.daySeg.Style.TextStyle.Bold = false
@@ -100,11 +101,7 @@ func (t *JDateInputWidget) FocusLost() {
 	t.Refresh()
 }
 
-func (t *JDateInputWidget) TypedRune(k rune) {
-	// needed
-}
-
-func (t *JDateInputWidget) TypedKey(e *fyne.KeyEvent) {
+func (t *JDateEntry) TypedKey(e *fyne.KeyEvent) {
 	if e.Name == fyne.KeyUp || e.Name == fyne.KeyU {
 		t.addTime(t.curSection, 1)
 		t.updateDisplay()
@@ -141,14 +138,11 @@ func (t *JDateInputWidget) TypedKey(e *fyne.KeyEvent) {
 	}
 }
 
-// End: implement focusable interface
 
-// Start: implemnet Tappable
-func (t *JDateInputWidget) Tapped(p *fyne.PointEvent) {
+// implemnet: Tappable
+func (t *JDateEntry) Tapped(p *fyne.PointEvent) {
 	t.mainWindow.Canvas().Focus(t)
 }
-
-// End: implemnet Tappable
 
 // helper functions
 func newTextSegment() *widget.TextSegment {
@@ -157,29 +151,31 @@ func newTextSegment() *widget.TextSegment {
 	return t
 }
 
-// public interface
-func (t *JDateInputWidget) SetDate(newDate time.Time) {
+// Set New Date
+func (t *JDateEntry) SetDate(newDate time.Time) {
 	t.currentDate = newDate
 	t.updateDisplay()
 }
 
-func (t *JDateInputWidget) GetDate() time.Time {
+// Get Inputed Data
+func (t *JDateEntry) GetDate() time.Time {
 	return t.currentDate
 }
 
-func (t *JDateInputWidget) GetDateString() string {
+// Get Date As String
+func (t *JDateEntry) GetDateString() string {
 	return t.currentDate.Format("02-Jan-2006")
 }
 
 // widget render
-func (t *JDateInputWidget) CreateRenderer() fyne.WidgetRenderer {
+func (t *JDateEntry) CreateRenderer() fyne.WidgetRenderer {
 	t.ExtendBaseWidget(t)
 	return widget.NewSimpleRenderer(t.gl)
 }
 
 // constructor
-func NewJDateInputWidget(app fyne.App, window fyne.Window) *JDateInputWidget {
-	t := new(JDateInputWidget)
+func NewJDateInputWidget(app fyne.App, window fyne.Window) *JDateEntry {
+	t := new(JDateEntry)
 	t.ExtendBaseWidget(t)
 
 	t.fyneApp = app
