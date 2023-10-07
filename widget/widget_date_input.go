@@ -138,6 +138,9 @@ func (t *JDateEntry) TypedKey(e *fyne.KeyEvent) {
 	}
 }
 
+func (t *JDateEntry) TypedRune(e rune) {
+}
+
 
 // implemnet: Tappable
 func (t *JDateEntry) Tapped(p *fyne.PointEvent) {
