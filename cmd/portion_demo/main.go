@@ -15,6 +15,6 @@ func main() {
 	shorter := widget.NewButton("Short", nil)
 	long2 := widget.NewButton("I am also long", nil)
 	btn := widget.NewButton("123", nil)
-	w.SetContent(container.New(layout.NewHPortion([]float32{0.3, 0.2, 0.3, 0.1}), long, shorter, long2, btn))
+	w.SetContent(container.New(layout.NewHPortion([]float64{30, 20, 30, 10}), long, shorter, long2, btn))
 	w.ShowAndRun()
 }

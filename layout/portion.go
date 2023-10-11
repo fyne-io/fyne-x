@@ -12,7 +12,7 @@ var _ fyne.Layout = (*HPortion)(nil)
 // HPortion allows the canvas objects to be divided into portions of the width.
 // The length of the Portions slice needs to be equal to the amount of canvas objects.
 type HPortion struct {
-	Portions []float32
+	Portions []float64
 }
 
 // Layout sets the size and position of the canvas objects.
@@ -22,12 +22,17 @@ func (p *HPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 		return
 	}
 
+	sum := float64(0)
+	for _, child := range p.Portions {
+		sum += float64(child)
+	}
+
 	padding := theme.Padding()
 	width := size.Width - padding*float32(len(objects)-1)
 	xpos := float32(0)
 
 	for i, child := range objects {
-		width := p.Portions[i] * width
+		width := float32(p.Portions[i]/sum) * width
 		child.Resize(fyne.NewSize(width, size.Height))
 		child.Move(fyne.NewPos(xpos, 0))
 
@@ -47,6 +52,11 @@ func (p *HPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		return fyne.NewSize(0, 0)
 	}
 
+	sum := float64(0)
+	for _, child := range p.Portions {
+		sum += float64(child)
+	}
+
 	maxMinWidth := float32(0)
 	maxIndex := -1
 	height := float32(0)
@@ -62,14 +72,14 @@ func (p *HPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	}
 
 	totalPadding := float32(len(objects)-1) * theme.Padding()
-	return fyne.NewSize(maxMinWidth/p.Portions[maxIndex]+totalPadding, height)
+	return fyne.NewSize(maxMinWidth/float32(p.Portions[maxIndex]/sum)+totalPadding, height)
 }
 
 // NewHPortion creates a layout that partitions objects horizontally taking up
 // as large of a portion of the space as defined by the given slice.
 // The portions should be between 0 and 1 but not equal to.
 // The length of the Portions slice needs to be equal to the amount of objects.
-func NewHPortion(Portions []float32) *HPortion {
+func NewHPortion(Portions []float64) *HPortion {
 	return &HPortion{Portions: Portions}
 }
 
@@ -78,7 +88,7 @@ var _ fyne.Layout = (*VPortion)(nil)
 // VPortion allows the canvas objects to be divided into portions of the height.
 // The length of the Portions slice needs to be equal to the amount of canvas objects.
 type VPortion struct {
-	Portions []float32
+	Portions []float64
 }
 
 // Layout sets the size and position of the canvas objects.
@@ -88,12 +98,17 @@ func (p *VPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 		return
 	}
 
+	sum := float64(0)
+	for _, child := range p.Portions {
+		sum += float64(child)
+	}
+
 	padding := theme.Padding()
 	height := size.Width - padding*float32(len(objects)-1)
 	ypos := float32(0)
 
 	for i, child := range objects {
-		height := p.Portions[i] * height
+		height := float32(p.Portions[i]/sum) * height
 		child.Resize(fyne.NewSize(ypos, height))
 		child.Move(fyne.NewPos(ypos, 0))
 
@@ -113,6 +128,11 @@ func (p *VPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		return fyne.NewSize(0, 0)
 	}
 
+	sum := float64(0)
+	for _, child := range p.Portions {
+		sum += float64(child)
+	}
+
 	maxMinHeight := float32(0)
 	maxIndex := -1
 	width := float32(0)
@@ -128,13 +148,13 @@ func (p *VPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	}
 
 	totalPadding := float32(len(objects)-1) * theme.Padding()
-	return fyne.NewSize(width, maxMinHeight/p.Portions[maxIndex]+totalPadding)
+	return fyne.NewSize(width, maxMinHeight/float32(p.Portions[maxIndex]/sum)+totalPadding)
 }
 
 // NewVPortion creates a layout that partitions objects verticaly taking up
 // as large of a portion of the space as defined by the given slice.
 // The portions should be between 0 and 1 but not equal to.
 // The length of the Portions slice needs to be equal to the amount of objects.
-func NewVPortion(portion []float32) *VPortion {
+func NewVPortion(portion []float64) *VPortion {
 	return &VPortion{Portions: portion}
 }
