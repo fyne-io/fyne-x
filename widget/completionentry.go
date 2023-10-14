@@ -9,14 +9,18 @@ import (
 // CompletionEntry is an Entry with options displayed in a PopUpMenu.
 type CompletionEntry struct {
 	widget.Entry
-	popupMenu     *widget.PopUp
-	navigableList *navigableList
-	Options       []string
-	pause         bool
-	itemHeight    float32
+
+	Options           []string
+	OnCompleted       func(string) string // Called when you select an item from the list ; return different string to override the completion
+	SubmitOnCompleted bool                // True will call Entry.OnSubmited when you select a completion item
 
 	CustomCreate func() fyne.CanvasObject
 	CustomUpdate func(id widget.ListItemID, object fyne.CanvasObject)
+
+	popup    *widget.PopUp
+	list     *completionEntryList
+	selected widget.ListItemID
+	pause    bool
 }
 
 // NewCompletionEntry creates a new CompletionEntry which creates a popup menu that responds to keystrokes to navigate through the items without losing the editing ability of the text input.
@@ -28,8 +32,9 @@ func NewCompletionEntry(options []string) *CompletionEntry {
 
 // HideCompletion hides the completion menu.
 func (c *CompletionEntry) HideCompletion() {
-	if c.popupMenu != nil {
-		c.popupMenu.Hide()
+	if c.popup != nil {
+		c.list.UnselectAll()
+		c.popup.Hide()
 	}
 }
 
@@ -38,17 +43,17 @@ func (c *CompletionEntry) HideCompletion() {
 // Implements: fyne.Widget
 func (c *CompletionEntry) Move(pos fyne.Position) {
 	c.Entry.Move(pos)
-	if c.popupMenu != nil {
-		c.popupMenu.Resize(c.maxSize())
-		c.popupMenu.Move(c.popUpPos())
+	if c.popup != nil && c.popup.Visible() {
+		c.popup.Move(c.popUpPos())
+		c.popup.Resize(c.maxSize())
 	}
 }
 
 // Refresh the list to update the options to display.
 func (c *CompletionEntry) Refresh() {
 	c.Entry.Refresh()
-	if c.navigableList != nil {
-		c.navigableList.SetOptions(c.Options)
+	if c.list != nil && c.list.Visible() {
+		c.list.Refresh()
 	}
 }
 
@@ -63,168 +68,199 @@ func (c *CompletionEntry) ShowCompletion() {
 	if c.pause {
 		return
 	}
-	if len(c.Options) == 0 {
+	if len(c.Options) <= 0 {
 		c.HideCompletion()
 		return
 	}
 
-	if c.navigableList == nil {
-		c.navigableList = newNavigableList(c.Options, &c.Entry, c.setTextFromMenu, c.HideCompletion,
-			c.CustomCreate, c.CustomUpdate)
-	} else {
-		c.navigableList.UnselectAll()
-		c.navigableList.selected = -1
+	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
+	if cnv == nil {
+		return // canvas acquisiton failed (widget not showed yet?)
 	}
-	holder := fyne.CurrentApp().Driver().CanvasForObject(c)
 
-	if c.popupMenu == nil {
-		c.popupMenu = widget.NewPopUp(c.navigableList, holder)
+	if c.list == nil {
+		c.list = newCompletionEntryList(c)
 	}
-	c.popupMenu.Resize(c.maxSize())
-	c.popupMenu.ShowAtPosition(c.popUpPos())
-	holder.Focus(c.navigableList)
+	if c.popup == nil {
+		c.popup = widget.NewPopUp(c.list, cnv)
+	}
+
+	c.popup.ShowAtPosition(c.popUpPos())
+	c.popup.Resize(c.maxSize())
+
+	c.list.Select(0)
+	cnv.Focus(c.list)
 }
 
 // calculate the max size to make the popup to cover everything below the entry
 func (c *CompletionEntry) maxSize() fyne.Size {
 	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
 
-	if c.itemHeight == 0 {
-		// set item height to cache
-		c.itemHeight = c.navigableList.CreateItem().MinSize().Height
+	// return empty size if cannot get canvas (widget not showed yet?)
+	if cnv == nil {
+		return fyne.Size{}
 	}
 
-	listheight := float32(len(c.Options))*(c.itemHeight+2*theme.Padding()+theme.SeparatorThicknessSize()) + 2*theme.Padding()
-	canvasSize := cnv.Size()
-	entrySize := c.Size()
-	if canvasSize.Height > listheight {
-		return fyne.NewSize(entrySize.Width, listheight)
+	pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
+
+	// define size boundaries
+	minWidth := c.Size().Width
+	maxWidth := cnv.Size().Width - pos.X - theme.Padding()
+	maxHeight := cnv.Size().Height - pos.Y - c.MinSize().Height - 2*theme.Padding()
+
+	// iterating items until the end or we rech maxHeight
+	var width, height float32
+	for i := 0; i < len(c.Options); i++ {
+		item := c.list.CreateItem()
+		c.list.UpdateItem(i, item)
+		sz := item.MinSize()
+		if sz.Width > width {
+			width = sz.Width
+		}
+		height += sz.Height + theme.Padding()
+		if height > maxHeight {
+			height = maxHeight
+			break
+		}
+	}
+	height += theme.Padding() // popup padding
+
+	width += 2 * theme.Padding() // let some padding on the trailing end of the longest item
+	if width < minWidth {
+		width = minWidth
+	}
+	if width > maxWidth {
+		width = maxWidth
 	}
 
-	return fyne.NewSize(
-		entrySize.Width,
-		canvasSize.Height-c.Position().Y-entrySize.Height-theme.InputBorderSize()-theme.Padding())
+	return fyne.NewSize(width, height)
 }
 
 // calculate where the popup should appear
 func (c *CompletionEntry) popUpPos() fyne.Position {
-	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
-	return entryPos.Add(fyne.NewPos(0, c.Size().Height))
+	pos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
+	return pos.Add(fyne.NewPos(0, c.Size().Height+theme.Padding()))
 }
 
 // Prevent the menu to open when the user validate value from the menu.
 func (c *CompletionEntry) setTextFromMenu(s string) {
+	c.popup.Hide()
 	c.pause = true
-	c.Entry.SetText(s)
+	if c.OnCompleted != nil {
+		s = c.OnCompleted(s)
+	}
+	c.Entry.Text = s
 	c.Entry.CursorColumn = len([]rune(s))
 	c.Entry.Refresh()
 	c.pause = false
-	c.popupMenu.Hide()
+	if c.SubmitOnCompleted && c.OnSubmitted != nil {
+		c.OnSubmitted(c.Entry.Text)
+	}
 }
 
-type navigableList struct {
+type completionEntryList struct {
 	widget.List
-	entry           *widget.Entry
-	selected        int
-	setTextFromMenu func(string)
-	hide            func()
-	navigating      bool
-	items           []string
 
-	customCreate func() fyne.CanvasObject
-	customUpdate func(id widget.ListItemID, object fyne.CanvasObject)
+	// just hold a reference to the "parent" CompletionEntry that already holds all what the list needs to operate
+	parent *CompletionEntry
 }
 
-func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func(),
-	create func() fyne.CanvasObject, update func(id widget.ListItemID, object fyne.CanvasObject)) *navigableList {
-	n := &navigableList{
-		entry:           entry,
-		selected:        -1,
-		setTextFromMenu: setTextFromMenu,
-		hide:            hide,
-		items:           items,
-		customCreate:    create,
-		customUpdate:    update,
-	}
+func newCompletionEntryList(parent *CompletionEntry) *completionEntryList {
+	list := &completionEntryList{parent: parent}
+	list.ExtendBaseWidget(list)
 
-	n.List = widget.List{
-		Length: func() int {
-			return len(n.items)
-		},
-		CreateItem: func() fyne.CanvasObject {
-			if fn := n.customCreate; fn != nil {
-				return fn()
-			}
-			return widget.NewLabel("")
-		},
-		UpdateItem: func(i widget.ListItemID, o fyne.CanvasObject) {
-			if fn := n.customUpdate; fn != nil {
-				fn(i, o)
-				return
-			}
-			o.(*widget.Label).SetText(n.items[i])
-		},
-		OnSelected: func(id widget.ListItemID) {
-			if !n.navigating && id > -1 {
-				setTextFromMenu(n.items[id])
-			}
-			n.navigating = false
-		},
+	list.List.Length = func() int { return len(parent.Options) }
+	list.List.CreateItem = func() fyne.CanvasObject {
+		var item *completionEntryListItem
+		if parent.CustomCreate != nil {
+			item = newCompletionEntryListItem(parent, parent.CustomCreate())
+		} else {
+			item = newCompletionEntryListItem(parent, widget.NewLabel(""))
+		}
+		return item
 	}
-	n.ExtendBaseWidget(n)
-	return n
+	list.List.UpdateItem = func(id widget.ListItemID, co fyne.CanvasObject) {
+		if parent.CustomUpdate != nil {
+			parent.CustomUpdate(id, co.(*completionEntryListItem).co)
+		} else {
+			co.(*completionEntryListItem).co.(*widget.Label).Text = parent.Options[id]
+		}
+		co.(*completionEntryListItem).id = id
+		list.SetItemHeight(id, co.MinSize().Height)
+		co.Refresh()
+	}
+	list.List.OnSelected = func(id widget.ListItemID) {
+		parent.selected = id
+	}
+	list.List.OnUnselected = func(_ widget.ListItemID) {
+		parent.selected = -1
+	}
+	return list
 }
 
 // Implements: fyne.Focusable
-func (n *navigableList) FocusGained() {
-}
+func (list *completionEntryList) FocusGained() {}
 
 // Implements: fyne.Focusable
-func (n *navigableList) FocusLost() {
-}
+func (list *completionEntryList) FocusLost() {}
 
-func (n *navigableList) SetOptions(items []string) {
-	n.Unselect(n.selected)
-	n.items = items
-	n.Refresh()
-	n.selected = -1
-}
-
-func (n *navigableList) TypedKey(event *fyne.KeyEvent) {
-	switch event.Name {
+// Implements: fyne.Focusable
+func (list *completionEntryList) TypedKey(ke *fyne.KeyEvent) {
+	switch ke.Name {
 	case fyne.KeyDown:
-		if n.selected < len(n.items)-1 {
-			n.selected++
+		if list.parent.selected < len(list.parent.Options)-1 {
+			list.parent.list.Select(list.parent.selected + 1)
 		} else {
-			n.selected = 0
+			list.parent.list.Select(0)
 		}
-		n.navigating = true
-		n.Select(n.selected)
-
 	case fyne.KeyUp:
-		if n.selected > 0 {
-			n.selected--
+		if list.parent.selected > 0 {
+			list.parent.list.Select(list.parent.selected - 1)
 		} else {
-			n.selected = len(n.items) - 1
+			list.parent.list.Select(len(list.parent.Options) - 1)
 		}
-		n.navigating = true
-		n.Select(n.selected)
 	case fyne.KeyReturn, fyne.KeyEnter:
-		if n.selected == -1 { // so the user want to submit the entry
-			n.hide()
-			n.entry.TypedKey(event)
+		if list.parent.selected >= 0 {
+			list.parent.setTextFromMenu(list.parent.Options[list.parent.selected])
 		} else {
-			n.navigating = false
-			n.OnSelected(n.selected)
+			list.parent.HideCompletion()
+			list.parent.Entry.TypedKey(ke)
 		}
-	case fyne.KeyEscape:
-		n.hide()
+	case fyne.KeyTab, fyne.KeyEscape:
+		list.parent.HideCompletion()
 	default:
-		n.entry.TypedKey(event)
-
+		list.parent.TypedKey(ke)
 	}
 }
 
-func (n *navigableList) TypedRune(r rune) {
-	n.entry.TypedRune(r)
+// Implements: fyne.Focusable
+func (list *completionEntryList) TypedRune(r rune) {
+	list.parent.TypedRune(r)
+}
+
+// Implements: fyne.Shortcutable
+func (list *completionEntryList) TypedShortcut(s fyne.Shortcut) {
+	list.parent.TypedShortcut(s)
+}
+
+type completionEntryListItem struct {
+	widget.BaseWidget
+	parent *CompletionEntry
+	id     widget.ListItemID // each list item knows where it belongs in parent's data slice
+	co     fyne.CanvasObject
+}
+
+func newCompletionEntryListItem(parent *CompletionEntry, co fyne.CanvasObject) *completionEntryListItem {
+	item := &completionEntryListItem{parent: parent, id: -1, co: co}
+	item.ExtendBaseWidget(item)
+	return item
+}
+
+func (item *completionEntryListItem) CreateRenderer() fyne.WidgetRenderer {
+	return widget.NewSimpleRenderer(item.co)
+}
+
+func (item *completionEntryListItem) Tapped(_ *fyne.PointEvent) {
+	item.parent.list.Select(item.id)
+	item.parent.setTextFromMenu(item.parent.Options[item.id])
 }
