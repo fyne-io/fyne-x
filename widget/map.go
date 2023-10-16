@@ -201,7 +201,7 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 
 	overlay := container.NewBorder(nil, copyright, move, zoom)
 
-	c := container.NewMax(canvas.NewRaster(m.draw), container.NewPadded(overlay))
+	c := container.NewStack(canvas.NewRaster(m.draw), container.NewPadded(overlay))
 	return widget.NewSimpleRenderer(c)
 }
 
