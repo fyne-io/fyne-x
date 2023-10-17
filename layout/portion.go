@@ -77,7 +77,6 @@ func (p *HPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 // NewHPortion creates a layout that partitions objects horizontally taking up
 // as large of a portion of the space as defined by the given slice.
-// The portions should be between 0 and 1 but not equal to.
 // The length of the Portions slice needs to be equal to the amount of objects.
 func NewHPortion(Portions []float64) *HPortion {
 	return &HPortion{Portions: Portions}
@@ -153,7 +152,6 @@ func (p *VPortion) MinSize(objects []fyne.CanvasObject) fyne.Size {
 
 // NewVPortion creates a layout that partitions objects verticaly taking up
 // as large of a portion of the space as defined by the given slice.
-// The portions should be between 0 and 1 but not equal to.
 // The length of the Portions slice needs to be equal to the amount of objects.
 func NewVPortion(portion []float64) *VPortion {
 	return &VPortion{Portions: portion}
