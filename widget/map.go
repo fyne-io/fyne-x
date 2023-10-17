@@ -195,14 +195,13 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 	var copyright fyne.CanvasObject
 	if !m.hideAttribution {
 		license, _ := url.Parse(m.attributionURL)
-		view := widget.NewHyperlink(m.attributionLabel, license)
-		view.Alignment = fyne.TextAlignTrailing
-		copyright = view
+		link := widget.NewHyperlink(m.attributionLabel, license)
+		copyright = container.NewHBox(layout.NewSpacer(), link)
 	}
 
 	overlay := container.NewBorder(nil, copyright, move, zoom)
 
-	c := container.NewMax(canvas.NewRaster(m.draw), overlay)
+	c := container.NewStack(canvas.NewRaster(m.draw), container.NewPadded(overlay))
 	return widget.NewSimpleRenderer(c)
 }
 

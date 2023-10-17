@@ -12,12 +12,13 @@ func main() {
 
 	m := xwidget.NewMapWithOptions(
 		xwidget.WithOsmTiles(),
-		xwidget.WithZoomButtons(false),
+		xwidget.WithZoomButtons(true),
 		xwidget.WithScrollButtons(true),
 	)
+	m.ZoomIn()
 	w.SetContent(m)
 
 	w.SetPadded(false)
-	w.Resize(fyne.NewSize(256, 256))
+	w.Resize(fyne.NewSize(512, 320))
 	w.ShowAndRun()
 }
