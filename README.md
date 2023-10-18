@@ -121,7 +121,7 @@ or resized.
 * [More Detail](./widget/diagramwidget/README.md)
 
 <p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/DiagramWidget.png" width="1024" height="880" alt="Diagram Widget" style="max-width: 100%" />
+  <img src="img/diagramdemo.png" width="1024" height="880" alt="Diagram Widget" style="max-width: 100%" />
 </p>
 
 
