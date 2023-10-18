@@ -53,13 +53,33 @@ layout := NewResponsiveLayout(
 
 ## Widgets
 
-Community contributed widgets.
+This package contains a collection of community-contributed widgets for the [Fyne](https://fyne.io/) 
+toolkit. The code here is intended to be production ready, but may be lacking
+some desirable functional features. If you have suggestions for changes to 
+existing functionality or addition of new functionality, please look at the existing
+issues in the repository to see if your idea is already on the table. If it is not,
+feel free to open an issue. 
+
+This collection should be considered a work in progress. When changes are made,
+serious consideration will be given to backward compatibility, but compatibility
+is not guaranteed. 
 
 `import "fyne.io/x/fyne/widget"`
 
-### Calendar
+### Animated Gif
 
-  
+A widget that will run animated gifs.
+
+<p align="center" class="align:center;margin:auto" markdown="1">
+<img src="img/gifwidget.gif" />
+</p>
+
+```go
+gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
+gif.Start()
+```
+
+### Calendar
 
 A date picker which returns a [time](https://pkg.go.dev/time) object with the selected date.
 
@@ -80,18 +100,30 @@ calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
 ```
 [Demo](./cmd/hexwidget_demo/main.go) available for example usage
 
-### Animated Gif
+### DiagramWidget
 
-A widget that will run animated gifs.
+The DiagramWidget provides a drawing area within which a diagram can be created. The diagram itself is a collection of 
+DiagramElement widgets (an interface). There are two types of DiagramElements: DiagramNode widgets and DiagramLink widgets. 
+DiagramNode widgets are thin wrappers around a user-supplied CanvasObject.
+Any valid CanvasObject can be used. DiagramLinks are line-based connections between DiagramElements.
+Note that links can connect to other links as well as nodes.
 
-<p align="center" class="align:center;margin:auto" markdown="1">
-<img src="img/gifwidget.gif" />
+While some provisions have been made for automatic layout, layouts are for the convenience
+of the author and are on-demand only. The design intent is that users will place the diagram elements for human readability. 
+
+DiagramElements are managed by the DiagramWidget from a layout perspective. DiagramNodes have no size
+constraints imposed by the DiagramWidget and can be placed anywhere. DiagramLinks connect 
+DiagramElements. The DiagramWidget keeps track of the DiagramElements to which each DiagramLink 
+is connected and calls the Refresh() method on the link when the connected diagram element is moved 
+or resized. 
+
+* [demo](./cmd/diagramdemo/main.go)
+* [More Detail](./widget/diagramwidget/README.md)
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/diagramdemo.png" width="1024" height="880" alt="Diagram Widget" style="max-width: 100%" />
 </p>
 
-```go
-gif, err := NewAnimatedGif(storage.NewFileURI("./testdata/gif/earth.gif"))
-gif.Start()
-```
 
 ### FileTree
 
