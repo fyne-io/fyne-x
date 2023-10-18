@@ -1,6 +1,7 @@
 
 ### Project Specific
 cmd/hexwidget_demo/hexwidget_demo
+cmd/portion_demo/portion_demo
 fyne-cross
 
 ### Tests
