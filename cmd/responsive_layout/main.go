@@ -28,15 +28,15 @@ func main() {
 		winSizeLabel(window), // 100% by default
 		layout.Responsive(
 			widget.NewButton("One !", func() {}),
-			1, .33,
+			1, 1.0/3.0,
 		),
 		layout.Responsive(
 			widget.NewButton("Two !", func() {}),
-			1, .33,
+			1, 1.0/3.0,
 		),
 		layout.Responsive(
 			widget.NewButton("Three !", func() {}),
-			1, .34,
+			1, 1.0/3.0,
 		),
 		layout.Responsive(fromLayout(), 1, .5), // 100% for small, 50% for others
 		layout.Responsive(fromLayout(), 1, .5), // 100% for small, 50% for others
