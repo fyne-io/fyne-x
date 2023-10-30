@@ -40,7 +40,7 @@ const (
 	// TwoThird is two third the size of the container.
 	TwoThird float32 = 2.0 / 3.0
 	// OneQuarter is one quarter the size of the container.
-	Quarter float32 = 0.25
+	OneQuarter float32 = 0.25
 	// OneFifth is five twelfths the size of the container.
 	OneFifth float32 = 0.2
 	// OneSixth is one sixth the size of the container.
