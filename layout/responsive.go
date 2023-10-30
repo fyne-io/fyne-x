@@ -31,13 +31,20 @@ import (
 type responsiveBreakpoint = float32
 
 const (
-	Full     float32 = 1.0
-	Half     float32 = 0.5
+	// Full is the full size of the container.
+	Full float32 = 1.0
+	// Half is half the size of the container.
+	Half float32 = 0.5
+	// OneThird is one third the size of the container.
 	OneThird float32 = 1.0 / 3.0
+	// TwoThird is two third the size of the container.
 	TwoThird float32 = 2.0 / 3.0
-	Quarter  float32 = 0.25
-	Fifth    float32 = 0.2
-	Sixth    float32 = 1.0 / 6.0
+	// OneQuarter is one quarter the size of the container.
+	Quarter float32 = 0.25
+	// FiveTwelfths is five twelfths the size of the container.
+	OneFifth float32 = 0.2
+	// OneSixth is one sixth the size of the container.
+	OneSixth float32 = 1.0 / 6.0
 )
 
 const (
