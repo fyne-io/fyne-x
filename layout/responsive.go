@@ -312,7 +312,7 @@ func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.Canva
 	if len(breakpointRatio) > 4 {
 		fyne.LogError(
 			"Too many arguments in Responsive()",
-			fmt.Errorf("The function can take at most 4 arguments, you provided %d", len(breakpointRatio)),
+			fmt.Errorf("the function can take at most 4 arguments, you provided %d", len(breakpointRatio)),
 		)
 	}
 	ro := &responsiveWidget{render: object, responsiveConfig: newResponsiveConf(breakpointRatio...)}
