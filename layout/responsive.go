@@ -28,7 +28,17 @@ import (
 // responsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
 //
 // See: https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints
-type responsiveBreakpoint uint16
+type responsiveBreakpoint = float32
+
+const (
+	Full     float32 = 1.0
+	Half     float32 = 0.5
+	OneThird float32 = 1.0 / 3.0
+	TwoThird float32 = 2.0 / 3.0
+	Quarter  float32 = 0.25
+	Fifth    float32 = 0.2
+	Sixth    float32 = 1.0 / 6.0
+)
 
 const (
 	// SMALL is the smallest breakpoint (mobile vertical).
@@ -110,24 +120,15 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		return
 	}
 
-	// Responsive is based on the window size, so we need to get it
-	window := fyne.CurrentApp().Driver().CanvasForObject(objects[0])
-	if window == nil {
-		return
-	}
-
 	// this will be updatad for each element to know where to place
 	// the next object.
-	pos := fyne.NewPos(0, 0)
+	pos := fyne.NewPos(theme.Padding(), 0)
 
 	// to calculate the next pos.Y when a new line is needed
-	maxHeight := float32(0)
+	var maxHeight float32
 
 	// objects in a line
 	line := []fyne.CanvasObject{}
-
-	// cast windowSize.Width to responsiveBreakpoint (uint16)
-	ww := responsiveBreakpoint(window.Size().Width)
 
 	// For each object, place it at the right position (pos) and resize it.
 	for _, o := range objects {
@@ -138,7 +139,9 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		// get tht configuration
 		ro, ok := o.(*responsiveWidget)
 		if !ok {
-			log.Fatal("A non responsive object has been packed inside a ResponsibleLayout. This is impossible.")
+			// We now allow non responsive objects to be packed inside a ResponsiveLayout. The
+			// size of the object will be 100% of the container.
+			ro = Responsive(o).(*responsiveWidget)
 		}
 		conf := ro.responsiveConfig
 
@@ -146,17 +149,18 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		size := o.MinSize()    // get some informations
 
 		// adapt object witdh from the configuration
-		if ww <= SMALL {
+		if containerSize.Width <= SMALL {
 			size.Width = conf[SMALL] * containerSize.Width
-		} else if ww <= MEDIUM {
+		} else if containerSize.Width <= MEDIUM {
 			size.Width = conf[MEDIUM] * containerSize.Width
-		} else if ww <= LARGE {
+		} else if containerSize.Width <= LARGE {
 			size.Width = conf[LARGE] * containerSize.Width
 		} else {
 			size.Width = conf[XLARGE] * containerSize.Width
 		}
 
 		// place and resize the element
+		size = size.Subtract(fyne.NewSize(theme.Padding(), 0))
 		o.Resize(size)
 		o.Move(pos)
 
@@ -166,16 +170,13 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		maxHeight = resp.maxFloat32(maxHeight, size.Height)
 
 		// Manage end of line, the next position overflows, so go to next line.
-		if pos.X >= containerSize.Width-theme.Padding() {
-			// we now know the number of object in a line, fix padding
-			resp.fixPaddingOnLine(line)
+		if pos.X >= containerSize.Width {
 			line = []fyne.CanvasObject{}
-			pos.X = 0          // back to left
-			pos.Y += maxHeight // move to the next line
+			pos.X = theme.Padding()              // back to left
+			pos.Y += maxHeight + theme.Padding() // move to the next line
 			maxHeight = 0
 		}
 	}
-	resp.fixPaddingOnLine(line) // fix padding for the last line
 }
 
 // MinSize return the minimum size ot the layout.
@@ -197,7 +198,7 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		if o.Position().Y != currentY {
 			currentY = o.Position().Y
 			// new line, so we can add the maxHeight to h
-			h += maxHeight
+			h += maxHeight + theme.Padding()
 
 			// drop the line
 			maxHeight = 0
@@ -206,23 +207,6 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	}
 	h += maxHeight + theme.Padding()
 	return fyne.NewSize(w, h)
-}
-
-// fixPaddingOnLine fix the space between the objects in a line.
-func (resp *ResponsiveLayout) fixPaddingOnLine(line []fyne.CanvasObject) {
-	if len(line) <= 1 {
-		return
-	}
-	for i, o := range line {
-		s := o.Size()
-		s.Width -= theme.Padding() / float32(len(line)-1)
-		o.Resize(s)
-		if i > 0 {
-			p := o.Position()
-			p.X -= theme.Padding() * float32(i)
-			o.Move(p)
-		}
-	}
 }
 
 // math.Max only works with float64, so let's make our own
