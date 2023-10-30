@@ -28,18 +28,18 @@ func main() {
 		winSizeLabel(window), // 100% by default
 		layout.Responsive(
 			widget.NewButton("One !", func() {}),
-			1, layout.OneThird,
+			1, .5, layout.OneThird, // 100% for small, 50% for medium and 33% for larger
 		),
 		layout.Responsive(
 			widget.NewButton("Two !", func() {}),
-			1, layout.OneThird,
+			1, .5, layout.OneThird, // 100% for small, 50% for medium and 33% for larger
 		),
 		layout.Responsive(
 			widget.NewButton("Three !", func() {}),
-			1, layout.OneThird,
+			1, 1, layout.OneThird, // 100% for small and medium, 33% for larger
 		),
-		layout.Responsive(fromLayout(), 1, .5), // 100% for small, 50% for others
-		layout.Responsive(fromLayout(), 1, .5), // 100% for small, 50% for others
+		layout.Responsive(formLayout(), 1, .5), // 100% for small, 50% for others
+		layout.Responsive(formLayout(), 1, .5), // 100% for small, 50% for others
 		button,                                 // 100% by default
 	)
 
@@ -55,12 +55,13 @@ func winSizeLabel(window fyne.Window) fyne.CanvasObject {
 	label := widget.NewLabel("")
 	label.Wrapping = fyne.TextWrapWord
 	label.Alignment = fyne.TextAlignCenter
-
 	go func() {
-		// when window is resized, the label will be updated
-		time.Sleep(time.Millisecond * 1000)
-		canvas := window.Canvas()
+		// Continuously update the label with the window size
 		for {
+			canvas := window.Canvas()
+			if canvas == nil {
+				continue
+			}
 			time.Sleep(time.Millisecond * 100)
 			if canvas.Size().Width <= float32(layout.SMALL) {
 				label.SetText(fmt.Sprintf("Extra small devicce %v <= %v", canvas.Size().Width, layout.SMALL))
@@ -87,7 +88,7 @@ func presentation() fyne.CanvasObject {
 	return label
 }
 
-// fromLayout returns responsive layout where label and entries width ratios are set.
+// formLayout returns responsive layout where label and entries width ratios are set.
 // Each label will:
 // - be 100% width for small device
 // - be 25% for medium device
@@ -96,7 +97,7 @@ func presentation() fyne.CanvasObject {
 // - be 100% width for small device
 // - be 75% for medium device (100 - 25% from the label)
 // - be 67% for larger device (100 - 33% from the label)
-func fromLayout() fyne.CanvasObject {
+func formLayout() fyne.CanvasObject {
 	title := widget.NewLabel(
 		"This container should be 100% width of small device and 50% for larger.\n" +
 			"The labels are sized to 100% width for small devices, 25% for medium and 33% for larger")
@@ -115,8 +116,8 @@ func fromLayout() fyne.CanvasObject {
 
 	labelw := float32(.25)
 	entryw := float32(.75)
-	labelx := 1 / float32(3)
-	entryx := 1 - labelx
+	labelx := layout.OneThird
+	entryx := layout.TwoThird
 	return layout.NewResponsiveLayout(
 		title,
 		layout.Responsive(label, 1, 1, labelw, labelx),

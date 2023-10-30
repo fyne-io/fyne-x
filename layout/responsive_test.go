@@ -1,7 +1,6 @@
 package layout
 
 import (
-	"math"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -51,16 +50,20 @@ func TestResponsive_Responsive(t *testing.T) {
 	size1 := label1.Size()
 	size2 := label2.Size()
 	assert.Equal(t, size1.Width, size2.Width)
-	assert.Equal(t, w-padding*3, size1.Width)
+	assert.Equal(t, size1.Width, w-padding*2)
 
 	// Then resize to w > SMALL so the labels should be sized to 50% of the layout
 	w = float32(MEDIUM)
 	win.Resize(fyne.NewSize(w, h))
 	size1 = label1.Size()
 	size2 = label2.Size()
-	// remove 2 * padding as there is 2 objects in a line
-	assert.Equal(t, w/2-padding*2, size1.Width)
-	assert.Equal(t, w/2-padding*2, size2.Width)
+
+	// the 2 widgets should be on the same line and have the same width
+	assert.Equal(t, label1.Position().Y, label2.Position().Y)
+	assert.Equal(t, size1.Width, size2.Width)
+
+	// the width should be 50% of the layout minus 1 padding between the 2 widgets
+	assert.Equal(t, size1.Width, (w-padding*3)/2)
 }
 
 // Check if a widget that overflows the container goes to the next line.
@@ -111,40 +114,33 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	w := float32(SMALL)
 	win.Resize(fyne.NewSize(w, h))
 	win.Content().Refresh()
-	w = w - 2*p
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
-		assert.Equal(t, w-p, size.Width)
+		assert.Equal(t, size.Width, w-2*p)
 	}
 
 	// Then resize to w > SMALL so the labels should be sized to 50% of the layout
 	w = float32(MEDIUM)
 	win.Resize(fyne.NewSize(w, h))
-	w = w/2 - 2*p
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
-		assert.Equal(t, w, size.Width) // 1 padding between 2 widgets
+		assert.Equal(t, size.Width, (w-p*3)/2)
 	}
 
 	// Then resize to w > MEDIUM so the labels should be sized to 33% of the layout
 	w = float32(LARGE)
 	win.Resize(fyne.NewSize(w, h))
-	w = w / 3
-	w = float32(math.Floor(float64(w))) - p - 2 // note: 2px are removed to avoid rounding errors
 	for i := 0; i < n-1; i++ {
 		size := labels[i].Size()
-		assert.Equal(t, w, size.Width) // 2 paddings between 3 widgets
+		assert.Equal(t, size.Width, (w-p*4)/3)
 	}
 
 	// Then resize to w > LARGE so the labels should be sized to 25% of the layout
 	w = float32(XLARGE)
 	win.Resize(fyne.NewSize(w, h))
-	w = w / 4
-	w = w - p*2 + 2 // note: 2px are added to avoid rounding errors
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
-		// note: 1px is added to the size to avoid rounding errors
-		assert.Equal(t, w, size.Width) // 3 paddings between 4 widgets
+		assert.Equal(t, size.Width, (w-p*5)/4)
 	}
 }
 

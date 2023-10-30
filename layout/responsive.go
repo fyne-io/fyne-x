@@ -28,7 +28,7 @@ import (
 // responsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
 //
 // See: https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints
-type responsiveBreakpoint = float32
+type responsiveBreakpoint float32
 
 const (
 	// Full is the full size of the container.
@@ -127,61 +127,46 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		return
 	}
 
-	// this will be updatad for each element to know where to place
-	// the next object.
-	pos := fyne.NewPos(theme.Padding(), 0)
+	// For each object, place it at the right position (currentPos) and resize it.
+	var (
+		currentPos             = fyne.Position{X: 0, Y: 0} // current position
+		shouldCount    bool    = true                      // should we count the number of object in the same line ?
+		lineHeight     float32                             // to know the height of the current line
+		appliedPadding int                                 // number of padding applied in the current line
+	)
 
-	// to calculate the next pos.Y when a new line is needed
-	var maxHeight float32
-
-	// objects in a line
-	line := []fyne.CanvasObject{}
-
-	// For each object, place it at the right position (pos) and resize it.
-	for _, o := range objects {
-		if o == nil || !o.Visible() {
+	for currentIndex, currentObject := range objects {
+		if currentObject == nil || !currentObject.Visible() {
 			continue
 		}
 
-		// get tht configuration
-		ro, ok := o.(*responsiveWidget)
-		if !ok {
-			// We now allow non responsive objects to be packed inside a ResponsiveLayout. The
-			// size of the object will be 100% of the container.
-			ro = Responsive(o).(*responsiveWidget)
+		// place the object
+		currentObject.Move(currentPos)
+
+		// calculate the size of the object based on the container size
+		size := resp.calcSize(currentObject, containerSize)
+		if shouldCount {
+			// calculate the number of object that can be placed in the same line
+			// starting from the current object
+			appliedPadding = resp.numberInLine(objects[currentIndex:], containerSize)
+			shouldCount = false
 		}
-		conf := ro.responsiveConfig
+		// adapt object witdh from the number of padding set in this line
+		size.Width += theme.Padding() / float32(appliedPadding-1)
 
-		line = append(line, o) // add the container to the line
-		size := o.MinSize()    // get some informations
+		// and resize it
+		currentObject.Resize(size)
 
-		// adapt object witdh from the configuration
-		if containerSize.Width <= SMALL {
-			size.Width = conf[SMALL] * containerSize.Width
-		} else if containerSize.Width <= MEDIUM {
-			size.Width = conf[MEDIUM] * containerSize.Width
-		} else if containerSize.Width <= LARGE {
-			size.Width = conf[LARGE] * containerSize.Width
-		} else {
-			size.Width = conf[XLARGE] * containerSize.Width
-		}
+		// next element X position is the current X + the current width + padding
+		currentPos = currentPos.Add(fyne.NewPos(size.Width+theme.Padding(), 0))
 
-		// place and resize the element
-		size = size.Subtract(fyne.NewSize(theme.Padding(), 0))
-		o.Resize(size)
-		o.Move(pos)
-
-		// next element X position
-		pos = pos.Add(fyne.NewPos(size.Width+theme.Padding(), 0))
-
-		maxHeight = resp.maxFloat32(maxHeight, size.Height)
-
+		lineHeight = resp.maxFloat32(lineHeight, size.Height)
 		// Manage end of line, the next position overflows, so go to next line.
-		if pos.X >= containerSize.Width {
-			line = []fyne.CanvasObject{}
-			pos.X = theme.Padding()              // back to left
-			pos.Y += maxHeight + theme.Padding() // move to the next line
-			maxHeight = 0
+		if currentPos.X >= containerSize.Width {
+			currentPos.X = 0                             // back to left
+			currentPos.Y += lineHeight + theme.Padding() // move to the next line
+			lineHeight = 0
+			shouldCount = true
 		}
 	}
 }
@@ -216,9 +201,55 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(w, h)
 }
 
+// calcSize calculate the size of the object based on the container size.
+func (resp *ResponsiveLayout) calcSize(o fyne.CanvasObject, containerSize fyne.Size) fyne.Size {
+	ro, ok := o.(*responsiveWidget)
+	if !ok {
+		// We now allow non responsive objects to be packed inside a ResponsiveLayout. The
+		// size of the object will be 100% of the container.
+		ro = Responsive(o).(*responsiveWidget)
+	}
+
+	objectSize := o.MinSize()
+
+	// adapt object witdh from the configuration
+	width := responsiveBreakpoint(containerSize.Width)
+	var factor float32
+	if width <= SMALL {
+		factor = ro.responsiveConfig[SMALL]
+	} else if width <= MEDIUM {
+		factor = ro.responsiveConfig[MEDIUM]
+	} else if width <= LARGE {
+		factor = ro.responsiveConfig[LARGE]
+	} else {
+		factor = ro.responsiveConfig[XLARGE]
+	}
+
+	objectSize.Width = factor * containerSize.Width
+	// set the size (without padding adaptation)
+	objectSize = objectSize.Subtract(fyne.NewSize(theme.Padding(), 0))
+	o.Resize(objectSize)
+	return objectSize
+}
+
 // math.Max only works with float64, so let's make our own
 func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
 	return float32(math.Max(float64(a), float64(b)))
+}
+
+// count the number of object that can be placed in the same line. The objects should contain only the leading objects.
+func (resp *ResponsiveLayout) numberInLine(objects []fyne.CanvasObject, containerSize fyne.Size) int {
+	var ww float32
+	count := 1
+	for _, o := range objects {
+		size := resp.calcSize(o, containerSize)
+		ww += size.Width + theme.Padding()
+		if ww > containerSize.Width {
+			break
+		}
+		count++
+	}
+	return count
 }
 
 // NewResponsiveLayout return a responsive layout that will adapt objects with the responsive rules. To
