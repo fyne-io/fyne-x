@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
+	xcontainer "fyne.io/x/fyne/container"
 	"fyne.io/x/fyne/layout"
 )
 
@@ -23,7 +24,7 @@ func main() {
 		dialog.NewInformation("Hello", "Hello World", window).Show()
 	})
 
-	resp := layout.NewResponsiveLayout(
+	resp := xcontainer.NewResponsive(
 		presentation(),       // 100% by default
 		winSizeLabel(window), // 100% by default
 		layout.Responsive(
@@ -118,7 +119,7 @@ func formLayout() fyne.CanvasObject {
 	entryw := float32(.75)
 	labelx := layout.OneThird
 	entryx := layout.TwoThird
-	return layout.NewResponsiveLayout(
+	return xcontainer.NewResponsive(
 		title,
 		layout.Responsive(label, 1, 1, labelw, labelx),
 		layout.Responsive(entry, 1, 1, entryw, entryx),

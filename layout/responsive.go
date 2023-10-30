@@ -6,7 +6,6 @@ import (
 	"math"
 
 	"fyne.io/fyne/v2"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -18,6 +17,10 @@ import (
 // we use width ratio.
 // By default, a standard fyne.CanvasObject will always be width to 1 * containerSize and place in vertical.
 // If you want to change the behavior, you can use Responsive() function that registers the layout configuration.
+//
+// To avoid using fractions, some constants are defined like Half, OneThird, OneQuarter, OneFifth and OneSixth.
+//
+// Responsive() function takes a fyne.CanvasObject and a list of ratios. The number of ratios could be 1, 2, 3 or 4.
 //
 // Example:
 //    layout := NewResponsiveLayout(
@@ -114,6 +117,8 @@ func newResponsiveConf(ratios ...float32) responsiveConfig {
 	return responsive
 }
 
+var _ fyne.Layout = (*ResponsiveLayout)(nil)
+
 // ResponsiveLayout is the layout that will adapt objects with the responsive rules. See NewResponsiveLayout
 // for details.
 type ResponsiveLayout struct{}
@@ -140,27 +145,29 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 			continue
 		}
 
-		// place the object
-		currentObject.Move(currentPos)
-
-		// calculate the size of the object based on the container size
-		size := resp.calcSize(currentObject, containerSize)
 		if shouldCount {
 			// calculate the number of object that can be placed in the same line
 			// starting from the current object
-			appliedPadding = resp.numberInLine(objects[currentIndex:], containerSize)
+			appliedPadding = resp.computeElementInLine(objects[currentIndex:], containerSize)
 			shouldCount = false
 		}
-		// adapt object witdh from the number of padding set in this line
-		size.Width += theme.Padding() / float32(appliedPadding-1)
 
-		// and resize it
-		currentObject.Resize(size)
+		// resize the object width using the number of applied paddings
+		// and place it at the right position
+		currentObject.Resize(
+			currentObject.Size().Add(fyne.NewSize(
+				theme.Padding()/float32(appliedPadding-1),
+				0,
+			)),
+		)
+		currentObject.Move(currentPos)
 
 		// next element X position is the current X + the current width + padding
-		currentPos = currentPos.Add(fyne.NewPos(size.Width+theme.Padding(), 0))
+		currentPos = currentPos.Add(fyne.NewPos(
+			currentObject.Size().Width+theme.Padding(), 0,
+		))
 
-		lineHeight = resp.maxFloat32(lineHeight, size.Height)
+		lineHeight = resp.maxFloat32(lineHeight, currentObject.Size().Height)
 		// Manage end of line, the next position overflows, so go to next line.
 		if currentPos.X >= containerSize.Width {
 			currentPos.X = 0                             // back to left
@@ -201,7 +208,7 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	return fyne.NewSize(w, h)
 }
 
-// calcSize calculate the size of the object based on the container size.
+// calcSize calculate the size to apply to the object based on the container size.
 func (resp *ResponsiveLayout) calcSize(o fyne.CanvasObject, containerSize fyne.Size) fyne.Size {
 	ro, ok := o.(*responsiveWidget)
 	if !ok {
@@ -228,7 +235,6 @@ func (resp *ResponsiveLayout) calcSize(o fyne.CanvasObject, containerSize fyne.S
 	objectSize.Width = factor * containerSize.Width
 	// set the size (without padding adaptation)
 	objectSize = objectSize.Subtract(fyne.NewSize(theme.Padding(), 0))
-	o.Resize(objectSize)
 	return objectSize
 }
 
@@ -237,14 +243,15 @@ func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
 	return float32(math.Max(float64(a), float64(b)))
 }
 
-// count the number of object that can be placed in the same line. The objects should contain only the leading objects.
-func (resp *ResponsiveLayout) numberInLine(objects []fyne.CanvasObject, containerSize fyne.Size) int {
-	var ww float32
+// computeElementInLine resize the objects in the same line and return the number of object contained in the line.
+func (resp *ResponsiveLayout) computeElementInLine(objects []fyne.CanvasObject, containerSize fyne.Size) int {
+	var lineWidth float32
 	count := 1
 	for _, o := range objects {
 		size := resp.calcSize(o, containerSize)
-		ww += size.Width + theme.Padding()
-		if ww > containerSize.Width {
+		o.Resize(size)
+		lineWidth += size.Width + theme.Padding()
+		if lineWidth > containerSize.Width {
 			break
 		}
 		count++
@@ -261,21 +268,23 @@ func (resp *ResponsiveLayout) numberInLine(objects []fyne.CanvasObject, containe
 //	    Responsive(label, 1, .5, .25),  // 100% for small, 50% for medium, 25% for large
 //	    Responsive(button, 1, .5, .25), // ...
 //	    label2,                         // this will be placed and resized with default behaviors
-//	                                    // => 1, 1, 1
+//	                                    // => 1, 1, 1, 1
 //	)
-func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
+func NewResponsiveLayout() fyne.Layout {
 	r := &ResponsiveLayout{}
 
-	objects := []fyne.CanvasObject{}
-	for _, unknowObject := range o {
-		if _, ok := unknowObject.(*responsiveWidget); !ok {
-			unknowObject = Responsive(unknowObject)
-		}
-		objects = append(objects, unknowObject)
-	}
+	//objects := []fyne.CanvasObject{}
+	//for _, unknowObject := range o {
+	//	if _, ok := unknowObject.(*responsiveWidget); !ok {
+	//		unknowObject = Responsive(unknowObject)
+	//	}
+	//	objects = append(objects, unknowObject)
+	//}
 
-	return container.New(r, objects...)
+	return r
 }
+
+var _ fyne.Widget = (*responsiveWidget)(nil)
 
 type responsiveWidget struct {
 	widget.BaseWidget
@@ -284,7 +293,12 @@ type responsiveWidget struct {
 	responsiveConfig responsiveConfig
 }
 
-var _ fyne.Widget = (*responsiveWidget)(nil)
+func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
+	if ro.render == nil {
+		return nil
+	}
+	return widget.NewSimpleRenderer(ro.render)
+}
 
 // Responsive register the object with a responsive configuration.
 // The optional ratios must
@@ -295,14 +309,13 @@ var _ fyne.Widget = (*responsiveWidget)(nil)
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
 func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
+	if len(breakpointRatio) > 4 {
+		fyne.LogError(
+			"Too many arguments in Responsive()",
+			fmt.Errorf("The function can take at most 4 arguments, you provided %d", len(breakpointRatio)),
+		)
+	}
 	ro := &responsiveWidget{render: object, responsiveConfig: newResponsiveConf(breakpointRatio...)}
 	ro.ExtendBaseWidget(ro)
 	return ro
-}
-
-func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
-	if ro.render == nil {
-		return nil
-	}
-	return widget.NewSimpleRenderer(ro.render)
 }

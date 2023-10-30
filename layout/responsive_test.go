@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -17,13 +18,15 @@ func TestResponsive_SimpleLayout(t *testing.T) {
 
 	// build
 	label := widget.NewLabel("Hello World")
-	layout := NewResponsiveLayout(label)
+	layout := NewResponsiveLayout()
 
-	win := test.NewWindow(layout)
+	ctn := container.New(layout)
+	ctn.Add(label)
+	win := test.NewWindow(ctn)
 	defer win.Close()
 	win.Resize(fyne.NewSize(w, h))
 
-	size := layout.Size()
+	size := ctn.Size()
 
 	assert.Equal(t, w-padding*2, size.Width)
 
@@ -38,8 +41,11 @@ func TestResponsive_Responsive(t *testing.T) {
 	label1 := Responsive(widget.NewLabel("Hello World"), 1, .5)
 	label2 := Responsive(widget.NewLabel("Hello World"), 1, .5)
 
+	ctn := container.New(NewResponsiveLayout())
+	ctn.Add(label1)
+	ctn.Add(label2)
 	win := test.NewWindow(
-		NewResponsiveLayout(label1, label2),
+		ctn,
 	)
 	win.SetPadded(true)
 	defer win.Close()
@@ -75,8 +81,12 @@ func TestResponsive_GoToNextLine(t *testing.T) {
 	label2 := Responsive(widget.NewLabel("Hello World"), .5)
 	label3 := Responsive(widget.NewLabel("Hello World"), .5)
 
-	layout := NewResponsiveLayout(label1, label2, label3)
-	win := test.NewWindow(layout)
+	layout := NewResponsiveLayout()
+	ctn := container.New(layout)
+	ctn.Add(label1)
+	ctn.Add(label2)
+	ctn.Add(label3)
+	win := test.NewWindow(ctn)
 	defer win.Close()
 	w = float32(MEDIUM)
 	win.Resize(fyne.NewSize(w, h))
@@ -104,8 +114,12 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	for i := 0; i < n; i++ {
 		labels[i] = Responsive(widget.NewLabel("Hello World"), 1, 1/float32(2), 1/float32(3), 1/float32(4))
 	}
-	layout := NewResponsiveLayout(labels...)
-	win := test.NewWindow(layout)
+	layout := NewResponsiveLayout()
+	ctn := container.New(layout)
+	for i := 0; i < n; i++ {
+		ctn.Add(labels[i])
+	}
+	win := test.NewWindow(ctn)
 	defer win.Close()
 
 	h := float32(1200)
@@ -141,19 +155,5 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
 		assert.Equal(t, size.Width, (w-p*5)/4)
-	}
-}
-
-// Test if a widget is responsive to fill 100% of the layout
-// when we don't provides rsponsive ratios.
-func TestResponsive_NoArgs(t *testing.T) {
-	label := widget.NewLabel("Hello World")
-	resp := NewResponsiveLayout(Responsive(label))
-	for _, child := range resp.Objects {
-		ro, ok := child.(*responsiveWidget)
-		assert.Equal(t, true, ok)
-		for _, s := range []responsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
-			assert.Equal(t, float32(1), ro.responsiveConfig[s])
-		}
 	}
 }
