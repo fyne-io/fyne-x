@@ -6,27 +6,6 @@ import (
 	"fyne.io/x/fyne/layout"
 )
 
-// FractionHelper is a helper type to define a fraction of a container. It's a float32 alias.
-type FractionHelper = float32
-
-// Some common fractions helpers.
-const (
-	// Full is the full size of the container.
-	Full FractionHelper = 1.0
-	// Half is half the size of the container.
-	Half FractionHelper = 0.5
-	// OneThird is one third the size of the container.
-	OneThird FractionHelper = 1.0 / 3.0
-	// TwoThird is two third the size of the container.
-	TwoThird FractionHelper = 2.0 / 3.0
-	// OneQuarter is one quarter the size of the container.
-	OneQuarter FractionHelper = 0.25
-	// OneFifth is five twelfths the size of the container.
-	OneFifth FractionHelper = 0.2
-	// OneSixth is one sixth the size of the container.
-	OneSixth FractionHelper = 1.0 / 6.0
-)
-
 // NewResponsive returns a container with a responsive layout. The objects
 // can be copmmon containers or responsive objects using the Responsive()
 // function. Note that the content size is computed from the container size and not
@@ -75,6 +54,6 @@ func NewResponsive(objects ...fyne.CanvasObject) *fyne.Container {
 //	ctn := NewResponsive()
 //	ctn.Add(Responsive(widget.NewLabel("Hello World"), 1, .5))
 //	ctn.Add(Responsive(widget.NewLabel("Hello World"), 1, .5))
-func Responsive(object fyne.CanvasObject, ratios ...float32) fyne.CanvasObject {
+func Responsive(object fyne.CanvasObject, ratios ...Ratio) fyne.CanvasObject {
 	return layout.Responsive(object, ratios...)
 }

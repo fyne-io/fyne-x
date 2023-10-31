@@ -29,15 +29,15 @@ func main() {
 		winSizeLabel(window), // 100% by default
 		xcontainer.Responsive(
 			widget.NewButton("One !", func() {}),
-			1, .5, xcontainer.OneThird, // 100% for small, 50% for medium and 33% for larger
+			1, .5, xcontainer.OneThirdRatio(), // 100% for small, 50% for medium and 33% for larger
 		),
 		xcontainer.Responsive(
 			widget.NewButton("Two !", func() {}),
-			1, .5, xcontainer.OneThird, // 100% for small, 50% for medium and 33% for larger
+			1, .5, xcontainer.OneThirdRatio(), // 100% for small, 50% for medium and 33% for larger
 		),
 		xcontainer.Responsive(
 			widget.NewButton("Three !", func() {}),
-			1, 1, xcontainer.OneThird, // 100% for small and medium, 33% for larger
+			1, 1, xcontainer.OneThirdRatio(), // 100% for small and medium, 33% for larger
 		),
 		xcontainer.Responsive(formLayout(), 1, .5), // 100% for small, 50% for others
 		xcontainer.Responsive(formLayout(), 1, .5), // 100% for small, 50% for others
@@ -123,8 +123,8 @@ func formLayout() fyne.CanvasObject {
 	// define the sizes for medium and large devices
 	mediumLabelSize := float32(.25) // we can use float32
 	mediumEntrySize := float32(.75)
-	largeLabelSize := xcontainer.OneThird // or helpers
-	largeEntrySize := xcontainer.TwoThird
+	largeLabelSize := xcontainer.OneThirdRatio() // or helpers
+	largeEntrySize := xcontainer.TwoThirdRatio()
 	return xcontainer.NewResponsive(
 		title,
 		//                         Small,     Medium,     Large and above
