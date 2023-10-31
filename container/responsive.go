@@ -8,6 +8,7 @@ import (
 
 type FractionHelper = float32
 
+// Some common fractions helpers.
 const (
 	// Full is the full size of the container.
 	Full FractionHelper = 1.0
@@ -27,7 +28,8 @@ const (
 
 // NewResponsive returns a container with a responsive layout. The objects
 // can be copmmon containers or responsive objects using the Responsive()
-// function.
+// function. Note that the content size is computed from the container size and not
+// from the window size.
 //
 // Example:
 //
@@ -43,17 +45,18 @@ func NewResponsive(objects ...fyne.CanvasObject) *fyne.Container {
 }
 
 // Responsive returns a responsive object configured with breakpoint sizes.
-// If no size is provided, the object will be 100% of the layout.
-// The number of sizes can be up to 5, for extra small, small, medium, large and extra large and above.
-// If more than 5 sizes are provided, the extra sizes are ignored.
+// The number of ratios can be up to 5, for extra small, small, medium, large and extra large and above.
+// If no size is provided, the object will be 100% of the layout for the whole possible size breakpoints.
+// If more than 5 ratios are provided, the extra ratios are ignored.
+// If less than 5 raiios are provided, the last ratio is used for the missing sizes.
 //
-// The sizes are used for the following breakpoints:
+// This sizes are used for the following breakpoints:
 //
-//   - extra small: 0px to 479px
-//   - small: 480px to 767px
-//   - medium: 768px to 1023px
-//   - large: 1024px to 1279px
-//   - extra large: 1280px and above
+//   - extra small: 0px to 576px
+//   - small: 567px to 767px
+//   - medium: 768px to 992 px
+//   - large: 992px to 1200
+//   - extra large: 1281px and above
 //
 // Example:
 //
@@ -63,7 +66,7 @@ func NewResponsive(objects ...fyne.CanvasObject) *fyne.Container {
 //
 //	NewResponsive(
 //		Responsive(widget.NewLabel("Hello World"), 1, .5),
-//		Responsive(widget.NewLabel("Hello World"), 1, .5),
+//		Responsive(widget.NewLabel("Hello World"), 1, .5, .25),
 //	)
 //
 // Or with the Add() method:
@@ -71,8 +74,6 @@ func NewResponsive(objects ...fyne.CanvasObject) *fyne.Container {
 //	ctn := NewResponsive()
 //	ctn.Add(Responsive(widget.NewLabel("Hello World"), 1, .5))
 //	ctn.Add(Responsive(widget.NewLabel("Hello World"), 1, .5))
-//
-// This function is a shortcut for layout.Responsive()
-func Responsive(object fyne.CanvasObject, sizes ...float32) fyne.CanvasObject {
-	return layout.Responsive(object, sizes...)
+func Responsive(object fyne.CanvasObject, ratios ...float32) fyne.CanvasObject {
+	return layout.Responsive(object, ratios...)
 }
