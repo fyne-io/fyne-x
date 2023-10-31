@@ -1,6 +1,11 @@
 package layout
 
 import (
+	"bytes"
+	"fmt"
+	"log"
+	"os"
+	"strings"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -14,7 +19,7 @@ import (
 // Check if a simple widget is responsive to fill 100% of the layout.
 func TestResponsive_SimpleLayout(t *testing.T) {
 	padding := theme.Padding()
-	w, h := float32(SMALL), float32(300)
+	w, h := float32(Small), float32(300)
 
 	// build
 	label := widget.NewLabel("Hello World")
@@ -51,7 +56,7 @@ func TestResponsive_Responsive(t *testing.T) {
 	defer win.Close()
 
 	// First, we are at w < SMALL so the labels should be sized to 100% of the layout
-	w, h := float32(SMALL), float32(300)
+	w, h := float32(ExtraSmall), float32(300)
 	win.Resize(fyne.NewSize(w, h))
 	size1 := label1.Size()
 	size2 := label2.Size()
@@ -59,7 +64,7 @@ func TestResponsive_Responsive(t *testing.T) {
 	assert.Equal(t, size1.Width, w-padding*2)
 
 	// Then resize to w > SMALL so the labels should be sized to 50% of the layout
-	w = float32(MEDIUM)
+	w = float32(Medium)
 	win.Resize(fyne.NewSize(w, h))
 	size1 = label1.Size()
 	size2 = label2.Size()
@@ -88,7 +93,7 @@ func TestResponsive_GoToNextLine(t *testing.T) {
 	ctn.Add(label3)
 	win := test.NewWindow(ctn)
 	defer win.Close()
-	w = float32(MEDIUM)
+	w = float32(Medium)
 	win.Resize(fyne.NewSize(w, h))
 
 	// label 1 and 2 are on the same line
@@ -112,7 +117,9 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	n := 4
 	labels := make([]fyne.CanvasObject, n)
 	for i := 0; i < n; i++ {
-		labels[i] = Responsive(widget.NewLabel("Hello World"), 1, 1/float32(2), 1/float32(3), 1/float32(4))
+		l := widget.NewLabel("Hello World from the tests")
+		l.Wrapping = fyne.TextWrapWord
+		labels[i] = Responsive(l, 1, 1/float32(2), 1/float32(3), 1/float32(4), 1/float32(5))
 	}
 	layout := NewResponsiveLayout()
 	ctn := container.New(layout)
@@ -125,7 +132,7 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	h := float32(1200)
 	p := theme.Padding()
 	// First, we are at w < SMALL so the labels should be sized to 100% of the layout
-	w := float32(SMALL)
+	w := float32(ExtraSmall)
 	win.Resize(fyne.NewSize(w, h))
 	win.Content().Refresh()
 	for i := 0; i < n; i++ {
@@ -134,7 +141,7 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	}
 
 	// Then resize to w > SMALL so the labels should be sized to 50% of the layout
-	w = float32(MEDIUM)
+	w = float32(Small)
 	win.Resize(fyne.NewSize(w, h))
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
@@ -142,7 +149,7 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	}
 
 	// Then resize to w > MEDIUM so the labels should be sized to 33% of the layout
-	w = float32(LARGE)
+	w = float32(Medium)
 	win.Resize(fyne.NewSize(w, h))
 	for i := 0; i < n-1; i++ {
 		size := labels[i].Size()
@@ -150,10 +157,47 @@ func TestResponsive_SwitchAllSizes(t *testing.T) {
 	}
 
 	// Then resize to w > LARGE so the labels should be sized to 25% of the layout
-	w = float32(XLARGE)
+	w = float32(Large)
 	win.Resize(fyne.NewSize(w, h))
 	for i := 0; i < n; i++ {
 		size := labels[i].Size()
 		assert.Equal(t, size.Width, (w-p*5)/4)
 	}
+
+	// Then resize to w > EXTRA LARGE so the labels should be sized to 20% of the layout
+	// Add one more label to check if the layout is correctly computed
+	n = 5
+	labels = make([]fyne.CanvasObject, n)
+	ctn.Objects = []fyne.CanvasObject{}
+	for i := 0; i < n; i++ {
+		l := widget.NewLabel("Hello World from the tests")
+		l.Wrapping = fyne.TextWrapWord
+		labels[i] = Responsive(l, 1, 1/float32(2), 1/float32(3), 1/float32(4), 1/float32(5))
+		ctn.Add(labels[i])
+	}
+	ctn.Refresh()
+	w = float32(ExtraLarge) + 2*theme.Padding() // add 2 padding to be sure to be in the extra large size
+	win.Resize(fyne.NewSize(w, h))
+	ew := fmt.Sprintf("%.1f", (w-p*6)/5)
+	for i := 0; i < n; i++ {
+		size := labels[i].Size()
+		sw := fmt.Sprintf("%.1f", size.Width)
+		assert.Equal(t, sw, ew)
+	}
+}
+
+func TestToomanyArguments(t *testing.T) {
+
+	// force to get logs
+	writer := bytes.Buffer{}
+	log.SetOutput(&writer)
+	defer log.SetOutput(os.Stderr)
+
+	layout := NewResponsiveLayout()
+	ctn := container.New(layout)
+	ctn.Add(Responsive(widget.NewLabel("Hello World"), 1, .5, .25, .125, .0625, .03125)) // 6 arguments
+
+	// we must have an warning message
+	assert.True(t, strings.Contains(writer.String(), "Too many responsive"), "Error message should be printed to stderr")
+
 }

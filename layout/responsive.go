@@ -2,120 +2,12 @@ package layout
 
 import (
 	"fmt"
-	"log"
 	"math"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
-
-// responsive layout provides a fyne.Layout that is responsive to the window size.
-// All fyne.CanvasObject are resized and positionned following the rules you decide.
-//
-// It is strongly inspired by Bootstrap's grid system. But instead of using 12 columns,
-// we use width ratio.
-// By default, a standard fyne.CanvasObject will always be width to 1 * containerSize and place in vertical.
-// If you want to change the behavior, you can use Responsive() function that registers the layout configuration.
-//
-// To avoid using fractions, some constants are defined like Half, OneThird, OneQuarter, OneFifth and OneSixth.
-//
-// Responsive() function takes a fyne.CanvasObject and a list of ratios. The number of ratios could be 1, 2, 3 or 4.
-//
-// Example:
-//    layout := NewResponsiveLayout(
-//         Responsive(label, 1, .5, .25, .5), // small, medium, large, xlarge ratio
-//    }
-// Note that a responsive layout can handle others layouts, responsive or not.
-
-// responsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
-//
-// See: https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints
-type responsiveBreakpoint float32
-
-const (
-	// Full is the full size of the container.
-	Full float32 = 1.0
-	// Half is half the size of the container.
-	Half float32 = 0.5
-	// OneThird is one third the size of the container.
-	OneThird float32 = 1.0 / 3.0
-	// TwoThird is two third the size of the container.
-	TwoThird float32 = 2.0 / 3.0
-	// OneQuarter is one quarter the size of the container.
-	OneQuarter float32 = 0.25
-	// OneFifth is five twelfths the size of the container.
-	OneFifth float32 = 0.2
-	// OneSixth is one sixth the size of the container.
-	OneSixth float32 = 1.0 / 6.0
-)
-
-const (
-	// SMALL is the smallest breakpoint (mobile vertical).
-	SMALL responsiveBreakpoint = 576
-
-	// MEDIUM is the medium breakpoint (mobile horizontal, tablet vertical).
-	MEDIUM responsiveBreakpoint = 768
-
-	// LARGE is the largest breakpoint (tablet horizontal, small desktop).
-	LARGE responsiveBreakpoint = 992
-
-	// XLARGE is the largest breakpoint (large desktop).
-	XLARGE responsiveBreakpoint = 1200
-
-	// SM is an alias for SMALL
-	SM responsiveBreakpoint = SMALL
-
-	// MD is an alias for MEDIUM
-	MD responsiveBreakpoint = MEDIUM
-
-	// LG is an alias for LARGE
-	LG responsiveBreakpoint = LARGE
-
-	// XL is an alias for XLARGE
-	XL responsiveBreakpoint = XLARGE
-)
-
-// ResponsiveConfiguration is the configuration for a responsive object. It's
-// a simple map from the breakpoint to the size ratio from it's container.
-// Breakpoint is a uint16 that should be set from const SMALL, MEDIUM, LARGE and XLARGE.
-type responsiveConfig map[responsiveBreakpoint]float32
-
-// newResponsiveConf return a new responsive configuration.
-// The optional ratios must
-// be 0 < ratio <= 1 and  passed in this order:
-//
-//	Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
-//
-// They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
-func newResponsiveConf(ratios ...float32) responsiveConfig {
-	responsive := responsiveConfig{}
-
-	if len(ratios) > 4 {
-		log.Println("Responsive: you declared more than 4 ratios, only the first 4 will be used")
-	}
-
-	// basic check
-	for _, i := range ratios {
-		if i <= 0 || i > 1 {
-			message := "Responsive: size must be > 0 and <= 1, got: %f"
-			panic(fmt.Errorf(message, i))
-		}
-	}
-
-	// Set default values
-	for index, bp := range []responsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
-		if len(ratios) <= index {
-			if index == 0 {
-				ratios = append(ratios, 1)
-			} else {
-				ratios = append(ratios, ratios[index-1])
-			}
-		}
-		responsive[bp] = ratios[index]
-	}
-	return responsive
-}
 
 var _ fyne.Layout = (*ResponsiveLayout)(nil)
 
@@ -163,11 +55,12 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 		currentObject.Move(currentPos)
 
 		// next element X position is the current X + the current width + padding
-		currentPos = currentPos.Add(fyne.NewPos(
-			currentObject.Size().Width+theme.Padding(), 0,
-		))
+		currentPos.X += currentObject.Size().Width + theme.Padding()
 
-		lineHeight = resp.maxFloat32(lineHeight, currentObject.Size().Height)
+		lineHeight = float32(math.Max(
+			float64(lineHeight),
+			float64(currentObject.Size().Height),
+		))
 		// Manage end of line, the next position overflows, so go to next line.
 		if currentPos.X >= containerSize.Width {
 			currentPos.X = 0                             // back to left
@@ -193,18 +86,25 @@ func (resp *ResponsiveLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 		if o == nil || !o.Visible() {
 			continue
 		}
-		w = resp.maxFloat32(o.MinSize().Width, w) + theme.Padding()
-		if o.Position().Y != currentY {
-			currentY = o.Position().Y
-			// new line, so we can add the maxHeight to h
-			h += maxHeight + theme.Padding()
+		// the min width is the max of one item in the container
+		w = theme.Padding() + float32(math.Max(
+			float64(o.MinSize().Width),
+			float64(w),
+		))
 
-			// drop the line
-			maxHeight = 0
+		// but the height is the sum of all items in the container of the same line
+		if o.Position().Y == currentY {
+			maxHeight = float32(math.Max(
+				float64(maxHeight),
+				float64(o.MinSize().Height),
+			))
+		} else {
+			h += maxHeight + theme.Padding()
+			maxHeight = o.MinSize().Height
+			currentY = o.Position().Y
 		}
-		maxHeight = resp.maxFloat32(maxHeight, o.MinSize().Height)
 	}
-	h += maxHeight + theme.Padding()
+	h += maxHeight
 	return fyne.NewSize(w, h)
 }
 
@@ -222,25 +122,21 @@ func (resp *ResponsiveLayout) calcSize(o fyne.CanvasObject, containerSize fyne.S
 	// adapt object witdh from the configuration
 	width := responsiveBreakpoint(containerSize.Width)
 	var factor float32
-	if width <= SMALL {
-		factor = ro.responsiveConfig[SMALL]
-	} else if width <= MEDIUM {
-		factor = ro.responsiveConfig[MEDIUM]
-	} else if width <= LARGE {
-		factor = ro.responsiveConfig[LARGE]
+	if width <= ExtraSmall {
+		factor = ro.responsiveConfig[ExtraSmall] // extra small
+	} else if width <= Small {
+		factor = ro.responsiveConfig[Small] // small
+	} else if width <= Medium {
+		factor = ro.responsiveConfig[Medium] // medium
+	} else if width <= Large {
+		factor = ro.responsiveConfig[Large] // large
 	} else {
-		factor = ro.responsiveConfig[XLARGE]
+		factor = ro.responsiveConfig[ExtraLarge] // extra large
 	}
 
-	objectSize.Width = factor * containerSize.Width
-	// set the size (without padding adaptation)
-	objectSize = objectSize.Subtract(fyne.NewSize(theme.Padding(), 0))
+	// resize the object width using the factor
+	objectSize.Width = (factor * containerSize.Width) - theme.Padding()
 	return objectSize
-}
-
-// math.Max only works with float64, so let's make our own
-func (resp *ResponsiveLayout) maxFloat32(a, b float32) float32 {
-	return float32(math.Max(float64(a), float64(b)))
 }
 
 // computeElementInLine resize the objects in the same line and return the number of object contained in the line.
@@ -309,13 +205,86 @@ func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
 func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
-	if len(breakpointRatio) > 4 {
-		fyne.LogError(
-			"Too many arguments in Responsive()",
-			fmt.Errorf("the function can take at most 4 arguments, you provided %d", len(breakpointRatio)),
-		)
-	}
 	ro := &responsiveWidget{render: object, responsiveConfig: newResponsiveConf(breakpointRatio...)}
 	ro.ExtendBaseWidget(ro)
 	return ro
+}
+
+// responsiveBreakpoint is a integer representing a breakpoint size as defined in Bootstrap.
+//
+// See: https://getbootstrap.com/docs/4.0/layout/overview/#responsive-breakpoints
+type responsiveBreakpoint float32
+
+const (
+	// ExtraSmall is below the smallest breakpoint (mobile vertical).
+	ExtraSmall responsiveBreakpoint = 576
+
+	// Small is the smallest breakpoint (mobile vertical).
+	Small responsiveBreakpoint = 768
+
+	// Medium is the medium breakpoint (mobile horizontal, tablet vertical).
+	Medium responsiveBreakpoint = 992
+
+	// Large is the largest breakpoint (tablet horizontal, small desktop).
+	Large responsiveBreakpoint = 1200
+
+	// ExtraLarge is the largest breakpoint (large desktop).
+	ExtraLarge responsiveBreakpoint = Large + 1
+
+	// XS is an alias for ExtraSmall
+	XS responsiveBreakpoint = ExtraSmall
+
+	// SM is an alias for Small
+	SM responsiveBreakpoint = Small
+
+	// MD is an alias for Medium
+	MD responsiveBreakpoint = Medium
+
+	// LG is an alias for Large
+	LG responsiveBreakpoint = Large
+
+	// XL is an alias for ExtraLarge
+	XL responsiveBreakpoint = ExtraLarge
+)
+
+// ResponsiveConfiguration is the configuration for a responsive object. It's
+// a simple map from the breakpoint to the size ratio from it's container.
+// Breakpoint is a uint16 that should be set from const SMALL, MEDIUM, LARGE and XLARGE.
+type responsiveConfig map[responsiveBreakpoint]float32
+
+// newResponsiveConf return a new responsive configuration.
+// The optional ratios must
+// be 0 < ratio <= 1 and  passed in this order:
+//
+//	Responsive(object, smallRatio, mediumRatio, largeRatio, xlargeRatio)
+//
+// They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
+func newResponsiveConf(ratios ...float32) responsiveConfig {
+	if len(ratios) > 5 {
+		err := fmt.Errorf("responsive: you declared more than 5 ratios, only the first 5 will be used")
+		fyne.LogError("Too many responsive ratios", err)
+	}
+
+	responsive := responsiveConfig{}
+
+	// basic check
+	for _, i := range ratios {
+		if i <= 0 || i > 1 {
+			message := "Responsive: size must be > 0 and <= 1, got: %f"
+			panic(fmt.Errorf(message, i))
+		}
+	}
+
+	// Set default values
+	for index, bp := range []responsiveBreakpoint{ExtraSmall, Small, Medium, Large, ExtraLarge} {
+		if len(ratios) <= index {
+			if index == 0 {
+				ratios = append(ratios, 1)
+			} else {
+				ratios = append(ratios, ratios[index-1])
+			}
+		}
+		responsive[bp] = ratios[index]
+	}
+	return responsive
 }
