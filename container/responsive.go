@@ -6,6 +6,7 @@ import (
 	"fyne.io/x/fyne/layout"
 )
 
+// FractionHelper is a helper type to define a fraction of a container. It's a float32 alias.
 type FractionHelper = float32
 
 // Some common fractions helpers.
