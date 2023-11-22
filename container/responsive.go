@@ -19,9 +19,7 @@ import (
 //		Responsive(widget.NewLabel("Hello World"), 1, .5), // 100% for small, 50% for others
 //	)
 func NewResponsive(objects ...fyne.CanvasObject) *fyne.Container {
-	container := container.New(layout.NewResponsiveLayout())
-	container.Objects = objects
-	return container
+	return container.New(layout.NewResponsiveLayout(), objects...)
 }
 
 // Responsive returns a responsive object configured with breakpoint sizes.
