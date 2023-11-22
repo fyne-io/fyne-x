@@ -167,17 +167,7 @@ func (resp *ResponsiveLayout) computeElementInLine(objects []fyne.CanvasObject, 
 //	                                    // => 1, 1, 1, 1
 //	)
 func NewResponsiveLayout() fyne.Layout {
-	r := &ResponsiveLayout{}
-
-	//objects := []fyne.CanvasObject{}
-	//for _, unknowObject := range o {
-	//	if _, ok := unknowObject.(*responsiveWidget); !ok {
-	//		unknowObject = Responsive(unknowObject)
-	//	}
-	//	objects = append(objects, unknowObject)
-	//}
-
-	return r
+	return &ResponsiveLayout{}
 }
 
 var _ fyne.Widget = (*responsiveWidget)(nil)
