@@ -66,7 +66,7 @@ func InitializeBaseDiagramNode(diagramNode DiagramNode, diagram *DiagramWidget, 
 	bdn.pads["default"] = NewRectanglePad(bdn)
 	bdn.pads["default"].Hide()
 	for _, handleKey := range []string{"upperLeft", "upperMiddle", "upperRight", "leftMiddle", "rightMiddle", "lowerLeft", "lowerMiddle", "lowerRight"} {
-		newHandle := NewHandle(bdn)
+		newHandle := NewHandle(diagramNode)
 		bdn.handles[handleKey] = newHandle
 		newHandle.Hide()
 	}
@@ -139,7 +139,7 @@ func (bdn *BaseDiagramNode) GetEdgePad() ConnectionPad {
 	return bdn.pads["default"]
 }
 
-func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent) {
+func (bdn *BaseDiagramNode) HandleDragged(handle *Handle, event *fyne.DragEvent) {
 	// determine which handle it is
 	currentInnerSize := bdn.effectiveInnerSize()
 	handleKey := bdn.findKeyForHandle(handle)
@@ -192,7 +192,7 @@ func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent)
 	bdn.Refresh()
 }
 
-func (bdn *BaseDiagramNode) handleDragEnd(handle *Handle) {
+func (bdn *BaseDiagramNode) HandleDragEnd(handle *Handle) {
 
 }
 

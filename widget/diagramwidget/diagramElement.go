@@ -45,10 +45,10 @@ type DiagramElement interface {
 	GetPadColor() color.Color
 	// GetProperties returns the properties of the DiagramElement
 	GetProperties() DiagramElementProperties
-	// handleDragged responds to drag events
-	handleDragged(handle *Handle, event *fyne.DragEvent)
-	// handleDragEnd responds to the end of a drag
-	handleDragEnd(handle *Handle)
+	// HandleDragged responds to drag events
+	HandleDragged(handle *Handle, event *fyne.DragEvent)
+	// HandleDragEnd responds to the end of a drag
+	HandleDragEnd(handle *Handle)
 	// HideHandles hides the handles on the DiagramElement
 	HideHandles()
 	// IsLink returns true if the diagram element is a link

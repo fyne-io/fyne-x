@@ -26,9 +26,8 @@ type linkPadPair struct {
 type DiagramWidget struct {
 	widget.BaseWidget
 	scrollingContainer *container.Scroll
-	// drawingArea is public only to support application-level testing scenarios in which simylated
-	// Drag, Mouse, and Tap events need to be sent to the diagram. It should not be otherwise accessed
-	drawingArea *drawingArea
+	drawingArea        *drawingArea
+	background         fyne.CanvasObject
 
 	// ID is expected to be unique across all DiagramWidgets in the application.
 	ID string
@@ -37,6 +36,9 @@ type DiagramWidget struct {
 
 	// DesiredSize specifies the size of the displayed diagram. Defaults to 800 x 600
 	DesiredSize fyne.Size
+
+	// MinimumSize is the minimum size for the diagram widget
+	MinimumSize fyne.Size
 
 	DefaultDiagramElementProperties DiagramElementProperties
 	DiagramElements                 *list.List
@@ -47,6 +49,8 @@ type DiagramWidget struct {
 	diagramElementLinkDependencies map[string][]linkPadPair
 	// ConnectionTransaction holds transient data during the creation of a link. It is public for testing purposes
 	ConnectionTransaction *ConnectionTransaction
+	// AnchoredTextChangedCallback is called when the position, offset, or text of the anchored text has changed
+	AnchoredTextChangedCallback func(*AnchoredText)
 	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
 	IsConnectionAllowedCallback func(DiagramLink, LinkEnd, ConnectionPad) bool
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
@@ -84,6 +88,7 @@ func NewDiagramWidget(id string) *DiagramWidget {
 	dw := &DiagramWidget{
 		ID:              id,
 		DesiredSize:     fyne.Size{Width: 800, Height: 600},
+		MinimumSize:     fyne.Size{Width: 800, Height: 600},
 		Offset:          fyne.Position{X: 0, Y: 0},
 		DiagramElements: list.New(),
 		// Nodes:                          map[string]DiagramNode{},
@@ -283,6 +288,11 @@ func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
 	dw.adjustBounds()
+}
+
+// GetBackground returns the canvas object being used as a background
+func (dw *DiagramWidget) GetBackground() fyne.CanvasObject {
+	return dw.background
 }
 
 // GetBackgroundColor returns the background color for the widget from the diagram's theme, which
@@ -515,6 +525,12 @@ func (dw *DiagramWidget) SendBackward(elementID string) {
 	}
 }
 
+// SetBackground sets the canvas object to be used as a background
+func (dw *DiagramWidget) SetBackground(canvasObject fyne.CanvasObject) {
+	dw.background = canvasObject
+	dw.Refresh()
+}
+
 // showAllPads is a work-around for fyne Issue #3906 in which a child's Hoverable interface
 // (i.e. the pad) masks the parent's Tappable interface. This function (and all references to
 // it) should be removed when this issue has been resolved
@@ -546,7 +562,7 @@ func (r *diagramWidgetRenderer) Layout(size fyne.Size) {
 }
 
 func (r *diagramWidgetRenderer) MinSize() fyne.Size {
-	return r.diagramWidget.DesiredSize
+	return r.diagramWidget.MinimumSize
 }
 
 func (r *diagramWidgetRenderer) Objects() []fyne.CanvasObject {
@@ -656,6 +672,9 @@ func (dar *drawingAreaRenderer) MinSize() fyne.Size {
 
 func (dar *drawingAreaRenderer) Objects() []fyne.CanvasObject {
 	obj := []fyne.CanvasObject{}
+	if dar.da.diagram.background != nil {
+		obj = append(obj, dar.da.diagram.background)
+	}
 	for _, n := range dar.da.diagram.GetDiagramElements() {
 		obj = append(obj, n)
 	}

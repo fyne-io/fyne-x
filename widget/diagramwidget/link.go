@@ -135,7 +135,7 @@ func (bdl *BaseDiagramLink) CreateRenderer() fyne.WidgetRenderer {
 // AddSourceAnchoredText creates a new AnchoredText widget and adds it to the DiagramLink at the Source
 // position. It uses the supplied key to index the widget so that it can be retrieved later.
 // Multiple AnchoredText widgets can be added.
-func (bdl *BaseDiagramLink) AddSourceAnchoredText(key string, displayedText string) *AnchoredText {
+func (bdl *BaseDiagramLink) AddSourceAnchoredText(key string, displayedText string, id ...string) *AnchoredText {
 	at := NewAnchoredText(displayedText)
 	at.link = bdl
 	bdl.sourceAnchoredText[key] = at
@@ -156,8 +156,8 @@ func (bdl *BaseDiagramLink) AddSourceDecoration(decoration Decoration) {
 // AddMidpointAnchoredText creates a new AnchoredText widget and adds it to the DiagramLink at the Midpoint
 // position. It uses the supplied key to index the widget so that it can be retrieved later.
 // Multiple AnchoredText widgets can be added.
-func (bdl *BaseDiagramLink) AddMidpointAnchoredText(key string, displayedText string) *AnchoredText {
-	at := NewAnchoredText(displayedText)
+func (bdl *BaseDiagramLink) AddMidpointAnchoredText(key string, displayedText string, id ...string) *AnchoredText {
+	at := NewAnchoredText(displayedText, id...)
 	at.link = bdl
 	bdl.midpointAnchoredText[key] = at
 	at.SetReferencePosition(bdl.getMidPosition())
@@ -177,8 +177,8 @@ func (bdl *BaseDiagramLink) AddMidpointDecoration(decoration Decoration) {
 // AddTargetAnchoredText creates a new AnchoredText widget and adds it to the DiagramLink at the Target
 // position. It uses the supplied key to index the widget so that it can be retrieved later.
 // Multiple AnchoredText widgets can be added.
-func (bdl *BaseDiagramLink) AddTargetAnchoredText(key string, displayedText string) *AnchoredText {
-	at := NewAnchoredText(displayedText)
+func (bdl *BaseDiagramLink) AddTargetAnchoredText(key string, displayedText string, id ...string) *AnchoredText {
+	at := NewAnchoredText(displayedText, id...)
 	at.link = bdl
 	bdl.targetAnchoredText[key] = at
 	at.SetReferencePosition(bdl.getTargetPosition())
@@ -277,7 +277,7 @@ func (bdl *BaseDiagramLink) getTargetPosition() fyne.Position {
 	return bdl.linkPoints[len(bdl.linkPoints)-1].Position()
 }
 
-func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent) {
+func (bdl *BaseDiagramLink) HandleDragged(handle *Handle, event *fyne.DragEvent) {
 	handleKey := bdl.getHandleKey(handle)
 	var linkPoint *LinkPoint
 	var pad ConnectionPad
@@ -311,7 +311,7 @@ func (bdl *BaseDiagramLink) handleDragged(handle *Handle, event *fyne.DragEvent)
 	bdl.Refresh()
 }
 
-func (bdl *BaseDiagramLink) handleDragEnd(handle *Handle) {
+func (bdl *BaseDiagramLink) HandleDragEnd(handle *Handle) {
 	connTrans := bdl.diagram.ConnectionTransaction
 	handleKey := bdl.getHandleKey(handle)
 	if connTrans != nil {

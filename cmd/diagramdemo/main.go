@@ -9,6 +9,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
+	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 )
@@ -29,6 +30,48 @@ func forceanim(diagramWidget *diagramwidget.DiagramWidget) {
 	}
 }
 
+// ExtendedNode illustrates how to extend a node. This particular example
+// disables vertical movement and vertical resizing
+type ExtendedNode struct {
+	diagramwidget.BaseDiagramNode
+	label *widget.Label
+}
+
+// NewExtendedNode returns an instance of an ExtendedNode
+func NewExtendedNode(nodeID string, diagramWidget *diagramwidget.DiagramWidget) diagramwidget.DiagramNode {
+	newNode := &ExtendedNode{}
+	newNode.label = widget.NewLabel("Vertical Changes Not Alloweed")
+	diagramwidget.InitializeBaseDiagramNode(newNode, diagramWidget, newNode.label, nodeID)
+	newNode.Refresh()
+	return newNode
+}
+
+// Dragged passes the DragEvent to the diagram for processing after removing any Y value changes
+func (en *ExtendedNode) Dragged(event *fyne.DragEvent) {
+	modifiedDelta := fyne.Delta{
+		DX: event.Dragged.DX,
+		DY: 0,
+	}
+	modifiedDragEvent := &fyne.DragEvent{
+		PointEvent: event.PointEvent,
+		Dragged:    modifiedDelta,
+	}
+	en.GetDiagram().DiagramNodeDragged(&en.BaseDiagramNode, modifiedDragEvent)
+}
+
+// HandleDragged passes the HandleDragged event to the BasseDiagramNode after removing any Y value changes
+func (en *ExtendedNode) HandleDragged(handle *diagramwidget.Handle, event *fyne.DragEvent) {
+	modifiedDelta := fyne.Delta{
+		DX: event.Dragged.DX,
+		DY: 0,
+	}
+	modifiedDragEvent := &fyne.DragEvent{
+		PointEvent: event.PointEvent,
+		Dragged:    modifiedDelta,
+	}
+	en.BaseDiagramNode.HandleDragged(handle, modifiedDragEvent)
+}
+
 func main() {
 	app := app.New()
 	w := app.NewWindow("Diagram Demo")
@@ -37,9 +80,18 @@ func main() {
 
 	diagramWidget := diagramwidget.NewDiagramWidget("Diagram1")
 
-	scrollContainer := container.NewScroll(diagramWidget)
-
 	go forceanim(diagramWidget)
+
+	background := canvas.NewCircle(color.RGBA{
+		R: 252,
+		G: 244,
+		B: 3,
+		A: 255,
+	})
+
+	background.Resize(fyne.NewSize(200, 200))
+
+	diagramWidget.SetBackground(background)
 
 	// Node 0
 	node0Label := widget.NewLabel("Node0")
@@ -91,8 +143,17 @@ func main() {
 	}), "Node4")
 	node4.Move(fyne.Position{X: 400, Y: 400})
 
-	node5 := diagramwidget.NewDiagramNode(diagramWidget, widget.NewLabel("Node5"), "Node5")
+	node5 := diagramwidget.NewDiagramNode(diagramWidget, widget.NewButton("Node5: Toggle Background Graphic", func() {
+		if diagramWidget.GetBackground() == nil {
+			diagramWidget.SetBackground(background)
+		} else {
+			diagramWidget.SetBackground(nil)
+		}
+	}), "Node5")
 	node5.Move(fyne.NewPos(600, 200))
+
+	node6 := NewExtendedNode("Node6", diagramWidget)
+	node6.Move(fyne.NewPos(500, 0))
 
 	// Link0
 	link0 := diagramwidget.NewDiagramLink(diagramWidget, "Link0")
@@ -146,7 +207,7 @@ func main() {
 	link5.AddMidpointAnchoredText("linkName", "Link 5")
 	link5.AddTargetDecoration(diagramwidget.NewArrowhead())
 
-	w.SetContent(scrollContainer)
+	w.SetContent(diagramWidget)
 
 	w.Resize(fyne.NewSize(600, 400))
 	w.ShowAndRun()

@@ -20,6 +20,7 @@ import (
 type AnchoredText struct {
 	widget.BaseWidget
 	link                 *BaseDiagramLink
+	id                   string
 	offset               r2.Vec2
 	referencePosition    fyne.Position
 	displayedTextBinding binding.String
@@ -30,11 +31,14 @@ type AnchoredText struct {
 // NewAnchoredText creates an textual annotation for a link. After it is created, one of the
 // three Add<position>AnchoredText methods must be called on the link to actually associate the
 // anchored text with the appropriate reference point on the link.
-func NewAnchoredText(text string) *AnchoredText {
+func NewAnchoredText(text string, id ...string) *AnchoredText {
 	at := &AnchoredText{
 		offset:            r2.MakeVec2(0, 0),
 		ForegroundColor:   theme.ForegroundColor(),
 		referencePosition: fyne.Position{X: 0, Y: 0},
+	}
+	if len(id) > 0 {
+		at.id = id[0]
 	}
 	at.displayedTextBinding = binding.NewString()
 	at.displayedTextBinding.Set(text)
@@ -59,16 +63,28 @@ func (at *AnchoredText) CreateRenderer() fyne.WidgetRenderer {
 
 // DataChanged is the callback function for the displayedTextBinding.
 func (at *AnchoredText) DataChanged() {
+	callback := at.link.diagram.AnchoredTextChangedCallback
+	if callback != nil {
+		callback(at)
+	}
 	at.Refresh()
 }
 
 // Displace moves the anchored text relative to its reference position.
 func (at *AnchoredText) Displace(delta fyne.Position) {
 	at.Move(at.Position().Add(delta))
+	callback := at.link.diagram.AnchoredTextChangedCallback
+	if callback != nil {
+		callback(at)
+	}
 }
 
 // DragEnd is one of the required methods for a draggable widget. It just refreshes the widget.
 func (at *AnchoredText) DragEnd() {
+	callback := at.link.diagram.AnchoredTextChangedCallback
+	if callback != nil {
+		callback(at)
+	}
 	at.Refresh()
 }
 
@@ -77,12 +93,26 @@ func (at *AnchoredText) DragEnd() {
 func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
+	callback := at.link.diagram.AnchoredTextChangedCallback
+	if callback != nil {
+		callback(at)
+	}
 	at.Refresh()
 }
 
 // GetDisplayedTextBinding returns the binding for the displayed text
 func (at *AnchoredText) GetDisplayedTextBinding() binding.String {
 	return at.displayedTextBinding
+}
+
+// GetOffset returns the X and Y values of the anchored text's offset from the reference position
+func (at *AnchoredText) GetOffset() (X float64, Y float64) {
+	return at.offset.X, at.offset.Y
+}
+
+// GetReferencePosition returns the X and Y values of the anchored text's reference position
+func (at *AnchoredText) GetReferencePosition() (X float64, Y float64) {
+	return float64(at.referencePosition.X), float64(at.referencePosition.Y)
 }
 
 // GetTextEntry returns the entry widget
@@ -116,6 +146,10 @@ func (at *AnchoredText) Move(position fyne.Position) {
 	delta := r2.MakeVec2(float64(position.X-at.Position().X), float64(position.Y-at.Position().Y))
 	at.offset = at.offset.Add(delta)
 	at.BaseWidget.Move(position)
+	callback := at.link.diagram.AnchoredTextChangedCallback
+	if callback != nil {
+		callback(at)
+	}
 }
 
 // SetForegroundColor sets the text color
@@ -131,6 +165,10 @@ func (at *AnchoredText) SetReferencePosition(position fyne.Position) {
 	// We don't want to change the offset here, so we call the BaseWidget.Move directly
 	at.BaseWidget.Move(at.Position().Add(delta))
 	at.referencePosition = position
+	callback := at.link.diagram.AnchoredTextChangedCallback
+	if callback != nil {
+		callback(at)
+	}
 }
 
 // anchoredTextRenderer
