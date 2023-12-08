@@ -30,16 +30,16 @@ func forceanim(diagramWidget *diagramwidget.DiagramWidget) {
 	}
 }
 
-// ExtendedNode illustrates how to extend a node. This particular example
+// ModifiedDragNode illustrates how to extend a node. This particular example
 // disables vertical movement and vertical resizing
-type ExtendedNode struct {
+type ModifiedDragNode struct {
 	diagramwidget.BaseDiagramNode
 	label *widget.Label
 }
 
-// NewExtendedNode returns an instance of an ExtendedNode
-func NewExtendedNode(nodeID string, diagramWidget *diagramwidget.DiagramWidget) diagramwidget.DiagramNode {
-	newNode := &ExtendedNode{}
+// NewModifiedDragNode returns an instance of an ExtendedNode
+func NewModifiedDragNode(nodeID string, diagramWidget *diagramwidget.DiagramWidget) diagramwidget.DiagramNode {
+	newNode := &ModifiedDragNode{}
 	newNode.label = widget.NewLabel("Vertical Changes Not Alloweed")
 	diagramwidget.InitializeBaseDiagramNode(newNode, diagramWidget, newNode.label, nodeID)
 	newNode.Refresh()
@@ -47,7 +47,7 @@ func NewExtendedNode(nodeID string, diagramWidget *diagramwidget.DiagramWidget) 
 }
 
 // Dragged passes the DragEvent to the diagram for processing after removing any Y value changes
-func (en *ExtendedNode) Dragged(event *fyne.DragEvent) {
+func (en *ModifiedDragNode) Dragged(event *fyne.DragEvent) {
 	modifiedDelta := fyne.Delta{
 		DX: event.Dragged.DX,
 		DY: 0,
@@ -60,7 +60,7 @@ func (en *ExtendedNode) Dragged(event *fyne.DragEvent) {
 }
 
 // HandleDragged passes the HandleDragged event to the BasseDiagramNode after removing any Y value changes
-func (en *ExtendedNode) HandleDragged(handle *diagramwidget.Handle, event *fyne.DragEvent) {
+func (en *ModifiedDragNode) HandleDragged(handle *diagramwidget.Handle, event *fyne.DragEvent) {
 	modifiedDelta := fyne.Delta{
 		DX: event.Dragged.DX,
 		DY: 0,
@@ -70,6 +70,25 @@ func (en *ExtendedNode) HandleDragged(handle *diagramwidget.Handle, event *fyne.
 		Dragged:    modifiedDelta,
 	}
 	en.BaseDiagramNode.HandleDragged(handle, modifiedDragEvent)
+}
+
+// ModifiedPadsNode removes the default rectangle pad on the perimeter and adds two point pads,
+// one at each side of the node
+type ModifiedPadsNode struct {
+	diagramwidget.BaseDiagramNode
+	label *widget.Label
+}
+
+// NewModifiedPadsNode creates and initializes a ModifiedPadsNode
+func NewModifiedPadsNode(nodeID string, diagramWidget *diagramwidget.DiagramWidget) diagramwidget.DiagramNode {
+	newNode := &ModifiedPadsNode{}
+	newNode.label = widget.NewLabel("Connection pads on left and right")
+	diagramwidget.InitializeBaseDiagramNode(newNode, diagramWidget, newNode.label, nodeID)
+	// Get rid of the default pad on the perimeter
+	newNode.SetConnectionPad(nil, "default")
+	newNode.SetConnectionPad(diagramwidget.NewPointPad(newNode.GetProperties().PadStrokeWidth), "left")
+	newNode.SetConnectionPad(diagramwidget.NewPointPad(newNode.GetProperties().PadStrokeWidth), "right")
+	return newNode
 }
 
 func main() {
@@ -152,8 +171,19 @@ func main() {
 	}), "Node5")
 	node5.Move(fyne.NewPos(600, 200))
 
-	node6 := NewExtendedNode("Node6", diagramWidget)
+	node6 := NewModifiedDragNode("Node6", diagramWidget)
 	node6.Move(fyne.NewPos(500, 0))
+
+	node7 := NewModifiedPadsNode("Node7", diagramWidget)
+	node7Size := node7.Size()
+	halfPointPadSize := diagramwidget.PointPadSize / 2
+	node7Pads := node7.GetConnectionPads()
+	node7DefaultPadPosition := fyne.NewPos(-halfPointPadSize, node7Size.Height/2-halfPointPadSize)
+	node7Pads["left"].Move(node7DefaultPadPosition)
+	node7RightPadPosition := fyne.NewPos(node7Size.Width-halfPointPadSize, node7Size.Height/2-halfPointPadSize)
+	node7Pads["right"].Move(node7RightPadPosition)
+	node7.Move(fyne.NewPos(500, 50))
+	node7.Refresh()
 
 	// Link0
 	link0 := diagramwidget.NewDiagramLink(diagramWidget, "Link0")
@@ -206,6 +236,14 @@ func main() {
 	link5.SetTargetPad(node5.GetEdgePad())
 	link5.AddMidpointAnchoredText("linkName", "Link 5")
 	link5.AddTargetDecoration(diagramwidget.NewArrowhead())
+
+	link6 := diagramwidget.NewDiagramLink(diagramWidget, "Link6")
+	link6.SetSourcePad(node6.GetEdgePad())
+	link6.SetTargetPad(node7.GetConnectionPads()["left"])
+
+	link7 := diagramwidget.NewDiagramLink(diagramWidget, "Link7")
+	link7.SetSourcePad(node6.GetEdgePad())
+	link7.SetTargetPad(node7.GetConnectionPads()["right"])
 
 	w.SetContent(diagramWidget)
 

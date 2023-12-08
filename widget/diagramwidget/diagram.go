@@ -51,6 +51,10 @@ type DiagramWidget struct {
 	ConnectionTransaction *ConnectionTransaction
 	// AnchoredTextChangedCallback is called when the position, offset, or text of the anchored text has changed
 	AnchoredTextChangedCallback func(*AnchoredText)
+	// DragEndCallback is called when a dragEnd event occurs in the drawing area
+	DragEndCallback func()
+	// DraggedCallback is called when a drag event occurs in the drawing area
+	DraggedCallback func(event *fyne.DragEvent)
 	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
 	IsConnectionAllowedCallback func(DiagramLink, LinkEnd, ConnectionPad) bool
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
@@ -156,13 +160,13 @@ func (dw *DiagramWidget) addLinkDependency(diagramElement DiagramElement, link *
 // addNode adds a node to the diagram
 func (dw *DiagramWidget) addNode(node DiagramNode) {
 	dw.DiagramElements.PushBack(node)
-	dw.adjustBounds()
+	dw.AdjustBounds()
 	node.Refresh()
 }
 
-// adjustBounds calculates the bounds of the diagram elements and adjusts the size of the drawing area accordingly
+// AdjustBounds calculates the bounds of the diagram elements and adjusts the size of the drawing area accordingly
 // If necessary, it also moves all the diagram elements so that their position coordinates are all positive
-func (dw *DiagramWidget) adjustBounds() {
+func (dw *DiagramWidget) AdjustBounds() {
 	position := dw.drawingArea.Position()
 	size := dw.drawingArea.Size()
 	left := position.X
@@ -188,7 +192,7 @@ func (dw *DiagramWidget) adjustBounds() {
 		moveDeltaChanged = true
 	}
 	if moveDeltaChanged {
-		dw.moveDiagramElements(moveDelta)
+		dw.MoveDiagramElements(moveDelta)
 		// moving the elements might have pushed an element beyond the newly computed bounds.
 		// we have to recompute
 		position = dw.drawingArea.Position()
@@ -287,7 +291,7 @@ func (dw *DiagramWidget) DiagramNodeDragged(node *BaseDiagramNode, event *fyne.D
 func (dw *DiagramWidget) DisplaceNode(node DiagramNode, delta fyne.Position) {
 	node.Move(node.Position().Add(delta))
 	dw.refreshDependentLinks(node)
-	dw.adjustBounds()
+	dw.AdjustBounds()
 }
 
 // GetBackground returns the canvas object being used as a background
@@ -388,7 +392,9 @@ func (dw *DiagramWidget) hideAllPads() {
 	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
 		diagramElement := listElement.Value.(DiagramElement)
 		for _, pad := range diagramElement.GetConnectionPads() {
-			pad.Hide()
+			if pad != nil {
+				pad.Hide()
+			}
 		}
 	}
 }
@@ -398,8 +404,8 @@ func (dw *DiagramWidget) IsSelected(de DiagramElement) bool {
 	return dw.selection[de.GetDiagramElementID()] != nil
 }
 
-// moveDiagramElements moves all of the diagram elements
-func (dw *DiagramWidget) moveDiagramElements(delta fyne.Position) {
+// MoveDiagramElements moves all of the diagram elements
+func (dw *DiagramWidget) MoveDiagramElements(delta fyne.Position) {
 	for _, diagramElement := range dw.GetDiagramElements() {
 		diagramElement.Move(diagramElement.Position().Add(delta))
 	}
@@ -538,7 +544,9 @@ func (dw *DiagramWidget) showAllPads() {
 	for listElement := dw.DiagramElements.Front(); listElement != nil; listElement = listElement.Next() {
 		diagramElement := listElement.Value.(DiagramElement)
 		for _, pad := range diagramElement.GetConnectionPads() {
-			pad.Show()
+			if pad != nil {
+				pad.Show()
+			}
 		}
 	}
 }
@@ -599,14 +607,22 @@ func (da *drawingArea) CreateRenderer() fyne.WidgetRenderer {
 
 // DragEnd is called when the drag comes to an end. It refreshes the widget
 func (da *drawingArea) DragEnd() {
+	if da.diagram.DragEndCallback != nil {
+		da.diagram.DragEndCallback()
+		return
+	}
 	da.Refresh()
 }
 
 // Dragged responds to a drag movement in the background of the diagram. It moves the widget itself.
 func (da *drawingArea) Dragged(event *fyne.DragEvent) {
+	if da.diagram.DraggedCallback != nil {
+		da.diagram.DraggedCallback(event)
+		return
+	}
 	delta := fyne.NewPos(event.Dragged.DX, event.Dragged.DY)
-	da.diagram.moveDiagramElements(delta)
-	da.diagram.adjustBounds()
+	da.diagram.MoveDiagramElements(delta)
+	da.diagram.AdjustBounds()
 }
 
 // MouseDown responds to MouseDown events. It invokes the callback, if present

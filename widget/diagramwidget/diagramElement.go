@@ -57,6 +57,8 @@ type DiagramElement interface {
 	IsNode() bool
 	// Position returns the position of the diagram element
 	Position() fyne.Position
+	// SetConnectionPad sets the connection pad with the indicated key
+	SetConnectionPad(pad ConnectionPad, key string)
 	// SetForegroundColor sets the foreground color for the widget
 	SetForegroundColor(color.Color)
 	// SetBackgroundColor sets the background color for the widget
