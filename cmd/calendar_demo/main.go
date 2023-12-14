@@ -15,15 +15,17 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Calendar")
 
-	i := widget.NewLabel("Please Choose a Date")
+	i := widget.NewLabel("OnChanged")
 	i.Alignment = fyne.TextAlignCenter
 	l := widget.NewLabel("")
 	l.Alignment = fyne.TextAlignCenter
-	d := &date{instruction: i, dateChosen: l}
+	ll := widget.NewLabel("OnSelected: ")
+	d := &date{selectedDates: l, dateSelected: ll}
 
 	// Defines which date you would like the calendar to start
 	startingDate := time.Now()
-	calendar := xwidget.NewCalendar(startingDate, d.onChanged)
+	calendar := xwidget.NewCalendarWithMode(startingDate, d.onChanged, xwidget.CalendarSingle)
+	calendar.OnSelected = d.onSelected
 
 	selection := widget.NewRadioGroup([]string{"Single", "Multi", "Range"}, func(s string) {
 		calendar.ClearSelection()
@@ -47,6 +49,7 @@ func main() {
 	c := container.NewVBox(
 		i,
 		scroll,
+		ll,
 		calendar,
 		selection,
 	)
@@ -56,16 +59,19 @@ func main() {
 }
 
 type date struct {
-	instruction *widget.Label
-	dateChosen  *widget.Label
+	selectedDates *widget.Label
+	dateSelected  *widget.Label
 }
 
 func (d *date) onChanged(selectedDates []time.Time) {
 	// use time object to set text on label with given format
-	d.instruction.SetText("Date Selected:")
 	var str string
 	for _, d := range selectedDates {
 		str += fmt.Sprint(d.Format("Mon 02 Jan 2006"), "\n")
 	}
-	d.dateChosen.SetText(str)
+	d.selectedDates.SetText(str)
+}
+
+func (d *date) onSelected(selectedDate time.Time) {
+	d.dateSelected.SetText("OnSelected: " + selectedDate.Format("Mon 02 Jan 2006"))
 }

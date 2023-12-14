@@ -115,6 +115,7 @@ type Calendar struct {
 	SelectionMode int
 	SelectedDates []time.Time
 	OnChanged     func([]time.Time)
+	OnSelected    func(time.Time)
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
@@ -145,10 +146,10 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 		b = widget.NewButton(s, func() {
 
 			selectedDate := c.dateForButton(dayNum)
+			isSelected := false
 
 			if c.SelectionMode == CalendarSingle {
 				// Unselect all currently selected buttons
-				isSelected := false
 				for _, t := range c.SelectedDates {
 					tYear, tMonth, tDay := t.Date()
 
@@ -169,6 +170,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 				} else {
 					c.SelectedDates = c.SelectedDates[:0]
 				}
+				isSelected = !isSelected
 			} else if c.SelectionMode == CalendarMulti {
 				// Only add it to the slice if it does not contain it
 				var index int
@@ -184,6 +186,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 				if !found {
 					c.SelectedDates = append(c.SelectedDates, selectedDate)
 					b.Importance = calendarSelectColor
+					isSelected = true
 				} else {
 					c.SelectedDates = append(c.SelectedDates[:index], c.SelectedDates[index+1:]...)
 					b.Importance = calendarUnselectColor
@@ -200,6 +203,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 					dateButtons[sDay].Refresh()
 
 					c.SelectedDates = append(c.SelectedDates, selectedDate)
+					isSelected = true
 				} else if len(c.SelectedDates) == 1 {
 					if dateEquals(c.SelectedDates[0], selectedDate) {
 						sDay := selectedDate.Day()
@@ -238,6 +242,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 						}
 
 						c.SelectedDates = allDates
+						isSelected = true
 					}
 				} else {
 					if dateEquals(c.SelectedDates[0], selectedDate) {
@@ -293,6 +298,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 							}
 
 							c.SelectedDates = c.SelectedDates[index:]
+							isSelected = true
 						} else {
 							// Change the end to the current one
 							for _, t := range c.SelectedDates[index+1:] {
@@ -304,6 +310,7 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 							}
 
 							c.SelectedDates = c.SelectedDates[:index+1]
+							isSelected = true
 						}
 					} else {
 						// if a date outside start and end is clicked
@@ -343,12 +350,17 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 
 							c.SelectedDates = append(c.SelectedDates, selectedDate)
 						}
+
+						isSelected = true
 					}
 				}
 			}
 
 			if c.OnChanged != nil {
 				c.OnChanged(c.SelectedDates)
+			}
+			if isSelected && c.OnSelected != nil {
+				c.OnSelected(selectedDate)
 			}
 		})
 
@@ -432,10 +444,22 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 }
 
 // NewCalendar creates a calendar instance
-func NewCalendar(cT time.Time, onChanged func([]time.Time)) *Calendar {
+func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
 	c := &Calendar{
 		currentTime:   cT,
 		SelectionMode: CalendarSingle,
+		OnSelected:    onSelected,
+	}
+
+	c.ExtendBaseWidget(c)
+
+	return c
+}
+
+func NewCalendarWithMode(cT time.Time, onChanged func([]time.Time), mode int) *Calendar {
+	c := &Calendar{
+		currentTime:   cT,
+		SelectionMode: mode,
 		OnChanged:     onChanged,
 	}
 
