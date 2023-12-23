@@ -5,7 +5,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -32,14 +31,14 @@ var segmentLookupTable []uint8 = []uint8{
 }
 
 // size of the hex widget
-const defaultHexHeight float32 = 75.0
-const defaultHexWidth float32 = defaultHexHeight * (7.5 / 14.0)
+const defaultHexHeight float32 = 58.0
+const defaultHexWidth float32 = defaultHexHeight * (8 / 14.0)
 
 // slant angle
 const defaultHexOffset float32 = 0.1 * defaultHexWidth
 
-var defaultHexOnColor color.RGBA = color.RGBA{200, 25, 25, 255}
-var defaultHexOffColor color.RGBA = color.RGBA{25, 15, 15, 64}
+var defaultHexOnColor color.Color = color.RGBA{200, 25, 25, 255}
+var defaultHexOffColor color.Color = color.RGBA{25, 15, 15, 64}
 
 type hexRenderer struct {
 	hex            *HexWidget
@@ -48,31 +47,17 @@ type hexRenderer struct {
 
 func (h *hexRenderer) MinSize() fyne.Size {
 	return fyne.NewSize(
-		h.hex.size.Width+theme.Padding()*2+2*h.hex.hexOffset,
-		h.hex.size.Height+theme.Padding()*2,
+		h.hex.size.Width+h.hex.hexOffset,
+		h.hex.size.Height,
 	)
 }
 
-func (h *hexRenderer) Layout(size fyne.Size) {
-}
-
-func (h *hexRenderer) ApplyTheme() {
-}
-
-func (h *hexRenderer) Refresh() {
+func (h *hexRenderer) Layout(_ fyne.Size) {
 	hexSegmentWidth := 0.2 * h.hex.size.Width
-	hexSegmentVLength := (9.14 / (2 * 14)) * h.hex.size.Height
-	hexSegmentHLength := (4.8 / 7.5) * h.hex.size.Width
 
-	h.segmentObjects[0].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[1].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[2].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[3].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[4].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[5].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-	h.segmentObjects[6].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
-
-	pos := fyne.NewPos(h.hex.hexOffset, 0)
+	hexSegmentVLength := (h.hex.size.Height - hexSegmentWidth) / 2
+	hexSegmentHLength := h.hex.size.Width - hexSegmentWidth
+	pos := fyne.NewPos(h.hex.hexOffset, hexSegmentWidth/2)
 
 	pt0Center := fyne.NewPos(pos.X+h.hex.size.Width/2.0+h.hex.hexOffset, pos.Y)
 	pt05 := fyne.NewPos(float32(pt0Center.X)-(hexSegmentHLength/2), pt0Center.Y)
@@ -93,6 +78,18 @@ func (h *hexRenderer) Refresh() {
 	setLineEndpoints(h.segmentObjects[4].(*canvas.Line), pt34, pt65)
 	setLineEndpoints(h.segmentObjects[5].(*canvas.Line), pt65, pt05)
 	setLineEndpoints(h.segmentObjects[6].(*canvas.Line), pt65, pt61)
+}
+
+func (h *hexRenderer) Refresh() {
+	hexSegmentWidth := 0.2 * h.hex.size.Width
+
+	h.segmentObjects[0].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[1].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[2].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[3].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[4].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[5].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
+	h.segmentObjects[6].(*canvas.Line).StrokeWidth = float32(hexSegmentWidth / 2)
 
 	for i, v := range h.segmentObjects {
 		v.(*canvas.Line).StrokeColor = h.hex.getSegmentColor(i)
@@ -111,16 +108,16 @@ func (h *hexRenderer) Objects() []fyne.CanvasObject {
 // of the display mapped active-low onto 7 state bits, with segment 0 in
 // the least significant bit.
 //
-//       0
-//     -----
-//    |     |
-//  5 |     | 1
-//    |  6  |
-//     -----
-//    |     |
-//  4 |     | 2
-//    |  3  |
-//     -----
+//	     0
+//	   -----
+//	  |     |
+//	5 |     | 1
+//	  |  6  |
+//	   -----
+//	  |     |
+//	4 |     | 2
+//	  |  3  |
+//	   -----
 type HexWidget struct {
 	widget.BaseWidget
 	segments uint8
@@ -132,22 +129,22 @@ type HexWidget struct {
 	hexOffset float32
 
 	// color when the hex is on
-	hexOnColor color.RGBA
+	hexOnColor color.Color
 
 	// color when the hex is off
-	hexOffColor color.RGBA
+	hexOffColor color.Color
 }
 
 // SetOnColor changes the color that segments are shown as when they are
 // active/on.
-func (h *HexWidget) SetOnColor(c color.RGBA) {
+func (h *HexWidget) SetOnColor(c color.Color) {
 	h.hexOnColor = c
 	h.Refresh()
 }
 
 // SetOffColor changes the color that segments are shown as when they are
 // inactive/off.
-func (h *HexWidget) SetOffColor(c color.RGBA) {
+func (h *HexWidget) SetOffColor(c color.Color) {
 	h.hexOffColor = c
 	h.Refresh()
 }
@@ -167,12 +164,7 @@ func (h *HexWidget) SetSlant(s float32) {
 	h.Refresh()
 }
 
-func setLineEndpoints(l *canvas.Line, pt1, pt2 fyne.Position) {
-	l.Move(fyne.NewPos(float32(pt1.X), float32(pt1.Y)))
-	l.Resize(fyne.NewSize(float32(pt2.X-pt1.X), float32(pt2.Y-pt1.Y)))
-}
-
-func (h *HexWidget) getSegmentColor(segno int) color.RGBA {
+func (h *HexWidget) getSegmentColor(segno int) color.Color {
 	if (h.segments & (1 << uint(segno))) == 0 {
 		return h.hexOnColor
 	}
@@ -231,4 +223,9 @@ func (h *HexWidget) UpdateSegments(segments uint8) {
 func (h *HexWidget) Set(val uint) {
 	val = val % 16
 	h.UpdateSegments(segmentLookupTable[val])
+}
+
+func setLineEndpoints(l *canvas.Line, pt1, pt2 fyne.Position) {
+	l.Position1 = pt1
+	l.Position2 = pt2
 }

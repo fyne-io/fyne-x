@@ -1,3 +1,4 @@
+//go:build slowtests
 // +build slowtests
 
 package widget
