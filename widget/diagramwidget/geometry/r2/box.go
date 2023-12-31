@@ -2,20 +2,20 @@ package r2
 
 // Box defines a box in R2
 //
-//                A
-//                |
-//                |
-//                |
-//                v
-//    (1) A.X,A.Y +------+ A.X+S.X,A.Y (2)
-//                |\     |
-//                | \    |
-//                |  \   |
-//                |   \S |
-//                |    \ |
-//                |     \|
-// (3)A.X,A.Y+S.Y +------+ A.X+S.X,A.Y+S.Y (4)
+//	            A
+//	            |
+//	            |
+//	            |
+//	            v
+//	(1) A.X,A.Y +------+ A.X+S.X,A.Y (2)
+//	            |\     |
+//	            | \    |
+//	            |  \   |
+//	            |   \S |
+//	            |    \ |
+//	            |     \|
 //
+// (3)A.X,A.Y+S.Y +------+ A.X+S.X,A.Y+S.Y (4)
 type Box struct {
 
 	// A defines the top-left corner of the box
