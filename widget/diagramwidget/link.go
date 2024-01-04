@@ -137,7 +137,7 @@ func (bdl *BaseDiagramLink) CreateRenderer() fyne.WidgetRenderer {
 // Multiple AnchoredText widgets can be added.
 func (bdl *BaseDiagramLink) AddSourceAnchoredText(key string, displayedText string, id ...string) *AnchoredText {
 	at := NewAnchoredText(displayedText)
-	at.link = bdl
+	at.diagramElement = bdl
 	bdl.sourceAnchoredText[key] = at
 	at.SetReferencePosition(bdl.getSourcePosition())
 	at.Move(bdl.getSourcePosition())
@@ -158,7 +158,7 @@ func (bdl *BaseDiagramLink) AddSourceDecoration(decoration Decoration) {
 // Multiple AnchoredText widgets can be added.
 func (bdl *BaseDiagramLink) AddMidpointAnchoredText(key string, displayedText string, id ...string) *AnchoredText {
 	at := NewAnchoredText(displayedText, id...)
-	at.link = bdl
+	at.diagramElement = bdl
 	bdl.midpointAnchoredText[key] = at
 	at.SetReferencePosition(bdl.getMidPosition())
 	at.Move(bdl.getMidPosition())
@@ -179,7 +179,7 @@ func (bdl *BaseDiagramLink) AddMidpointDecoration(decoration Decoration) {
 // Multiple AnchoredText widgets can be added.
 func (bdl *BaseDiagramLink) AddTargetAnchoredText(key string, displayedText string, id ...string) *AnchoredText {
 	at := NewAnchoredText(displayedText, id...)
-	at.link = bdl
+	at.diagramElement = bdl
 	bdl.targetAnchoredText[key] = at
 	at.SetReferencePosition(bdl.getTargetPosition())
 	at.Move(bdl.getTargetPosition())
@@ -275,6 +275,11 @@ func (bdl *BaseDiagramLink) GetTargetPad() ConnectionPad {
 
 func (bdl *BaseDiagramLink) getTargetPosition() fyne.Position {
 	return bdl.linkPoints[len(bdl.linkPoints)-1].Position()
+}
+
+// GetTypedElement returns the actual type of the link
+func (bdl *BaseDiagramLink) GetTypedElement() DiagramElement {
+	return bdl.typedLink
 }
 
 // HandleDragged determines what the link should do if the handle is dragged

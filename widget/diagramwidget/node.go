@@ -37,6 +37,7 @@ const (
 // around.
 type BaseDiagramNode struct {
 	diagramElement
+	typedNode DiagramElement
 	// InnerSize stores size that the inner object should have, may not
 	// be respected if not large enough for the object.
 	InnerSize fyne.Size
@@ -60,6 +61,7 @@ func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string
 // InitializeBaseDiagramNode is used to initailize the BaseDiagramNode. It must be called by any extensions to the BaseDiagramNode
 func InitializeBaseDiagramNode(diagramNode DiagramNode, diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) {
 	bdn := diagramNode.getBaseDiagramNode()
+	bdn.typedNode = diagramNode
 	bdn.InnerSize = fyne.Size{Width: defaultWidth, Height: defaultHeight}
 	bdn.innerObject = obj
 	bdn.diagramElement.initialize(diagram, nodeID)
@@ -137,6 +139,11 @@ func (bdn *BaseDiagramNode) GetDefaultConnectionPad() ConnectionPad {
 // GetEdgePad returns the edge pad for the node
 func (bdn *BaseDiagramNode) GetEdgePad() ConnectionPad {
 	return bdn.pads["default"]
+}
+
+// GetTypedElement returns the instantiated type of the node
+func (bdn *BaseDiagramNode) GetTypedElement() DiagramElement {
+	return bdn.typedNode
 }
 
 // HandleDragged modifies the node size when the handle is dragged

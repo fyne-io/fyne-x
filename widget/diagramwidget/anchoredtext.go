@@ -19,8 +19,8 @@ import (
 // move by the same amount
 type AnchoredText struct {
 	widget.BaseWidget
-	link                 *BaseDiagramLink
-	id                   string
+	diagramElement       DiagramElement
+	ID                   string
 	offset               r2.Vec2
 	referencePosition    fyne.Position
 	displayedTextBinding binding.String
@@ -38,7 +38,7 @@ func NewAnchoredText(text string, id ...string) *AnchoredText {
 		referencePosition: fyne.Position{X: 0, Y: 0},
 	}
 	if len(id) > 0 {
-		at.id = id[0]
+		at.ID = id[0]
 	}
 	at.displayedTextBinding = binding.NewString()
 	at.displayedTextBinding.Set(text)
@@ -63,7 +63,7 @@ func (at *AnchoredText) CreateRenderer() fyne.WidgetRenderer {
 
 // DataChanged is the callback function for the displayedTextBinding.
 func (at *AnchoredText) DataChanged() {
-	callback := at.link.diagram.AnchoredTextChangedCallback
+	callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
 	if callback != nil {
 		callback(at)
 	}
@@ -73,7 +73,7 @@ func (at *AnchoredText) DataChanged() {
 // Displace moves the anchored text relative to its reference position.
 func (at *AnchoredText) Displace(delta fyne.Position) {
 	at.Move(at.Position().Add(delta))
-	callback := at.link.diagram.AnchoredTextChangedCallback
+	callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
 	if callback != nil {
 		callback(at)
 	}
@@ -81,7 +81,7 @@ func (at *AnchoredText) Displace(delta fyne.Position) {
 
 // DragEnd is one of the required methods for a draggable widget. It just refreshes the widget.
 func (at *AnchoredText) DragEnd() {
-	callback := at.link.diagram.AnchoredTextChangedCallback
+	callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
 	if callback != nil {
 		callback(at)
 	}
@@ -93,11 +93,16 @@ func (at *AnchoredText) DragEnd() {
 func (at *AnchoredText) Dragged(event *fyne.DragEvent) {
 	delta := fyne.Position{X: event.Dragged.DX, Y: event.Dragged.DY}
 	at.Move(at.Position().Add(delta))
-	callback := at.link.diagram.AnchoredTextChangedCallback
+	callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
 	if callback != nil {
 		callback(at)
 	}
 	at.Refresh()
+}
+
+// GetDiagramElement returns the diagram element to which the anchored text belongs
+func (at *AnchoredText) GetDiagramElement() DiagramElement {
+	return at.diagramElement
 }
 
 // GetDisplayedTextBinding returns the binding for the displayed text
@@ -144,9 +149,9 @@ func (at *AnchoredText) MouseOut() {
 // and then calls the normal BaseWidget.Move method.
 func (at *AnchoredText) Move(position fyne.Position) {
 	delta := r2.MakeVec2(float64(position.X-at.Position().X), float64(position.Y-at.Position().Y))
-	at.offset = at.offset.Add(delta)
-	at.BaseWidget.Move(position)
-	callback := at.link.diagram.AnchoredTextChangedCallback
+	newOffset := at.offset.Add(delta)
+	at.SetOffsetNoCallback(newOffset.X, newOffset.Y)
+	callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
 	if callback != nil {
 		callback(at)
 	}
@@ -158,17 +163,53 @@ func (at *AnchoredText) SetForegroundColor(fc color.Color) {
 	at.Refresh()
 }
 
+// SetOffset sets the X and Y values of the anchored text's offset from the reference position
+func (at *AnchoredText) SetOffset(X float64, Y float64) {
+	if at.offset.X != X || at.offset.Y != Y {
+		at.SetOffsetNoCallback(X, Y)
+		callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
+		if callback != nil {
+			callback(at)
+		}
+	}
+}
+
+// SetOffsetNoCallback sets the X and Y values of the anchored text's offset from the reference position
+func (at *AnchoredText) SetOffsetNoCallback(X float64, Y float64) {
+	if at.offset.X != X || at.offset.Y != Y {
+		at.offset.X = X
+		at.offset.Y = Y
+		delta := fyne.Delta{DX: float32(X), DY: float32(Y)}
+		at.BaseWidget.Move(at.referencePosition.Add(delta))
+	}
+}
+
 // SetReferencePosition sets the reference position of the anchored text and calls
 // the BaseWidget.Move() method to actually move the displayed text
 func (at *AnchoredText) SetReferencePosition(position fyne.Position) {
-	delta := fyne.Delta{DX: float32(position.X - at.referencePosition.X), DY: float32(position.Y - at.referencePosition.Y)}
-	// We don't want to change the offset here, so we call the BaseWidget.Move directly
-	at.BaseWidget.Move(at.Position().Add(delta))
-	at.referencePosition = position
-	callback := at.link.diagram.AnchoredTextChangedCallback
-	if callback != nil {
-		callback(at)
+	if position != at.referencePosition {
+		at.SetReferencePositionNoCallback(position)
+		callback := at.diagramElement.GetDiagram().AnchoredTextChangedCallback
+		if callback != nil {
+			callback(at)
+		}
 	}
+}
+
+// SetReferencePositionNoCallback sets the reference position of the anchored text and calls
+// the BaseWidget.Move() method to actually move the displayed text
+func (at *AnchoredText) SetReferencePositionNoCallback(position fyne.Position) {
+	if position != at.referencePosition {
+		delta := fyne.Delta{DX: float32(position.X - at.referencePosition.X), DY: float32(position.Y - at.referencePosition.Y)}
+		// We don't want to change the offset here, so we call the BaseWidget.Move directly
+		at.BaseWidget.Move(at.Position().Add(delta))
+		at.referencePosition = position
+	}
+}
+
+// SetText sets the anchored text without invoking the callback
+func (at *AnchoredText) SetText(text string) {
+	at.displayedTextBinding.Set(text)
 }
 
 // anchoredTextRenderer

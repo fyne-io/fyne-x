@@ -45,6 +45,8 @@ type DiagramElement interface {
 	GetPadColor() color.Color
 	// GetProperties returns the properties of the DiagramElement
 	GetProperties() DiagramElementProperties
+	// GetTypedElement returns the actual instantiated type of the element
+	GetTypedElement() DiagramElement
 	// HandleDragged responds to drag events
 	HandleDragged(handle *Handle, event *fyne.DragEvent)
 	// HandleDragEnd responds to the end of a drag

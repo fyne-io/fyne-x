@@ -55,6 +55,8 @@ type DiagramWidget struct {
 	DragEndCallback func()
 	// DraggedCallback is called when a drag event occurs in the drawing area
 	DraggedCallback func(event *fyne.DragEvent)
+	// DiagramElementRemovedCallback is called when a diagram element is removed from the diagram
+	DiagramElementRemovedCallback func(element DiagramElement, diagram *DiagramWidget)
 	// IsConnectionAllowedCallback is called to determine whether a particular connection between a link and a pad is allowed
 	IsConnectionAllowedCallback func(DiagramLink, LinkEnd, ConnectionPad) bool
 	// LinkConnectionChangedCallback is called when a link connection changes. The string can either be
@@ -484,6 +486,9 @@ func (dw *DiagramWidget) RemoveElement(elementID string) {
 	}
 	if element.IsLink() {
 		dw.removeDependenciesInvolvingLink(elementID)
+	}
+	if dw.DiagramElementRemovedCallback != nil {
+		dw.DiagramElementRemovedCallback(element, dw)
 	}
 	dw.drawingArea.Refresh()
 }
