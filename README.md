@@ -121,7 +121,7 @@ or resized.
 * [More Detail](./widget/diagramwidget/README.md)
 
 <p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/diagramdemo.png" width="1024" height="880" alt="Diagram Widget" style="max-width: 100%" />
+  <img src="img/diagramdemo.png" width="1024" alt="Diagram Widget" style="max-width: 100%" />
 </p>
 
 
@@ -138,7 +138,7 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
 ```
 
 <p align="center" markdown="1" style="max-width: 100%">
-  <img src="img/widget-filetree.png" width="1024" height="880" alt="FileTree Widget" style="max-width: 100%" />
+  <img src="img/widget-filetree.png" width="1024" alt="FileTree Widget" style="max-width: 100%" />
 </p>
 
 ### CompletionEntry
