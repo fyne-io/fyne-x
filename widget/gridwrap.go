@@ -22,6 +22,8 @@ type GridWrapItemID = int
 // GridWrap is a widget with an API very similar to widget.List,
 // that lays out items in a scrollable wrapping grid similar to container.NewGridWrap.
 // It caches and reuses widgets for performance.
+//
+// Deprecated: Since Fyne 2.4, GridWrap is available in Fyne core
 type GridWrap struct {
 	widget.BaseWidget
 
@@ -37,6 +39,8 @@ type GridWrap struct {
 
 // NewGridWrap creates and returns a GridWrap widget for displaying items in
 // a wrapping grid layout with scrolling and caching for performance.
+//
+// Deprecated: Since Fyne 2.4, GridWrap is available in Fyne core
 func NewGridWrap(length func() int, createItem func() fyne.CanvasObject, updateItem func(GridWrapItemID, fyne.CanvasObject)) *GridWrap {
 	gwList := &GridWrap{Length: length, CreateItem: createItem, UpdateItem: updateItem}
 	gwList.ExtendBaseWidget(gwList)
@@ -44,6 +48,8 @@ func NewGridWrap(length func() int, createItem func() fyne.CanvasObject, updateI
 }
 
 // NewGridWrapWithData creates a new GridWrap widget that will display the contents of the provided data.
+//
+// Deprecated: Since Fyne 2.4, GridWrap is available in Fyne core
 func NewGridWrapWithData(data binding.DataList, createItem func() fyne.CanvasObject, updateItem func(binding.DataItem, fyne.CanvasObject)) *GridWrap {
 	gwList := NewGridWrap(
 		data.Length,
