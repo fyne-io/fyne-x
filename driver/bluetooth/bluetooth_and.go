@@ -69,64 +69,6 @@ jobject createBluetoothServer(uintptr_t env, jobject bluetoothAdapter, char** er
     return serverSocket;
 }
 
-char* getAddress(uintptr_t env, jobject serverSocket, char** errorMsg) {
-    JNIEnv* envPtr = (JNIEnv*)env;
-
-    // Get BluetoothServerSocket class
-    jclass serverSocketClass = (*envPtr)->GetObjectClass(envPtr, serverSocket);
-    if (serverSocketClass == NULL) {
-        copyToError( "Failed get serverSocket class", errorMsg);
-        return NULL;
-    }
-
-    // Get the getRemoteDevice method
-    jmethodID getRemoteDeviceMethod = (*envPtr)->GetMethodID(envPtr, serverSocketClass, "getRemoteDevice", "()Landroid/bluetooth/BluetoothDevice;");
-    if (getRemoteDeviceMethod == NULL) {
-        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
-        copyToError("Failed to get getRemoteDevice method", errorMsg);
-        return NULL;
-    }
-
-    // Call the getRemoteDevice method
-    jobject bluetoothDevice = (*envPtr)->CallObjectMethod(envPtr, serverSocket, getRemoteDeviceMethod);
-    if (bluetoothDevice == NULL) {
-        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
-        copyToError( "Failed to call the getRemoteDevice method", errorMsg);
-        return NULL;
-    }
-
-    // Get the getAddress method
-    jmethodID getAddressMethod = (*envPtr)->GetMethodID(envPtr, (*envPtr)->GetObjectClass(envPtr, bluetoothDevice), "getAddress", "()Ljava/lang/String;");
-    if (getAddressMethod == NULL) {
-        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
-        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
-        copyToError("Failed to get getAddress method", errorMsg);
-        return NULL;
-    }
-
-    // Call the getAddress method
-    jstring addressString = (jstring)(*envPtr)->CallObjectMethod(envPtr, bluetoothDevice, getAddressMethod);
-    if (addressString == NULL) {
-        (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
-        (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
-        copyToError( "Address string is NULL", errorMsg);
-        return NULL;
-    }
-
-    // Convert jstring to char*
-    const char* addressChars = (*envPtr)->GetStringUTFChars(envPtr, addressString, NULL);
-    char* address = (char*)malloc((strlen(addressChars) + 1) * sizeof(char));
-    strcpy(address, addressChars);
-
-    // Release memory
-    (*envPtr)->ReleaseStringUTFChars(envPtr, addressString, addressChars);
-    (*envPtr)->DeleteLocalRef(envPtr, serverSocketClass);
-    (*envPtr)->DeleteLocalRef(envPtr, bluetoothDevice);
-    (*envPtr)->DeleteLocalRef(envPtr, addressString);
-
-    return address;
-}
-
 void closeBluetoothServerSocket(uintptr_t env, jobject serverSocket, char** errorMsg) {
     JNIEnv* envPtr = (JNIEnv*)env;
 
@@ -695,10 +637,12 @@ void freeBluetoothAdapter(uintptr_t env, jobject bluetoothAdapter, char** errorM
 */
 import "C"
 import (
+	"bytes"
 	"errors"
 	"fmt"
-	"unsafe"
 	"fyne.io/fyne/v2/internal/driver/mobile/mobileinit"
+	"net"
+	"unsafe"
 )
 
 // adapter
@@ -751,20 +695,17 @@ func NewBluetoothDefaultAdapter() (_ Adapter, e error) {
 	return bb, errors.Join(e, err)
 }
 
-func (a *adapterAndroid) FetchAddress() (str string, e error) {
-	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
-		var errMsgC *C.char
-		nameC := C.getBluetoothName(C.uintptr_t(env), a.javaAdapter, &errMsgC)
-		if errMsgC != nil {
-			e = errors.New(C.GoString(errMsgC))
-			C.free(unsafe.Pointer(errMsgC))
-			return nil
+func (a *adapterAndroid) GetAddress() (str string, e error) {
+	interfaces, err := net.Interfaces()
+	if err == nil {
+		for _, i := range interfaces {
+			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+				// Don't use random as we have a real address
+				return i.HardwareAddr.String(), nil
+			}
 		}
-		str = C.GoString(nameC)
-		C.free(unsafe.Pointer(nameC))
-		return nil
-	})
-	return str, errors.Join(e, err)
+	}
+	return "", errors.New("not found")
 }
 
 // Close clean bluetooth adapter from memory
@@ -830,24 +771,6 @@ func (a *adapterAndroid) enable() (b bool, e error) {
 	return b, errors.Join(e, err)
 }
 
-// FetchStringData it is usefully if GetAddress return empty string,
-// it try to set internal address
-func (b *serverSocketAndroid) FetchStringData() (res string, e error) {
-	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
-		var errMsgC *C.char
-		nameC := C.getAddress(C.uintptr_t(env), b.javaServerSocket, &errMsgC)
-		if errMsgC != nil {
-			e = errors.New(C.GoString(errMsgC))
-			C.free(unsafe.Pointer(errMsgC))
-			return nil
-		}
-		res = C.GoString(nameC)
-		C.free(unsafe.Pointer(nameC))
-		return nil
-	})
-	return res, errors.Join(e, err)
-}
-
 func (b *serverSocketAndroid) Close() (e error) {
 	err := mobileinit.RunOnJVM(func(vm, env, ctx uintptr) error {
 		var errMsgC *C.char
@@ -876,7 +799,7 @@ func (b *serverSocketAndroid) Accept() (bs Socket, e error) {
 	return bs, errors.Join(err, e)
 }
 
-func (b *socketAndroid) FetchStringData() (string, error) {
+func (b *socketAndroid) StringData() (string, error) {
 	name, err := b.fetchName()
 	if err != nil {
 		return "", err
@@ -885,7 +808,7 @@ func (b *socketAndroid) FetchStringData() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("name:%s, address: %s", name, addr), nil
+	return fmt.Sprintf("mac: %s, name: %s", addr, name), nil
 }
 
 func (b *socketAndroid) Read(bytes []byte) (int, error) {

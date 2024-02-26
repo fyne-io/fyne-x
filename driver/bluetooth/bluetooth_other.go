@@ -18,7 +18,7 @@ func NewBluetoothDefaultAdapter() (b Adapter, e error) {
 	return nil, errors.New("not implemented")
 }
 
-func (a *adapterOther) FetchAddress() (string, error) {
+func (a *adapterOther) GetAddress() (string, error) {
 	return "", errors.New("not implemented")
 }
 
@@ -34,7 +34,7 @@ func (a *adapterOther) ConnectAsClientToServer(s string) (Socket, error) {
 	return nil, errors.New("not implemented")
 }
 
-func (s *socketOther) FetchStringData() (string, error) {
+func (s *socketOther) StringData() (string, error) {
 	return "", errors.New("not implemented")
 }
 
@@ -48,10 +48,6 @@ func (s *socketOther) Read([]byte) (int, error) {
 
 func (s *socketOther) Write([]byte) (int, error) {
 	return 0, errors.New("not implemented")
-}
-
-func (s *serverSocketOther) FetchStringData() (string, error) {
-	return "", errors.New("not implemented")
 }
 
 func (s *serverSocketOther) Close() error {

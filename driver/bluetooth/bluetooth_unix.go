@@ -4,10 +4,11 @@ package bluetooth
 
 import "C"
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"golang.org/x/sys/unix"
-	"os"
+	"net"
 	"strconv"
 	"strings"
 	"syscall"
@@ -18,7 +19,8 @@ type adapterUnix struct{}
 
 // socket
 type socketUnix struct {
-	fd int
+	fd      int
+	address unix.Sockaddr
 }
 
 // serverSocket
@@ -31,8 +33,17 @@ func NewBluetoothDefaultAdapter() (b Adapter, e error) {
 	return &adapterUnix{}, nil
 }
 
-func (a *adapterUnix) FetchAddress() (string, error) {
-	return os.Hostname()
+func (a *adapterUnix) GetAddress() (string, error) {
+	interfaces, err := net.Interfaces()
+	if err == nil {
+		for _, i := range interfaces {
+			if i.Flags&net.FlagUp != 0 && bytes.Compare(i.HardwareAddr, nil) != 0 {
+				// Don't use random as we have a real address
+				return i.HardwareAddr.String(), nil
+			}
+		}
+	}
+	return "", errors.New("not found")
 }
 
 func (a *adapterUnix) Close() error {
@@ -67,7 +78,7 @@ func (a *adapterUnix) ConnectAsClientToServer(address string) (Socket, error) {
 	if err != nil {
 		return nil, errors.Join(err, unix.Close(fd))
 	}
-	return &socketUnix{fd: fd}, nil
+	return &socketUnix{fd: fd, address: addr}, nil
 }
 
 func (a *adapterUnix) str2ba(s string) [6]byte {
@@ -80,32 +91,16 @@ func (a *adapterUnix) str2ba(s string) [6]byte {
 	return b
 }
 
-func (s *serverSocketUnix) FetchStringData() (string, error) {
-	getpeername, err := unix.Getpeername(s.fd)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprint(getpeername), err
-}
-
 func (s *serverSocketUnix) Close() error {
 	return unix.Close(s.fd)
 }
 
 func (s *serverSocketUnix) Accept() (Socket, error) {
-	connFd, _, err := unix.Accept(s.fd)
+	connFd, address, err := unix.Accept(s.fd)
 	if err != nil {
 		return nil, err
 	}
-	return &socketUnix{fd: connFd}, nil
-}
-
-func (s *socketUnix) FetchStringData() (string, error) {
-	getpeername, err := unix.Getpeername(s.fd)
-	if err != nil {
-		return "", err
-	}
-	return fmt.Sprint(getpeername), err
+	return &socketUnix{fd: connFd, address: address}, nil
 }
 
 func (s *socketUnix) Close() error {
@@ -118,4 +113,16 @@ func (s *socketUnix) Read(bytes []byte) (int, error) {
 
 func (s *socketUnix) Write(bytes []byte) (int, error) {
 	return unix.Write(s.fd, bytes)
+}
+
+func (s *socketUnix) StringData() (string, error) {
+	adr, ok := s.address.(*unix.SockaddrRFCOMM)
+	if !ok {
+		return "", errors.New("unexpected error casting *windows.SockaddrRFCOMM")
+	}
+	return fmt.Sprint("mac: ", uint8AddressToStr(adr.Addr)), nil
+}
+
+func uint8AddressToStr(s [6]uint8) string {
+	return fmt.Sprint(s[0], ":", s[1], ":", s[2], ":", s[3], ":", s[4], ":", s[5], ":")
 }
