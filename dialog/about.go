@@ -12,20 +12,38 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
+// NewAbout creates a parallax about dialog using the app metadata along with the
+// markdown content and links passed into this method.
+// You should call Show on the returned dialog to display it.
+func NewAbout(content string, links []*widget.Hyperlink, a fyne.App, w fyne.Window) dialog.Dialog {
+	d := dialog.NewCustom("About", "OK", aboutContent(content, links, a), w)
+	d.Resize(fyne.NewSize(400, 320))
+
+	return d
+}
+
+// NewAboutWindow creates a parallax about window using the app metadata along with the
+// markdown content and links passed into this method.
+// You should call Show on the returned window to display it.
+func NewAboutWindow(content string, links []*widget.Hyperlink, a fyne.App) fyne.Window {
+	w := a.NewWindow("About")
+	w.SetContent(aboutContent(content, links, a))
+	w.Resize(fyne.NewSize(360, 280))
+
+	return w
+}
+
 // ShowAbout opens a parallax about dialog using the app metadata along with the
 // markdown content and links passed into this method.
 func ShowAbout(content string, links []*widget.Hyperlink, a fyne.App, w fyne.Window) {
-	d := dialog.NewCustom("About", "OK", aboutContent(content, links, a), w)
-	d.Resize(fyne.NewSize(400, 320))
+	d := NewAbout(content, links, a, w)
 	d.Show()
 }
 
 // ShowAboutWindow opens a parallax about window using the app metadata along with the
 // markdown content and links passed into this method.
 func ShowAboutWindow(content string, links []*widget.Hyperlink, a fyne.App) {
-	w := a.NewWindow("About")
-	w.SetContent(aboutContent(content, links, a))
-	w.Resize(fyne.NewSize(360, 280))
+	w := NewAboutWindow(content, links, a)
 	w.Show()
 }
 
