@@ -120,10 +120,10 @@ func (u unpad) Layout(objs []fyne.CanvasObject, s fyne.Size) {
 	}
 	size := s
 	if u.top {
-		size.Y += pad
+		size.Height += pad
 	}
 	if u.bottom {
-		size.Y += pad
+		size.Height += pad
 	}
 	for _, o := range objs {
 		o.Move(pos)
