@@ -31,19 +31,11 @@ func ShowAboutWindow(content string, links []*widget.Hyperlink, a fyne.App) {
 
 func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.CanvasObject {
 	rich := widget.NewRichTextFromMarkdown(content)
+	footer := aboutFooter(links)
 
 	logo := canvas.NewImageFromResource(a.Metadata().Icon)
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(128, 128))
-
-	footer := container.NewHBox(layout.NewSpacer())
-	for i, a := range links {
-		footer.Add(a)
-		if i < len(links)-1 {
-			footer.Add(widget.NewLabel("-"))
-		}
-	}
-	footer.Add(layout.NewSpacer())
 
 	body := container.NewVBox(
 		logo,
@@ -60,20 +52,7 @@ func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.Ca
 	underlayer := underLayout{}
 	slideBG := container.New(underlayer, underlay)
 	footerBG := canvas.NewRectangle(shadowColor)
-
-	listen := make(chan fyne.Settings)
-	fyne.CurrentApp().Settings().AddChangeListener(listen)
-	go func() {
-		for range listen {
-			bgColor = withAlpha(theme.BackgroundColor(), 0xe0)
-			bg.FillColor = bgColor
-			bg.Refresh()
-
-			shadowColor = withAlpha(theme.BackgroundColor(), 0x33)
-			footerBG.FillColor = bgColor
-			footer.Refresh()
-		}
-	}()
+	watchTheme(bg, footerBG, a)
 
 	underlay.Resize(fyne.NewSize(512, 512))
 	scroll.OnScrolled = func(p fyne.Position) {
@@ -87,6 +66,35 @@ func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.Ca
 		container.NewBorder(nil,
 			container.NewStack(footerBG, footer), nil, nil,
 			container.New(unpad{top: true, bottom: true}, scroll)))
+}
+
+func aboutFooter(links []*widget.Hyperlink) fyne.CanvasObject {
+	footer := container.NewHBox(layout.NewSpacer())
+	for i, a := range links {
+		footer.Add(a)
+		if i < len(links)-1 {
+			footer.Add(widget.NewLabel("-"))
+		}
+	}
+	footer.Add(layout.NewSpacer())
+
+	return footer
+}
+
+func watchTheme(bg, footer *canvas.Rectangle, a fyne.App) {
+	listen := make(chan fyne.Settings)
+	fyne.CurrentApp().Settings().AddChangeListener(listen)
+	go func() {
+		for range listen {
+			bgColor := withAlpha(theme.BackgroundColor(), 0xe0)
+			bg.FillColor = bgColor
+			bg.Refresh()
+
+			shadowColor := withAlpha(theme.BackgroundColor(), 0x33)
+			footer.FillColor = shadowColor
+			footer.Refresh()
+		}
+	}()
 }
 
 func withAlpha(c color.Color, alpha uint8) color.Color {
