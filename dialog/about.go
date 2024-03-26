@@ -17,7 +17,7 @@ import (
 // You should call Show on the returned dialog to display it.
 func NewAbout(content string, links []*widget.Hyperlink, a fyne.App, w fyne.Window) dialog.Dialog {
 	d := dialog.NewCustom("About", "OK", aboutContent(content, links, a), w)
-	d.Resize(fyne.NewSize(400, 320))
+	d.Resize(fyne.NewSize(400, 360))
 
 	return d
 }
@@ -28,7 +28,7 @@ func NewAbout(content string, links []*widget.Hyperlink, a fyne.App, w fyne.Wind
 func NewAboutWindow(content string, links []*widget.Hyperlink, a fyne.App) fyne.Window {
 	w := a.NewWindow("About")
 	w.SetContent(aboutContent(content, links, a))
-	w.Resize(fyne.NewSize(360, 280))
+	w.Resize(fyne.NewSize(360, 300))
 
 	return w
 }
@@ -55,10 +55,15 @@ func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.Ca
 	logo.FillMode = canvas.ImageFillContain
 	logo.SetMinSize(fyne.NewSize(128, 128))
 
+	appData := widget.NewRichTextFromMarkdown(
+		"## " + a.Metadata().Name + "\n**Version:** " + a.Metadata().Version)
+	centerText(appData)
+	space := canvas.NewRectangle(color.Transparent)
+	space.SetMinSize(fyne.NewSquareSize(theme.Padding() * 4))
 	body := container.NewVBox(
+		space,
 		logo,
-		container.NewCenter(widget.NewRichTextFromMarkdown(
-			"## "+a.Metadata().Name+"\n**Version:** "+a.Metadata().Version)),
+		appData,
 		container.NewCenter(rich))
 	scroll := container.NewScroll(body)
 
@@ -97,6 +102,14 @@ func aboutFooter(links []*widget.Hyperlink) fyne.CanvasObject {
 	footer.Add(layout.NewSpacer())
 
 	return footer
+}
+
+func centerText(rich *widget.RichText) {
+	for _, s := range rich.Segments {
+		if text, ok := s.(*widget.TextSegment); ok {
+			text.Style.Alignment = fyne.TextAlignCenter
+		}
+	}
 }
 
 func watchTheme(bg, footer *canvas.Rectangle, a fyne.App) {
