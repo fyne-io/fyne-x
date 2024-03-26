@@ -46,9 +46,9 @@ func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.Ca
 	footer.Add(layout.NewSpacer())
 
 	body := container.NewVBox(
-		container.NewCenter(
-			widget.NewRichTextFromMarkdown("**Version:** "+a.Metadata().Version)),
 		logo,
+		container.NewCenter(widget.NewRichTextFromMarkdown(
+			"## "+a.Metadata().Name+"\n**Version:** "+a.Metadata().Version)),
 		container.NewCenter(rich))
 	scroll := container.NewScroll(body)
 
