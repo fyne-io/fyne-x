@@ -116,7 +116,7 @@ func (u unpad) Layout(objs []fyne.CanvasObject, s fyne.Size) {
 	pad := theme.Padding()
 	var pos fyne.Position
 	if u.top {
-		pos = fyne.NewPos(0, -pad)
+		pos.Y = -pad
 	}
 	size := s
 	if u.top {
