@@ -216,6 +216,23 @@ m := NewMap()
 
 ![](img/map.png)
 
+## Dialogs
+
+### About
+
+A cool parallax about dialog that pulls data from the app metadata and includes
+some markup content and links at the bottom of the window/dialog.
+
+```go
+	docURL, _ := url.Parse("https://docs.fyne.io")
+	links := []*widget.Hyperlink{
+		widget.NewHyperlink("Docs", docURL),
+	}
+	dialog.ShowAboutWindow("Some **cool** stuff", links, a)
+```
+
+![](img/about.png)
+
 ## Data Binding
 
 Community contributed data sources for binding.
