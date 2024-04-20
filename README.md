@@ -29,7 +29,7 @@ The responsive layout follow the [bootstrap size breakpoints](https://getbootstr
 - small for window width <= 768
 - medium for window width <= 992
 - large for window width <= 1200
-- extra large for windo width > 1200
+- extra large for window width > 1200
 
 <p align="center" class="align:center;margin:auto">
     <img src="img/responsive-layout.png" style="max-width: 100%" alt="Responsive Layout"/>
