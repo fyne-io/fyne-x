@@ -61,6 +61,9 @@ const (
 // Breakpoint is a uint16 that should be set from const SMALL, MEDIUM, LARGE and XLARGE.
 type responsiveConfig map[responsiveBreakpoint]float32
 
+// hidableConfig = true if the object should be hidden at that breakpoint
+type hidableConfig map[responsiveBreakpoint]bool
+
 // newResponsiveConf return a new responsive configuration.
 // The optional ratios must
 // be 0 < ratio <= 1 and  passed in this order:
@@ -126,40 +129,23 @@ func (resp *ResponsiveLayout) Layout(objects []fyne.CanvasObject, containerSize 
 	// objects in a line
 	line := []fyne.CanvasObject{}
 
-	// cast windowSize.Width to responsiveBreakpoint (uint16)
-	ww := responsiveBreakpoint(window.Size().Width)
+	windowSize := window.Size()
 
 	// For each object, place it at the right position (pos) and resize it.
 	for _, o := range objects {
-		if o == nil || !o.Visible() {
-			continue
-		}
-
 		// get tht configuration
-		ro, ok := o.(*responsiveWidget)
+		ro, ok := o.(ResponsiveWidget)
 		if !ok {
 			log.Fatal("A non responsive object has been packed inside a ResponsibleLayout. This is impossible.")
 		}
-		conf := ro.responsiveConfig
 
-		line = append(line, o) // add the container to the line
-		size := o.MinSize()    // get some informations
-
-		// adapt object witdh from the configuration
-		if ww <= SMALL {
-			size.Width = conf[SMALL] * containerSize.Width
-		} else if ww <= MEDIUM {
-			size.Width = conf[MEDIUM] * containerSize.Width
-		} else if ww <= LARGE {
-			size.Width = conf[LARGE] * containerSize.Width
-		} else {
-			size.Width = conf[XLARGE] * containerSize.Width
+		ro.HandleResize(pos, windowSize, containerSize)
+		if !ro.Visible() {
+			continue
 		}
 
-		// place and resize the element
-		o.Resize(size)
-		o.Move(pos)
-
+		size := ro.Size()
+		line = append(line, o) // add the container to the line
 		// next element X position
 		pos = pos.Add(fyne.NewPos(size.Width+theme.Padding(), 0))
 
@@ -255,11 +241,25 @@ func NewResponsiveLayout(o ...fyne.CanvasObject) *fyne.Container {
 	return container.New(r, objects...)
 }
 
+type ResponsiveWidget interface {
+	fyne.Widget
+	// ComputeWindowResize calculates, resizes and returns the object size
+	// based on the window resizing to a new width. Returns 0 if not visible
+	HandleResize(newPos fyne.Position, windowSize, containerSize fyne.Size)
+}
+
+type HidableResponsiveWidget interface {
+	ResponsiveWidget
+	// Configure whether the element should be hidden at each breakpoint
+	Hidable(hiddenAtBreakpoint ...bool)
+}
+
 type responsiveWidget struct {
 	widget.BaseWidget
 
 	render           fyne.CanvasObject
 	responsiveConfig responsiveConfig
+	hidableConfig    *hidableConfig
 }
 
 var _ fyne.Widget = (*responsiveWidget)(nil)
@@ -272,10 +272,80 @@ var _ fyne.Widget = (*responsiveWidget)(nil)
 //
 // They are set to previous value if a value is not passed, or 1.0 if there is no previous value.
 // The returned object is not modified.
-func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) fyne.CanvasObject {
-	ro := &responsiveWidget{render: object, responsiveConfig: newResponsiveConf(breakpointRatio...)}
+func Responsive(object fyne.CanvasObject, breakpointRatio ...float32) ResponsiveWidget {
+	ro := &responsiveWidget{
+		render:           object,
+		responsiveConfig: newResponsiveConf(breakpointRatio...),
+		hidableConfig:    nil,
+	}
 	ro.ExtendBaseWidget(ro)
 	return ro
+}
+
+func HidableResponsive(object fyne.CanvasObject, breakpointRatio ...float32) HidableResponsiveWidget {
+	return Responsive(object, breakpointRatio...).(HidableResponsiveWidget)
+}
+
+func (ro *responsiveWidget) Hidable(hiddenAtBreakpoint ...bool) {
+	hc := hidableConfig{
+		SMALL:  false,
+		MEDIUM: false,
+		LARGE:  false,
+		XLARGE: false,
+	}
+
+	for i, bp := range []responsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
+		if len(hiddenAtBreakpoint) > i {
+			hc[bp] = hiddenAtBreakpoint[i]
+		}
+	}
+
+	ro.hidableConfig = &hc
+}
+
+func (ro *responsiveWidget) hideOnResize(windowSize fyne.Size) {
+	// cast windowSize.Width to responsiveBreakpoint (uint16)
+	windowWidth := responsiveBreakpoint(windowSize.Width)
+
+	if ro.hidableConfig != nil {
+		hideConf := *ro.hidableConfig
+		for _, bp := range []responsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
+			if windowWidth <= bp {
+				if hideConf[bp] {
+					ro.Hide()
+				} else {
+					ro.Show()
+				}
+				break
+			}
+		}
+	}
+}
+
+func (ro *responsiveWidget) HandleResize(
+	newPos fyne.Position,
+	windowSize, containerSize fyne.Size) {
+
+	ro.Move(newPos)
+
+	ro.hideOnResize(windowSize)
+	if !ro.Visible() {
+		return
+	}
+
+	conf := ro.responsiveConfig
+	size := ro.MinSize() // get some informations
+
+	// cast windowSize.Width to responsiveBreakpoint (uint16)
+	windowWidth := responsiveBreakpoint(windowSize.Width)
+	// adapt object witdh from the configuration
+	for _, bp := range []responsiveBreakpoint{SMALL, MEDIUM, LARGE, XLARGE} {
+		if windowWidth <= bp {
+			size.Width = conf[bp] * containerSize.Width
+			break
+		}
+	}
+	ro.Resize(size)
 }
 
 func (ro *responsiveWidget) CreateRenderer() fyne.WidgetRenderer {
