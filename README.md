@@ -98,7 +98,7 @@ To use create a new calendar with a given time and a callback function:
 calendar := widget.NewCalendar(time.Now(), onSelected, cellSize, padding)
 
 ```
-[Demo](./cmd/hexwidget_demo/main.go) available for example usage
+[Demo](./cmd/calendar_demo/main.go) available for example usage
 
 ### DiagramWidget
 
