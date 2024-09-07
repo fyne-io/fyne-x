@@ -1,7 +1,9 @@
 package widget
 
 import (
+	"errors"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -17,8 +19,14 @@ import (
 var _ fyne.Layout = (*calendarLayout)(nil)
 
 const (
-	daysPerWeek      = 7
-	maxWeeksPerMonth = 6
+	daysPerWeek           = 7
+	maxWeeksPerMonth      = 6
+	calendarSelectColor   = widget.HighImportance
+	calendarUnselectColor = widget.LowImportance
+
+	CalendarSingle = iota
+	CalendarMulti  = iota
+	CalendarRange  = iota
 )
 
 type calendarLayout struct {
@@ -104,7 +112,10 @@ type Calendar struct {
 
 	dates *fyne.Container
 
-	onSelected func(time.Time)
+	SelectionMode int
+	SelectedDates []time.Time
+	OnChanged     func([]time.Time)
+	OnSelected    func(time.Time)
 }
 
 func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
@@ -122,19 +133,254 @@ func (c *Calendar) daysOfMonth() []fyne.CanvasObject {
 		buttons = append(buttons, layout.NewSpacer())
 	}
 
+	currentMonth := start.Month()
+	currentYear := start.Year()
+	// Stores all buttons of the current month
+	dateButtons := []*widget.Button{nil}
+
 	for d := start; d.Month() == start.Month(); d = d.AddDate(0, 0, 1) {
 
 		dayNum := d.Day()
 		s := strconv.Itoa(dayNum)
-		b := widget.NewButton(s, func() {
+		var b *widget.Button
+		b = widget.NewButton(s, func() {
 
 			selectedDate := c.dateForButton(dayNum)
+			isSelected := false
 
-			c.onSelected(selectedDate)
+			if c.SelectionMode == CalendarSingle {
+				// Unselect all currently selected buttons
+				for _, t := range c.SelectedDates {
+					tYear, tMonth, tDay := t.Date()
+
+					if tYear == currentYear && tMonth == currentMonth {
+						dateButtons[tDay].Importance = calendarUnselectColor
+						dateButtons[tDay].Refresh()
+						if tDay == dayNum {
+							isSelected = true
+						}
+					}
+				}
+
+				// Toggle the selection of a button
+				if !isSelected {
+					c.SelectedDates = []time.Time{selectedDate}
+					b.Importance = calendarSelectColor
+					b.Refresh()
+				} else {
+					c.SelectedDates = c.SelectedDates[:0]
+				}
+				isSelected = !isSelected
+			} else if c.SelectionMode == CalendarMulti {
+				// Only add it to the slice if it does not contain it
+				var index int
+				var found bool
+				for i, t := range c.SelectedDates {
+					if dateEquals(t, selectedDate) {
+						index = i
+						found = true
+						break
+					}
+				}
+
+				if !found {
+					c.SelectedDates = append(c.SelectedDates, selectedDate)
+					b.Importance = calendarSelectColor
+					isSelected = true
+				} else {
+					c.SelectedDates = append(c.SelectedDates[:index], c.SelectedDates[index+1:]...)
+					b.Importance = calendarUnselectColor
+				}
+
+				// Sort the dates
+				sort.Sort(&dateSort{c.SelectedDates})
+
+				b.Refresh()
+			} else if c.SelectionMode == CalendarRange {
+				if len(c.SelectedDates) == 0 {
+					sDay := selectedDate.Day()
+					dateButtons[sDay].Importance = calendarSelectColor
+					dateButtons[sDay].Refresh()
+
+					c.SelectedDates = append(c.SelectedDates, selectedDate)
+					isSelected = true
+				} else if len(c.SelectedDates) == 1 {
+					if dateEquals(c.SelectedDates[0], selectedDate) {
+						sDay := selectedDate.Day()
+						dateButtons[sDay].Importance = calendarUnselectColor
+						dateButtons[sDay].Refresh()
+
+						c.SelectedDates = c.SelectedDates[:0]
+					} else {
+						var beginDate, endDate time.Time
+
+						if c.SelectedDates[0].Before(selectedDate) {
+							beginDate = c.SelectedDates[0]
+							endDate = selectedDate
+						} else {
+							beginDate = selectedDate
+							endDate = c.SelectedDates[0]
+						}
+
+						// Add all other dates in between the beginning and the end
+						var allDates []time.Time
+						for t := beginDate; !dateEquals(t, endDate); t = t.AddDate(0, 0, 1) {
+							tYear, tMonth, tDay := t.Date()
+							if tYear == currentYear && tMonth == currentMonth {
+								dateButtons[tDay].Importance = calendarSelectColor
+								dateButtons[tDay].Refresh()
+							}
+
+							allDates = append(allDates, t)
+						}
+						allDates = append(allDates, endDate)
+
+						eYear, eMonth, eDay := endDate.Date()
+						if eYear == currentYear && eMonth == currentMonth {
+							dateButtons[eDay].Importance = calendarSelectColor
+							dateButtons[eDay].Refresh()
+						}
+
+						c.SelectedDates = allDates
+						isSelected = true
+					}
+				} else {
+					if dateEquals(c.SelectedDates[0], selectedDate) {
+						// Clear the entire selection except for the last
+						for _, t := range c.SelectedDates[:len(c.SelectedDates)-1] {
+							tYear, tMonth, tDay := t.Date()
+							if tYear == currentYear && tMonth == currentMonth {
+								dateButtons[tDay].Importance = calendarUnselectColor
+								dateButtons[tDay].Refresh()
+							}
+						}
+
+						c.SelectedDates = []time.Time{c.SelectedDates[len(c.SelectedDates)-1]}
+					} else if dateEquals(c.SelectedDates[len(c.SelectedDates)-1], selectedDate) {
+						// Clear the entire selection except for the first
+						for _, t := range c.SelectedDates[1:] {
+							tYear, tMonth, tDay := t.Date()
+							if tYear == currentYear && tMonth == currentMonth {
+								dateButtons[tDay].Importance = calendarUnselectColor
+								dateButtons[tDay].Refresh()
+							}
+						}
+
+						c.SelectedDates = []time.Time{c.SelectedDates[0]}
+					} else if c.SelectedDates[0].Before(selectedDate) && selectedDate.Before(c.SelectedDates[len(c.SelectedDates)-1]) {
+						// If a date between the start and end is clicked
+
+						var index int
+						var found bool
+						for i, t := range c.SelectedDates {
+							if dateEquals(t, selectedDate) {
+								index = i
+								found = true
+								break
+							}
+						}
+
+						// Should not happen
+						if !found {
+							fyne.LogError("Calendar", errors.New("index of selected date could not be found in the selected dates of the calendar"))
+							return
+						}
+
+						// Wether the selected date is closer to the start or end of the range
+						if selectedDate.Sub(c.SelectedDates[0]) < c.SelectedDates[len(c.SelectedDates)-1].Sub(selectedDate) {
+							// Change the start to the current one
+							for _, t := range c.SelectedDates[:index] {
+								tYear, tMonth, tDay := t.Date()
+								if tYear == currentYear && tMonth == currentMonth {
+									dateButtons[tDay].Importance = calendarUnselectColor
+									dateButtons[tDay].Refresh()
+								}
+							}
+
+							c.SelectedDates = c.SelectedDates[index:]
+							isSelected = true
+						} else {
+							// Change the end to the current one
+							for _, t := range c.SelectedDates[index+1:] {
+								tYear, tMonth, tDay := t.Date()
+								if tYear == currentYear && tMonth == currentMonth {
+									dateButtons[tDay].Importance = calendarUnselectColor
+									dateButtons[tDay].Refresh()
+								}
+							}
+
+							c.SelectedDates = c.SelectedDates[:index+1]
+							isSelected = true
+						}
+					} else {
+						// if a date outside start and end is clicked
+
+						if selectedDate.Before(c.SelectedDates[0]) {
+							// Change the start to the current one
+							for t := c.SelectedDates[0].AddDate(0, 0, -1); !dateEquals(t, selectedDate); t = t.AddDate(0, 0, -1) {
+								tYear, tMonth, tDay := t.Date()
+								if tYear == currentYear && tMonth == currentMonth {
+									dateButtons[tDay].Importance = calendarSelectColor
+									dateButtons[tDay].Refresh()
+								}
+
+								c.SelectedDates = append([]time.Time{t}, c.SelectedDates...)
+							}
+
+							sDay := selectedDate.Day()
+							dateButtons[sDay].Importance = calendarSelectColor
+							dateButtons[sDay].Refresh()
+
+							c.SelectedDates = append([]time.Time{selectedDate}, c.SelectedDates...)
+						} else {
+							// Change the end to the current one
+							for t := c.SelectedDates[len(c.SelectedDates)-1].AddDate(0, 0, 1); !dateEquals(t, selectedDate); t = t.AddDate(0, 0, 1) {
+								tYear, tMonth, tDay := t.Date()
+								if tYear == currentYear && tMonth == currentMonth {
+									dateButtons[tDay].Importance = calendarSelectColor
+									dateButtons[tDay].Refresh()
+								}
+
+								c.SelectedDates = append(c.SelectedDates, t)
+							}
+
+							sDay := selectedDate.Day()
+							dateButtons[sDay].Importance = calendarSelectColor
+							dateButtons[sDay].Refresh()
+
+							c.SelectedDates = append(c.SelectedDates, selectedDate)
+						}
+
+						isSelected = true
+					}
+				}
+			}
+
+			if c.OnChanged != nil {
+				c.OnChanged(c.SelectedDates)
+			}
+			if isSelected && c.OnSelected != nil {
+				c.OnSelected(selectedDate)
+			}
 		})
-		b.Importance = widget.LowImportance
+
+		// Give the selected dates a different importance
+		isSelected := false
+		for _, t := range c.SelectedDates {
+			if dateEquals(t, d) {
+				isSelected = true
+				break
+			}
+		}
+
+		if isSelected {
+			b.Importance = calendarSelectColor
+		} else {
+			b.Importance = calendarUnselectColor
+		}
 
 		buttons = append(buttons, b)
+		dateButtons = append(dateButtons, b)
 	}
 
 	return buttons
@@ -200,11 +446,91 @@ func (c *Calendar) CreateRenderer() fyne.WidgetRenderer {
 // NewCalendar creates a calendar instance
 func NewCalendar(cT time.Time, onSelected func(time.Time)) *Calendar {
 	c := &Calendar{
-		currentTime: cT,
-		onSelected:  onSelected,
+		currentTime:   cT,
+		SelectionMode: CalendarSingle,
+		OnSelected:    onSelected,
 	}
 
 	c.ExtendBaseWidget(c)
 
 	return c
+}
+
+func NewCalendarWithMode(cT time.Time, onChanged func([]time.Time), mode int) *Calendar {
+	c := &Calendar{
+		currentTime:   cT,
+		SelectionMode: mode,
+		OnChanged:     onChanged,
+	}
+
+	c.ExtendBaseWidget(c)
+
+	return c
+}
+
+func (c *Calendar) ClearSelection() {
+	c.SelectedDates = c.SelectedDates[:0]
+
+	for _, d := range c.dates.Objects {
+		if b, ok := d.(*widget.Button); ok {
+			b.Importance = calendarUnselectColor
+		}
+	}
+
+	if c.OnChanged != nil {
+		c.OnChanged(c.SelectedDates)
+	}
+}
+
+func (c *Calendar) Refresh() {
+	cYear, cMonth, _ := c.currentTime.Date()
+
+	// Color the date buttons according to the selected dates
+	for _, d := range c.dates.Objects {
+		if b, ok := d.(*widget.Button); ok {
+			day, err := strconv.Atoi(b.Text)
+			if err != nil {
+				continue
+			}
+
+			isSelected := false
+			for _, t := range c.SelectedDates {
+				tYear, tMonth, tDay := t.Date()
+				if tDay == day && tMonth == cMonth && tYear == cYear {
+					isSelected = true
+					break
+				}
+			}
+
+			if isSelected {
+				b.Importance = calendarSelectColor
+			} else {
+				b.Importance = calendarUnselectColor
+			}
+		}
+	}
+
+	c.BaseWidget.Refresh()
+}
+
+type dateSort struct {
+	dates []time.Time
+}
+
+func (d *dateSort) Len() int {
+	return len(d.dates)
+}
+
+func (d *dateSort) Less(i, j int) bool {
+	return d.dates[i].Before(d.dates[j])
+}
+
+func (d *dateSort) Swap(i, j int) {
+	d.dates[i], d.dates[j] = d.dates[j], d.dates[i]
+}
+
+func dateEquals(t1, t2 time.Time) bool {
+	d1, m1, y1 := t1.Date()
+	d2, m2, y2 := t2.Date()
+	return d1 == d2 && m1 == m2 && y1 == y2
 }
