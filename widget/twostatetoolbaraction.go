@@ -46,11 +46,7 @@ func (t *TwoStateToolbarAction) SetState(state TwoStateState) {
 	if t.OnActivated != nil {
 		t.OnActivated(t.state)
 	}
-	if t.state == TwoState0 {
-		t.button.Icon = t.Icon0
-	} else {
-		t.button.Icon = t.Icon1
-	}
+	t.setButtonIcon()
 	t.button.Refresh()
 }
 
@@ -59,11 +55,7 @@ func (t *TwoStateToolbarAction) ToolbarObject() fyne.CanvasObject {
 	t.button.Importance = widget.LowImportance
 
 	// synchronize properties
-	if t.state == TwoState0 {
-		t.button.Icon = t.Icon0
-	} else {
-		t.button.Icon = t.Icon1
-	}
+	t.setButtonIcon()
 	t.button.OnTapped = t.activated
 	return &t.button
 }
@@ -71,13 +63,20 @@ func (t *TwoStateToolbarAction) ToolbarObject() fyne.CanvasObject {
 func (t *TwoStateToolbarAction) activated() {
 	if t.state == TwoState0 {
 		t.state = TwoState1
-		t.button.Icon = t.Icon1
 	} else {
 		t.state = TwoState0
-		t.button.Icon = t.Icon0
 	}
+	t.setButtonIcon()
 	if t.OnActivated != nil {
 		t.OnActivated(t.state)
 	}
 	t.button.Refresh()
+}
+
+func (t *TwoStateToolbarAction) setButtonIcon() {
+	if t.state == TwoState0 {
+		t.button.Icon = t.Icon0
+	} else {
+		t.button.Icon = t.Icon1
+	}
 }
