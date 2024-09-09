@@ -26,10 +26,10 @@ type TwoStateToolbarAction struct {
 
 // NewTwoStateToolbarAction returns a new push button style of Toolbar item that displays
 // a different icon for each of its two states
-func NewTwoStateToolbarAction(icon0 fyne.Resource,
-	icon1 fyne.Resource,
+func NewTwoStateToolbarAction(state0Icon fyne.Resource,
+	state1Icon fyne.Resource,
 	onTapped func(TwoStateState)) *TwoStateToolbarAction {
-	t := &TwoStateToolbarAction{Icon0: icon0, Icon1: icon1, OnActivated: onTapped}
+	t := &TwoStateToolbarAction{Icon0: state0Icon, Icon1: state1Icon, OnActivated: onTapped}
 	t.button.SetIcon(t.Icon0)
 	t.button.OnTapped = t.activated
 	return t
