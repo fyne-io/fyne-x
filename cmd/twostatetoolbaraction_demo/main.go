@@ -21,7 +21,12 @@ func main() {
 	sep := widget.NewToolbarSeparator()
 	ta := widget.NewToolbarAction(theme.MediaPhotoIcon(), nil)
 	tb := widget.NewToolbar(twoState0, sep, ta)
-	c := container.NewBorder(tb, nil, nil, nil)
+
+	toggleButton := widget.NewButton("Toggle State", func() {
+		state := twoState0.GetState()
+		twoState0.SetState(!state)
+	})
+	c := container.NewBorder(tb, toggleButton, nil, nil)
 	w.SetContent(c)
 	w.ShowAndRun()
 }
