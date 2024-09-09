@@ -35,6 +35,7 @@ func NewTwoStateToolbarAction(icon0 fyne.Resource,
 	return t
 }
 
+// ToolbarObject gets a button to render this ToolbarAction
 func (t *TwoStateToolbarAction) ToolbarObject() fyne.CanvasObject {
 	t.button.Importance = widget.LowImportance
 
