@@ -14,16 +14,16 @@ func TestNewTwoStateToolbarAction(t *testing.T) {
 	action := NewTwoStateToolbarAction(theme.MediaPlayIcon(),
 		theme.MediaPauseIcon(),
 		func(_ TwoStateState) {})
-	assert.Equal(t, theme.MediaPlayIcon().Name(), action.Icon0.Name())
+	assert.Equal(t, theme.MediaPlayIcon().Name(), action.icon0.Name())
 	assert.Equal(t, theme.MediaPauseIcon().Name(), action.Icon1.Name())
-	assert.Equal(t, action.Icon0.Name(), action.button.Icon.Name())
+	assert.Equal(t, action.icon0.Name(), action.button.Icon.Name())
 }
 
 func TestTwoStateToolbarAction_Activated(t *testing.T) {
 	action := NewTwoStateToolbarAction(theme.MediaPlayIcon(),
 		theme.MediaPauseIcon(),
 		func(_ TwoStateState) {})
-	require.Equal(t, action.Icon0.Name(), action.button.Icon.Name())
+	require.Equal(t, action.icon0.Name(), action.button.Icon.Name())
 	action.button.Tapped(nil)
 	assert.Equal(t, action.Icon1.Name(), action.button.Icon.Name())
 }
@@ -57,4 +57,17 @@ func TestTwoStateToolbarAction_GetSetState(t *testing.T) {
 	assert.Equal(t, TwoState1, action.GetState())
 	assert.Equal(t, TwoState1, ts)
 	test.AssertRendersToImage(t, "twostatetoolbaraction/state1.png", w.Canvas())
+}
+
+func TestTwoStateToolbarAction_SetState0Icon(t *testing.T) {
+	test.NewApp()
+	action := NewTwoStateToolbarAction(nil,
+		theme.MediaPauseIcon(),
+		func(state TwoStateState) {})
+	tb := widget.NewToolbar(action)
+	w := test.NewWindow(tb)
+	defer w.Close()
+
+	action.SetState0Icon(theme.MediaPlayIcon())
+	assert.Equal(t, theme.MediaPlayIcon().Name(), action.icon0.Name())
 }

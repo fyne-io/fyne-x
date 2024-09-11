@@ -14,19 +14,22 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("Two State Demo")
 
-	twoState0 := xwidget.NewTwoStateToolbarAction(theme.MediaPlayIcon(),
+	twoState0 := xwidget.NewTwoStateToolbarAction(nil,
 		theme.MediaPauseIcon(), func(state xwidget.TwoStateState) {
 			fmt.Println(state)
 		})
 	sep := widget.NewToolbarSeparator()
-	ta := widget.NewToolbarAction(theme.MediaPhotoIcon(), nil)
-	tb := widget.NewToolbar(twoState0, sep, ta)
+	tb := widget.NewToolbar(twoState0, sep)
 
 	toggleButton := widget.NewButton("Toggle State", func() {
 		state := twoState0.GetState()
 		twoState0.SetState(!state)
 	})
-	c := container.NewBorder(tb, toggleButton, nil, nil)
+	icon0Button := widget.NewButton("Set Icon0", func() {
+		twoState0.SetState0Icon(theme.MediaPlayIcon())
+	})
+	vc := container.NewVBox(toggleButton, icon0Button)
+	c := container.NewBorder(tb, vc, nil, nil)
 	w.SetContent(c)
 	w.ShowAndRun()
 }
