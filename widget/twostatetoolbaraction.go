@@ -18,7 +18,7 @@ const (
 type TwoStateToolbarAction struct {
 	state       TwoStateState
 	icon0       fyne.Resource
-	Icon1       fyne.Resource
+	icon1       fyne.Resource
 	OnActivated func(TwoStateState) `json:"-"`
 
 	button widget.Button
@@ -29,7 +29,7 @@ type TwoStateToolbarAction struct {
 func NewTwoStateToolbarAction(state0Icon fyne.Resource,
 	state1Icon fyne.Resource,
 	onTapped func(TwoStateState)) *TwoStateToolbarAction {
-	t := &TwoStateToolbarAction{icon0: state0Icon, Icon1: state1Icon, OnActivated: onTapped}
+	t := &TwoStateToolbarAction{icon0: state0Icon, icon1: state1Icon, OnActivated: onTapped}
 	t.button.SetIcon(t.icon0)
 	t.button.OnTapped = t.activated
 	return t
@@ -53,6 +53,13 @@ func (t *TwoStateToolbarAction) SetState(state TwoStateState) {
 // SetState0Icon sets the icon that is displayed when the state is TwoState0
 func (t *TwoStateToolbarAction) SetState0Icon(icon fyne.Resource) {
 	t.icon0 = icon
+	t.setButtonIcon()
+	t.button.Refresh()
+}
+
+// SetState1Icon sets the icon that is displayed when the state is TwoState1
+func (t *TwoStateToolbarAction) SetState1Icon(icon fyne.Resource) {
+	t.icon1 = icon
 	t.setButtonIcon()
 	t.button.Refresh()
 }
@@ -84,6 +91,6 @@ func (t *TwoStateToolbarAction) setButtonIcon() {
 	if t.state == TwoState0 {
 		t.button.Icon = t.icon0
 	} else {
-		t.button.Icon = t.Icon1
+		t.button.Icon = t.icon1
 	}
 }

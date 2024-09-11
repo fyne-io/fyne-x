@@ -15,7 +15,7 @@ func main() {
 	w := a.NewWindow("Two State Demo")
 
 	twoState0 := xwidget.NewTwoStateToolbarAction(nil,
-		theme.MediaPauseIcon(), func(state xwidget.TwoStateState) {
+		nil, func(state xwidget.TwoStateState) {
 			fmt.Println(state)
 		})
 	sep := widget.NewToolbarSeparator()
@@ -28,7 +28,10 @@ func main() {
 	icon0Button := widget.NewButton("Set Icon0", func() {
 		twoState0.SetState0Icon(theme.MediaPlayIcon())
 	})
-	vc := container.NewVBox(toggleButton, icon0Button)
+	icon1Button := widget.NewButton("Set Icon1", func() {
+		twoState0.SetState1Icon(theme.MediaPauseIcon())
+	})
+	vc := container.NewVBox(toggleButton, icon0Button, icon1Button)
 	c := container.NewBorder(tb, vc, nil, nil)
 	w.SetContent(c)
 	w.ShowAndRun()
