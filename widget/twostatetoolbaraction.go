@@ -9,8 +9,8 @@ import (
 type TwoStateState bool
 
 const (
-	TwoState0 TwoStateState = false
-	TwoState1 TwoStateState = true
+	OffState TwoStateState = false
+	OnState  TwoStateState = true
 )
 
 // TwoStateToolbarAction is a push button style of ToolbarItem that displays a different
@@ -75,10 +75,10 @@ func (t *TwoStateToolbarAction) ToolbarObject() fyne.CanvasObject {
 }
 
 func (t *TwoStateToolbarAction) activated() {
-	if t.state == TwoState0 {
-		t.state = TwoState1
+	if t.state == OffState {
+		t.state = OnState
 	} else {
-		t.state = TwoState0
+		t.state = OffState
 	}
 	t.setButtonIcon()
 	if t.OnActivated != nil {
@@ -88,7 +88,7 @@ func (t *TwoStateToolbarAction) activated() {
 }
 
 func (t *TwoStateToolbarAction) setButtonIcon() {
-	if t.state == TwoState0 {
+	if t.state == OffState {
 		t.button.Icon = t.icon0
 	} else {
 		t.button.Icon = t.icon1

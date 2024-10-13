@@ -43,6 +43,7 @@ func TestTwoStateToolbarAction_Tapped(t *testing.T) {
 
 func TestTwoStateToolbarAction_GetSetState(t *testing.T) {
 	var ts TwoStateState
+	playState := OffState
 	test.NewApp()
 	action := NewTwoStateToolbarAction(theme.MediaPlayIcon(),
 		theme.MediaPauseIcon(),
@@ -52,10 +53,10 @@ func TestTwoStateToolbarAction_GetSetState(t *testing.T) {
 	tb := widget.NewToolbar(action)
 	w := test.NewWindow(tb)
 	defer w.Close()
-	assert.Equal(t, TwoState0, action.GetState())
-	action.SetState(TwoState1)
-	assert.Equal(t, TwoState1, action.GetState())
-	assert.Equal(t, TwoState1, ts)
+	assert.Equal(t, playState, action.GetState())
+	action.SetState(OnState)
+	assert.Equal(t, OnState, action.GetState())
+	assert.Equal(t, OnState, ts)
 	test.AssertRendersToImage(t, "twostatetoolbaraction/state1.png", w.Canvas())
 }
 
