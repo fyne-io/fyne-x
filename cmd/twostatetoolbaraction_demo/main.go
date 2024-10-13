@@ -25,13 +25,13 @@ func main() {
 		state := twoState0.GetState()
 		twoState0.SetState(!state)
 	})
-	icon0Button := widget.NewButton("Set Icon0", func() {
-		twoState0.SetState0Icon(theme.MediaPlayIcon())
+	offIconButton := widget.NewButton("Set OffIcon", func() {
+		twoState0.SetOffStateIcon(theme.MediaPlayIcon())
 	})
-	icon1Button := widget.NewButton("Set Icon1", func() {
+	onIconButton := widget.NewButton("Set OnIcon", func() {
 		twoState0.SetState1Icon(theme.MediaPauseIcon())
 	})
-	vc := container.NewVBox(toggleButton, icon0Button, icon1Button)
+	vc := container.NewVBox(toggleButton, offIconButton, onIconButton)
 	c := container.NewBorder(tb, vc, nil, nil)
 	w.SetContent(c)
 	w.ShowAndRun()

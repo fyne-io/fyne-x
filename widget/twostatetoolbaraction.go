@@ -26,10 +26,10 @@ type TwoStateToolbarAction struct {
 
 // NewTwoStateToolbarAction returns a new push button style of Toolbar item that displays
 // a different icon for each of its two states
-func NewTwoStateToolbarAction(state0Icon fyne.Resource,
-	state1Icon fyne.Resource,
+func NewTwoStateToolbarAction(offStateIcon fyne.Resource,
+	onStateIcon fyne.Resource,
 	onTapped func(TwoStateState)) *TwoStateToolbarAction {
-	t := &TwoStateToolbarAction{offIcon: state0Icon, onIcon: state1Icon, OnActivated: onTapped}
+	t := &TwoStateToolbarAction{offIcon: offStateIcon, onIcon: onStateIcon, OnActivated: onTapped}
 	t.button.SetIcon(t.offIcon)
 	t.button.OnTapped = t.activated
 	return t
@@ -50,14 +50,14 @@ func (t *TwoStateToolbarAction) SetState(state TwoStateState) {
 	t.button.Refresh()
 }
 
-// SetState0Icon sets the icon that is displayed when the state is TwoState0
-func (t *TwoStateToolbarAction) SetState0Icon(icon fyne.Resource) {
+// SetOffStateIcon sets the icon that is displayed when the state is OffState
+func (t *TwoStateToolbarAction) SetOffStateIcon(icon fyne.Resource) {
 	t.offIcon = icon
 	t.setButtonIcon()
 	t.button.Refresh()
 }
 
-// SetState1Icon sets the icon that is displayed when the state is TwoState1
+// SetOnStateIcon sets the icon that is displayed when the state is OnState
 func (t *TwoStateToolbarAction) SetState1Icon(icon fyne.Resource) {
 	t.onIcon = icon
 	t.setButtonIcon()
