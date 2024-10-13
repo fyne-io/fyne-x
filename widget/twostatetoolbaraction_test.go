@@ -14,18 +14,18 @@ func TestNewTwoStateToolbarAction(t *testing.T) {
 	action := NewTwoStateToolbarAction(theme.MediaPlayIcon(),
 		theme.MediaPauseIcon(),
 		func(_ TwoStateState) {})
-	assert.Equal(t, theme.MediaPlayIcon().Name(), action.icon0.Name())
-	assert.Equal(t, theme.MediaPauseIcon().Name(), action.icon1.Name())
-	assert.Equal(t, action.icon0.Name(), action.button.Icon.Name())
+	assert.Equal(t, theme.MediaPlayIcon().Name(), action.offIcon.Name())
+	assert.Equal(t, theme.MediaPauseIcon().Name(), action.onIcon.Name())
+	assert.Equal(t, action.offIcon.Name(), action.button.Icon.Name())
 }
 
 func TestTwoStateToolbarAction_Activated(t *testing.T) {
 	action := NewTwoStateToolbarAction(theme.MediaPlayIcon(),
 		theme.MediaPauseIcon(),
 		func(_ TwoStateState) {})
-	require.Equal(t, action.icon0.Name(), action.button.Icon.Name())
+	require.Equal(t, action.offIcon.Name(), action.button.Icon.Name())
 	action.button.Tapped(nil)
-	assert.Equal(t, action.icon1.Name(), action.button.Icon.Name())
+	assert.Equal(t, action.onIcon.Name(), action.button.Icon.Name())
 }
 
 func TestTwoStateToolbarAction_Tapped(t *testing.T) {
@@ -70,7 +70,7 @@ func TestTwoStateToolbarAction_SetState0Icon(t *testing.T) {
 	defer w.Close()
 
 	action.SetState0Icon(theme.MediaPlayIcon())
-	assert.Equal(t, theme.MediaPlayIcon().Name(), action.icon0.Name())
+	assert.Equal(t, theme.MediaPlayIcon().Name(), action.offIcon.Name())
 }
 
 func TestTwoStateToolbarAction_SetState1Icon(t *testing.T) {
@@ -83,5 +83,5 @@ func TestTwoStateToolbarAction_SetState1Icon(t *testing.T) {
 	defer w.Close()
 
 	action.SetState1Icon(theme.MediaPauseIcon())
-	assert.Equal(t, theme.MediaPauseIcon().Name(), action.icon1.Name())
+	assert.Equal(t, theme.MediaPauseIcon().Name(), action.onIcon.Name())
 }
