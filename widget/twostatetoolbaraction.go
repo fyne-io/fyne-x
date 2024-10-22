@@ -58,7 +58,7 @@ func (t *TwoStateToolbarAction) SetOffStateIcon(icon fyne.Resource) {
 }
 
 // SetOnStateIcon sets the icon that is displayed when the state is OnState
-func (t *TwoStateToolbarAction) SetState1Icon(icon fyne.Resource) {
+func (t *TwoStateToolbarAction) SetOnStateIcon(icon fyne.Resource) {
 	t.onIcon = icon
 	t.setButtonIcon()
 	t.button.Refresh()

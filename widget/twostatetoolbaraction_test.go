@@ -82,6 +82,6 @@ func TestTwoStateToolbarAction_SetOnStateIcon(t *testing.T) {
 	w := test.NewWindow(tb)
 	defer w.Close()
 
-	action.SetOffStateIcon(theme.MediaPauseIcon())
+	action.SetOnStateIcon(theme.MediaPauseIcon())
 	assert.Equal(t, theme.MediaPauseIcon().Name(), action.onIcon.Name())
 }
