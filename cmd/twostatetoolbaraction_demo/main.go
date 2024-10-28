@@ -15,21 +15,21 @@ func main() {
 	w := a.NewWindow("Two State Demo")
 
 	twoState0 := xwidget.NewTwoStateToolbarAction(nil,
-		nil, func(state xwidget.TwoStateState) {
-			fmt.Println(state)
+		nil, func(on bool) {
+			fmt.Println(on)
 		})
 	sep := widget.NewToolbarSeparator()
 	tb := widget.NewToolbar(twoState0, sep)
 
 	toggleButton := widget.NewButton("Toggle State", func() {
-		state := twoState0.GetState()
-		twoState0.SetState(!state)
+		on := twoState0.GetOn()
+		twoState0.SetOn(!on)
 	})
 	offIconButton := widget.NewButton("Set OffIcon", func() {
-		twoState0.SetOffStateIcon(theme.MediaPlayIcon())
+		twoState0.SetOffIcon(theme.MediaPlayIcon())
 	})
 	onIconButton := widget.NewButton("Set OnIcon", func() {
-		twoState0.SetState1Icon(theme.MediaPauseIcon())
+		twoState0.SetOnIcon(theme.MediaStopIcon())
 	})
 	vc := container.NewVBox(toggleButton, offIconButton, onIconButton)
 	c := container.NewBorder(tb, vc, nil, nil)

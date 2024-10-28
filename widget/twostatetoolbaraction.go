@@ -5,21 +5,18 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// TwoStateState defines the type for the state of a TwoStateToolbarAction.
-type TwoStateState bool
-
-const (
-	OffState TwoStateState = false
-	OnState  TwoStateState = true
-)
-
 // TwoStateToolbarAction is a push button style of ToolbarItem that displays a different
-// icon depending on its state
+// icon depending on its state.
+//
+// state is a boolean indicating off and on. The actual meaning of the boolean depends on how it is used. For
+// example, in a media play app, false might indicate that the medium file is not being played, and true might
+// indicate that the file is being played.
+// Similarly, the two states could be used to indicate that a panel is being hidden or shown.
 type TwoStateToolbarAction struct {
-	state       TwoStateState
+	on          bool
 	offIcon     fyne.Resource
 	onIcon      fyne.Resource
-	OnActivated func(TwoStateState) `json:"-"`
+	OnActivated func(bool) `json:"-"`
 
 	button widget.Button
 }
@@ -28,37 +25,37 @@ type TwoStateToolbarAction struct {
 // a different icon for each of its two states
 func NewTwoStateToolbarAction(offStateIcon fyne.Resource,
 	onStateIcon fyne.Resource,
-	onTapped func(TwoStateState)) *TwoStateToolbarAction {
+	onTapped func(bool)) *TwoStateToolbarAction {
 	t := &TwoStateToolbarAction{offIcon: offStateIcon, onIcon: onStateIcon, OnActivated: onTapped}
 	t.button.SetIcon(t.offIcon)
 	t.button.OnTapped = t.activated
 	return t
 }
 
-// GetState returns the current state of the toolbaraction
-func (t *TwoStateToolbarAction) GetState() TwoStateState {
-	return t.state
+// GetOn returns the current state of the toolbaraction
+func (t *TwoStateToolbarAction) GetOn() bool {
+	return t.on
 }
 
-// SetState sets the state of the toolbaraction
-func (t *TwoStateToolbarAction) SetState(state TwoStateState) {
-	t.state = state
+// SetOn sets the state of the toolbaraction
+func (t *TwoStateToolbarAction) SetOn(on bool) {
+	t.on = on
 	if t.OnActivated != nil {
-		t.OnActivated(t.state)
+		t.OnActivated(t.on)
 	}
 	t.setButtonIcon()
 	t.button.Refresh()
 }
 
-// SetOffStateIcon sets the icon that is displayed when the state is OffState
-func (t *TwoStateToolbarAction) SetOffStateIcon(icon fyne.Resource) {
+// SetOffIcon sets the icon that is displayed when the state is false
+func (t *TwoStateToolbarAction) SetOffIcon(icon fyne.Resource) {
 	t.offIcon = icon
 	t.setButtonIcon()
 	t.button.Refresh()
 }
 
-// SetOnStateIcon sets the icon that is displayed when the state is OnState
-func (t *TwoStateToolbarAction) SetOnStateIcon(icon fyne.Resource) {
+// SetOnIcon sets the icon that is displayed when the state is true
+func (t *TwoStateToolbarAction) SetOnIcon(icon fyne.Resource) {
 	t.onIcon = icon
 	t.setButtonIcon()
 	t.button.Refresh()
@@ -75,20 +72,20 @@ func (t *TwoStateToolbarAction) ToolbarObject() fyne.CanvasObject {
 }
 
 func (t *TwoStateToolbarAction) activated() {
-	if t.state == OffState {
-		t.state = OnState
+	if !t.on {
+		t.on = true
 	} else {
-		t.state = OffState
+		t.on = false
 	}
 	t.setButtonIcon()
 	if t.OnActivated != nil {
-		t.OnActivated(t.state)
+		t.OnActivated(t.on)
 	}
 	t.button.Refresh()
 }
 
 func (t *TwoStateToolbarAction) setButtonIcon() {
-	if t.state == OffState {
+	if !t.on {
 		t.button.Icon = t.offIcon
 	} else {
 		t.button.Icon = t.onIcon
