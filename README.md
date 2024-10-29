@@ -233,8 +233,7 @@ closed, and the left panel close icon when the panel is open.
 action := NewTwoStateToolBar(theme.MediaPlayIcon(), 
     theme.MediaPauseIcon, 
     func(on bool) {
-        // Do something with state. For example, if on is true, start playback and display
-        // the pause icon.
+        // Do something with state. For example, if on is true, start playback.
     })
 ```
 
