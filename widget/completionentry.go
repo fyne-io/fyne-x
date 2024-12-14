@@ -146,8 +146,7 @@ type navigableList struct {
 }
 
 func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(string), hide func(),
-	create func() fyne.CanvasObject, update func(id widget.ListItemID, object fyne.CanvasObject),
-) *navigableList {
+	create func() fyne.CanvasObject, update func(id widget.ListItemID, object fyne.CanvasObject)) *navigableList {
 	n := &navigableList{
 		entry:           entry,
 		selected:        -1,
