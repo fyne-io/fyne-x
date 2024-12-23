@@ -52,6 +52,15 @@ func (c *CompletionEntry) Refresh() {
 	}
 }
 
+// Resize sets a new size for a widget.
+// Note this should not be used if the widget is being managed by a Layout within a Container.
+func (c *CompletionEntry) Resize(size fyne.Size) {
+	c.Entry.Resize(size)
+	if c.popupMenu != nil {
+		c.popupMenu.Resize(c.maxSize())
+	}
+}
+
 // SetOptions set the completion list with itemList and update the view.
 func (c *CompletionEntry) SetOptions(itemList []string) {
 	c.Options = itemList
@@ -94,16 +103,17 @@ func (c *CompletionEntry) maxSize() fyne.Size {
 		c.itemHeight = c.navigableList.CreateItem().MinSize().Height
 	}
 
-	listheight := float32(len(c.Options))*(c.itemHeight+2*theme.Padding()+theme.SeparatorThicknessSize()) + 2*theme.Padding()
 	canvasSize := cnv.Size()
 	entrySize := c.Size()
-	if canvasSize.Height > listheight {
-		return fyne.NewSize(entrySize.Width, listheight)
+	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(c)
+	listHeight := float32(len(c.Options))*(c.itemHeight+2*theme.Padding()+theme.SeparatorThicknessSize()) + 2*theme.Padding()
+	maxHeight := canvasSize.Height - entryPos.Y - entrySize.Height - 2*theme.Padding()
+
+	if listHeight > maxHeight {
+		listHeight = maxHeight
 	}
 
-	return fyne.NewSize(
-		entrySize.Width,
-		canvasSize.Height-c.Position().Y-entrySize.Height-theme.InputBorderSize()-theme.Padding())
+	return fyne.NewSize(entrySize.Width, listHeight)
 }
 
 // calculate where the popup should appear

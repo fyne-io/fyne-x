@@ -48,9 +48,9 @@ func TestCompletionEntry_Custom(t *testing.T) {
 
 	entry.SetText("init")
 	scroll := test.WidgetRenderer(entry.navigableList).Objects()[0].(fyne.Widget)
-	list := test.WidgetRenderer(scroll).Objects()[0].(*fyne.Container).Objects[1].(fyne.Widget)
+	list := test.WidgetRenderer(scroll).Objects()[0].(*fyne.Container).Objects[0].(fyne.Widget)
 	item1 := test.WidgetRenderer(list).Objects()[1]
-	assert.Equal(t, "bar", item1.(*widget.Check).Text) // ensure the item is a Check not Label
+	assert.Equal(t, "foo", item1.(*widget.Check).Text) // ensure the item is a Check not Label
 }
 
 // Show the completion menu
@@ -103,7 +103,6 @@ func TestCompletionEntry_CursorPosition(t *testing.T) {
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn})
 
 	assert.Equal(t, 6, entry.CursorColumn)
-
 }
 
 // Hide the menu on Escape key.
