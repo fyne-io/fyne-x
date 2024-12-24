@@ -216,6 +216,29 @@ m := NewMap()
 
 ![](img/map.png)
 
+### TwoStateToolbarAction
+
+A TwoStateToolbarAction displays one of two icons based on the stored state. It is similar
+to a regular ToolbarAction except that the icon and state are toggled each time the toolbar
+action is activated. The current (new) state is passed to the `onActivated` function.
+
+One potential use of this toolbar action is displaying the MediaPlayIcon when a media 
+file is not being played, and the MediaPauseIcon or MediaStopIcon when a media file is 
+being played. A second use may be seen in an application where a left or right panel is 
+displayed or not. For example, show the left panel open icon when the left panel is 
+closed, and the left panel close icon when the panel is open.
+
+
+```go
+action := NewTwoStateToolBar(theme.MediaPlayIcon(), 
+    theme.MediaPauseIcon(), 
+    func(on bool) {
+        // Do something with state. For example, if on is true, start playback.
+    })
+```
+
+* [Demo App](cmd/twostatetoolbaraction_demo/main.go)
+
 ## Dialogs
 
 ### About
