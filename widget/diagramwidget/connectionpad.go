@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	pointPadSize float32 = 10
+	// PointPadSize is the default size of a point pad
+	PointPadSize float32 = 10
 )
 
 // ConnectionPad is an interface to a connection shape on a DiagramElement.
@@ -24,7 +25,9 @@ type ConnectionPad interface {
 	getConnectionPointInDiagramCoordinates(referencePoint fyne.Position) fyne.Position
 	MouseDown(*desktop.MouseEvent)
 	MouseUp(*desktop.MouseEvent)
+	SetLineWidth(float32)
 	SetPadColor(color.Color)
+	setPadOwner(DiagramElement)
 }
 
 type connectionPad struct {
@@ -35,6 +38,14 @@ type connectionPad struct {
 
 func (cp *connectionPad) GetPadOwner() DiagramElement {
 	return cp.padOwner
+}
+
+func (cp *connectionPad) SetLineWidth(width float32) {
+	cp.lineWidth = width
+}
+
+func (cp *connectionPad) setPadOwner(owner DiagramElement) {
+	cp.padOwner = owner
 }
 
 // MouseDown responds to mouse down events
@@ -105,12 +116,12 @@ type PointPad struct {
 
 // NewPointPad creates a PointPad and associates it with the DiagramElement. Note that, by default,
 // the position of the PointPad will be (0,0), i.e. the origin of the DiagramElement.
-func NewPointPad(padOwner DiagramElement) *PointPad {
+func NewPointPad(lineWidth float32) *PointPad {
 	pp := &PointPad{}
-	pp.connectionPad.padOwner = padOwner
 	pp.BaseWidget.ExtendBaseWidget(pp)
-	pp.lineWidth = padOwner.GetProperties().PadStrokeWidth
 	pp.padColor = color.Transparent
+	pp.lineWidth = lineWidth
+	pp.Resize(fyne.NewSize(PointPadSize, PointPadSize))
 	return pp
 }
 
@@ -121,14 +132,14 @@ func (pp *PointPad) CreateRenderer() fyne.WidgetRenderer {
 		l1: canvas.NewLine(pp.padColor),
 		l2: canvas.NewLine(pp.padColor),
 	}
-	ppr.l1.StrokeWidth = pp.padOwner.GetProperties().PadStrokeWidth
-	ppr.l2.StrokeWidth = pp.padOwner.GetProperties().PadStrokeWidth
+	ppr.l1.StrokeWidth = pp.lineWidth
+	ppr.l2.StrokeWidth = pp.lineWidth
 	return ppr
 }
 
 // GetCenterInDiagramCoordinates returns the position in diagram coordinates
 func (pp *PointPad) GetCenterInDiagramCoordinates() fyne.Position {
-	return pp.padOwner.Position().Add(pp.Position().Add(fyne.NewPos(pointPadSize/2, pointPadSize/2)))
+	return pp.padOwner.Position().Add(pp.Position().Add(fyne.NewPos(PointPadSize/2, PointPadSize/2)))
 }
 
 // getConnectionPointInDiagramCoordinates returns the point on the pad to which a connection will be made from the referencePoint.
@@ -182,13 +193,13 @@ func (ppr *pointPadRenderer) Destroy() {
 
 func (ppr *pointPadRenderer) Layout(size fyne.Size) {
 	ppr.l1.Position1 = fyne.NewPos(0, 0)
-	ppr.l1.Position2 = fyne.NewPos(pointPadSize, pointPadSize)
-	ppr.l2.Position1 = fyne.NewPos(pointPadSize, 0)
-	ppr.l2.Position2 = fyne.NewPos(0, pointPadSize)
+	ppr.l1.Position2 = fyne.NewPos(PointPadSize, PointPadSize)
+	ppr.l2.Position1 = fyne.NewPos(PointPadSize, 0)
+	ppr.l2.Position2 = fyne.NewPos(0, PointPadSize)
 }
 
 func (ppr *pointPadRenderer) MinSize() fyne.Size {
-	return fyne.Size{Height: pointPadSize, Width: pointPadSize}
+	return fyne.Size{Height: PointPadSize, Width: PointPadSize}
 }
 
 func (ppr *pointPadRenderer) Objects() []fyne.CanvasObject {
@@ -223,11 +234,9 @@ type RectanglePad struct {
 
 // NewRectanglePad creates a RectanglePad and associates it with the DiagramElement. The size of the
 // pad becomes the size of the padOwner.
-func NewRectanglePad(padOwner DiagramElement) *RectanglePad {
+func NewRectanglePad() *RectanglePad {
 	rp := &RectanglePad{}
-	rp.connectionPad.padOwner = padOwner
 	rp.BaseWidget.ExtendBaseWidget(rp)
-	rp.lineWidth = padOwner.GetProperties().PadStrokeWidth
 	rp.padColor = color.Transparent
 	return rp
 }
