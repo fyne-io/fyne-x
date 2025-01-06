@@ -24,7 +24,6 @@ import (
 	"go/format"
 	"image/color"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -295,7 +294,7 @@ func generateColorScheme() error {
 		return fmt.Errorf("failed to get page: %w", err)
 	}
 	defer reps.Body.Close()
-	htpage, err := ioutil.ReadAll(reps.Body)
+	htpage, err := io.ReadAll(reps.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read body: %w", err)
 	}
@@ -409,7 +408,7 @@ func generateColorScheme() error {
 	if formatted, err := format.Source(buffer.Bytes()); err != nil {
 		return fmt.Errorf("failed to format source: %w", err)
 	} else {
-		return ioutil.WriteFile(colorSchemeOutput, formatted, 0644)
+		return os.WriteFile(colorSchemeOutput, formatted, 0644)
 	}
 }
 
@@ -427,7 +426,7 @@ func generateIcons() error {
 	tarReader := tar.NewReader(resp.Body)
 
 	// extract in a temporary directory
-	tmpDir, err := ioutil.TempDir("", "adwaita")
+	tmpDir, err := os.MkdirTemp("", "adwaita")
 	if err != nil {
 		return err
 	}
@@ -508,7 +507,7 @@ func generateIcons() error {
 	if formatted, err := format.Source(buffer.Bytes()); err != nil {
 		return fmt.Errorf("error formatting source: %w", err)
 	} else {
-		return ioutil.WriteFile(iconsOutput, formatted, 0644)
+		return os.WriteFile(iconsOutput, formatted, 0644)
 	}
 }
 
