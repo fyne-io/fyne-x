@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	fyne.io/fyne/v2 v2.5.3
-	github.com/Andrew-M-C/go.jsonvalue v1.1.2-0.20211223013816-e873b56b4a84
+	github.com/Andrew-M-C/go.jsonvalue v1.4.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/gorilla/websocket v1.5.3
 	github.com/nfnt/resize v0.0.0-20180221191011-83c6a9932646
@@ -35,6 +35,7 @@ require (
 	github.com/nicksnyder/go-i18n/v2 v2.4.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rymdport/portal v0.3.0 // indirect
+	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/srwiley/oksvg v0.0.0-20221011165216-be6e8873101c // indirect
 	github.com/yuin/goldmark v1.7.1 // indirect
 	golang.org/x/mobile v0.0.0-20231127183840-76ac6878050a // indirect
