@@ -33,7 +33,7 @@ type AnchoredText struct {
 func NewAnchoredText(text string) *AnchoredText {
 	at := &AnchoredText{
 		offset:            r2.MakeVec2(0, 0),
-		ForegroundColor:   theme.ForegroundColor(),
+		ForegroundColor:   theme.Color(theme.ColorNameForeground),
 		referencePosition: fyne.Position{X: 0, Y: 0},
 	}
 	at.displayedTextBinding = binding.NewString()

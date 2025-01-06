@@ -22,7 +22,7 @@ func newMapButton(icon fyne.Resource, f func()) *mapButton {
 
 func (b *mapButton) CreateRenderer() fyne.WidgetRenderer {
 	return &mapButtonRenderer{WidgetRenderer: b.Button.CreateRenderer(),
-		bg: canvas.NewRectangle(theme.ShadowColor())}
+		bg: canvas.NewRectangle(theme.Color(theme.ColorNameShadow))}
 }
 
 type mapButtonRenderer struct {
@@ -44,6 +44,6 @@ func (r *mapButtonRenderer) Objects() []fyne.CanvasObject {
 }
 
 func (r *mapButtonRenderer) Refresh() {
-	r.bg.FillColor = theme.ShadowColor()
+	r.bg.FillColor = theme.Color(theme.ColorNameShadow)
 	r.WidgetRenderer.Refresh()
 }
