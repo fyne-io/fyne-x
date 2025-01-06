@@ -75,7 +75,7 @@ func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.Ca
 	underlayer := underLayout{}
 	slideBG := container.New(underlayer, underlay)
 	footerBG := canvas.NewRectangle(shadowColor)
-	watchTheme(bg, footerBG, a)
+	watchTheme(bg, footerBG)
 
 	underlay.Resize(fyne.NewSize(512, 512))
 	scroll.OnScrolled = func(p fyne.Position) {
@@ -112,7 +112,7 @@ func centerText(rich *widget.RichText) {
 	}
 }
 
-func watchTheme(bg, footer *canvas.Rectangle, a fyne.App) {
+func watchTheme(bg, footer *canvas.Rectangle) {
 	listen := make(chan fyne.Settings)
 	fyne.CurrentApp().Settings().AddChangeListener(listen)
 	go func() {
