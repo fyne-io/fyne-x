@@ -1,7 +1,7 @@
 package widget
 
 import (
-	"io/ioutil"
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -33,7 +33,7 @@ func TestAnimatedGif_MinSize(t *testing.T) {
 	f, err := os.Open("./testdata/gif/earth.gif")
 	assert.Nil(t, err)
 
-	r, err := ioutil.ReadAll(f)
+	r, err := io.ReadAll(f)
 	assert.Nil(t, err)
 
 	res := fyne.NewStaticResource("earth.gif", r)

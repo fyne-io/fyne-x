@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -163,15 +162,15 @@ func Test_NewFileTree(t *testing.T) {
 
 func createTempDir(t *testing.T) string {
 	t.Helper()
-	tempDir, err := ioutil.TempDir("", "test")
+	tempDir, err := os.MkdirTemp("", "test")
 	assert.NoError(t, err)
 	err = os.MkdirAll(path.Join(tempDir, "A"), os.ModePerm)
 	assert.NoError(t, err)
 	err = os.MkdirAll(path.Join(tempDir, "B"), os.ModePerm)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(path.Join(tempDir, "B", "C.txt"), []byte("c"), os.ModePerm)
+	err = os.WriteFile(path.Join(tempDir, "B", "C.txt"), []byte("c"), os.ModePerm)
 	assert.NoError(t, err)
-	err = ioutil.WriteFile(path.Join(tempDir, "B", "D.txt"), []byte("d"), os.ModePerm)
+	err = os.WriteFile(path.Join(tempDir, "B", "D.txt"), []byte("d"), os.ModePerm)
 	assert.NoError(t, err)
 	return tempDir
 }

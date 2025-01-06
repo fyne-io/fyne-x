@@ -47,7 +47,7 @@ func NewArrowhead() *Arrowhead {
 	a := &Arrowhead{
 		baseAngle:   0.0,
 		StrokeWidth: defaultStrokeWidth,
-		StrokeColor: theme.ForegroundColor(),
+		StrokeColor: theme.Color(theme.ColorNameForeground),
 		Theta:       defaultTheta,
 		Length:      defaultLength,
 		visible:     true,

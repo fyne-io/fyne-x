@@ -67,15 +67,15 @@ func aboutContent(content string, links []*widget.Hyperlink, a fyne.App) fyne.Ca
 		container.NewCenter(rich))
 	scroll := container.NewScroll(body)
 
-	bgColor := withAlpha(theme.BackgroundColor(), 0xe0)
-	shadowColor := withAlpha(theme.BackgroundColor(), 0x33)
+	bgColor := withAlpha(theme.Color(theme.ColorNameBackground), 0xe0)
+	shadowColor := withAlpha(theme.Color(theme.ColorNameBackground), 0x33)
 
 	underlay := canvas.NewImageFromResource(a.Metadata().Icon)
 	bg := canvas.NewRectangle(bgColor)
 	underlayer := underLayout{}
 	slideBG := container.New(underlayer, underlay)
 	footerBG := canvas.NewRectangle(shadowColor)
-	watchTheme(bg, footerBG, a)
+	watchTheme(bg, footerBG)
 
 	underlay.Resize(fyne.NewSize(512, 512))
 	scroll.OnScrolled = func(p fyne.Position) {
@@ -112,16 +112,16 @@ func centerText(rich *widget.RichText) {
 	}
 }
 
-func watchTheme(bg, footer *canvas.Rectangle, a fyne.App) {
+func watchTheme(bg, footer *canvas.Rectangle) {
 	listen := make(chan fyne.Settings)
 	fyne.CurrentApp().Settings().AddChangeListener(listen)
 	go func() {
 		for range listen {
-			bgColor := withAlpha(theme.BackgroundColor(), 0xe0)
+			bgColor := withAlpha(theme.Color(theme.ColorNameBackground), 0xe0)
 			bg.FillColor = bgColor
 			bg.Refresh()
 
-			shadowColor := withAlpha(theme.BackgroundColor(), 0x33)
+			shadowColor := withAlpha(theme.Color(theme.ColorNameBackground), 0x33)
 			footer.FillColor = shadowColor
 			footer.Refresh()
 		}
