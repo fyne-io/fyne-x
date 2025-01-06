@@ -9,14 +9,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        go-version: ['1.17.x', '1.21.x']
+        go-version: ['1.19.x', 'stable']
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
     - uses: actions/checkout@v4
       with:
         persist-credentials: false
-    - uses: WillAbides/setup-go-faster@v1.13.0
+    - uses: WillAbides/setup-go-faster@v1
       with:
         go-version: ${{ matrix.go-version }}
 
