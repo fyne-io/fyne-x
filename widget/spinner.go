@@ -89,15 +89,13 @@ func (r *spinnerButtonRenderer) Destroy() {}
 
 // Layout lays out the components of the spinnerButton.
 func (r *spinnerButtonRenderer) Layout(size fyne.Size) {
-	//	r.button.background.Move(fyne.NewPos(0, 0))
 	r.button.background.Resize(size)
 }
 
-// MinSize returns the minimum size of the spinnerButton.
-// While a value is returned here, it is actually overridden
-// in the spinnerLayout.
+// MinSize returns the minimum (actual) size of the spinnerButton.
 func (r *spinnerButtonRenderer) MinSize() fyne.Size {
-	h := r.button.spinner.MinSize().Height / 2
+	th := r.button.spinner.Theme()
+	h := r.button.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
 	return fyne.NewSize(h, h)
 }
 
@@ -123,9 +121,8 @@ type Spinner struct {
 	max   int
 	step  int
 
-	upButton *spinnerButton
-
-	// layout *spinnerLayout
+	upButton   *spinnerButton
+	downButton *spinnerButton
 }
 
 // NewSpinner creates a new Spinner widget.
@@ -137,6 +134,7 @@ func NewSpinner(min, max, step int, tapped func()) *Spinner {
 		value: min,
 	}
 	s.upButton = newSpinnerButton(s, s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, s.downButtonClicked)
 	return s
 }
 
@@ -156,7 +154,7 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 		border,
 		text,
 		s.upButton,
-		// TODO: add downButton
+		s.downButton,
 	}
 	r := &spinnerRenderer{
 		spinner: s,
@@ -186,6 +184,8 @@ func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 	fmt.Printf("evt = %v\n", evt)
 	if s.upButton.containsPoint(evt.Position) {
 		s.upButton.Tapped(evt)
+	} else if s.downButton.containsPoint(evt.Position) {
+		s.downButton.Tapped(evt)
 	}
 }
 
@@ -240,11 +240,16 @@ func (r *spinnerRenderer) Layout(size fyne.Size) {
 
 	xPos += padding / 4
 	yPos -= theme.Padding()
-	r.spinner.upButton.Resize(fyne.NewSize((textSize.Height+padding)/2,
-		(textSize.Height+padding)/2))
+	buttonSize := fyne.NewSize((textSize.Height+padding)/2-1,
+		(textSize.Height+padding)/2-1)
+	r.spinner.upButton.Resize(buttonSize)
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
 	r.spinner.upButton.Refresh()
-	// TODO: add positioning of downButton
+
+	yPos = r.spinner.upButton.MinSize().Height + padding/4 - 1
+	r.spinner.downButton.Resize(buttonSize)
+	r.spinner.downButton.Move(fyne.NewPos(xPos, yPos))
+	r.spinner.downButton.Refresh()
 }
 
 // MinSize returns the minimum size of the Spinner widget.
@@ -273,6 +278,10 @@ func (r *spinnerRenderer) Refresh() {
 
 func (s *Spinner) upButtonClicked() {
 	fmt.Println("upButtonClicked")
+}
+
+func (s *Spinner) downButtonClicked() {
+	fmt.Println("downButtonClicked")
 }
 
 // max returns the larger of the two arguments.
