@@ -49,9 +49,16 @@ func (b *spinnerButton) CreateRenderer() fyne.WidgetRenderer {
 	return r
 }
 
-// MinSize returns the minimum size for the spinnerButton
-func (b *spinnerButton) MinSize() fyne.Size {
-	return fyne.NewSize(12, 12)
+// Move moves the button.
+func (b *spinnerButton) Move(pos fyne.Position) {
+	b.position = pos
+	b.BaseWidget.Move(pos)
+}
+
+// Resize resizes the button.
+func (b *spinnerButton) Resize(sz fyne.Size) {
+	b.size = sz
+	b.BaseWidget.Resize(sz)
 }
 
 // Tapped processes click events on the spinnerButton.
@@ -81,13 +88,17 @@ type spinnerButtonRenderer struct {
 func (r *spinnerButtonRenderer) Destroy() {}
 
 // Layout lays out the components of the spinnerButton.
-func (r *spinnerButtonRenderer) Layout(_ fyne.Size) {}
+func (r *spinnerButtonRenderer) Layout(size fyne.Size) {
+	//	r.button.background.Move(fyne.NewPos(0, 0))
+	r.button.background.Resize(size)
+}
 
 // MinSize returns the minimum size of the spinnerButton.
 // While a value is returned here, it is actually overridden
 // in the spinnerLayout.
 func (r *spinnerButtonRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(50, 50)
+	h := r.button.spinner.MinSize().Height / 2
+	return fyne.NewSize(h, h)
 }
 
 // Objects returns the CanvasObjects that make up the spinnerButtton.
@@ -97,7 +108,7 @@ func (r *spinnerButtonRenderer) Objects() []fyne.CanvasObject {
 
 // Refresh redisplays the s[innerButton.
 func (r *spinnerButtonRenderer) Refresh() {
-	r.button.background.FillColor = color.Gray{Y: 192}
+	r.button.background = canvas.NewRectangle(color.Gray{Y: 192})
 }
 
 var _ fyne.Tappable = (*Spinner)(nil)
@@ -125,7 +136,6 @@ func NewSpinner(min, max, step int, tapped func()) *Spinner {
 		step:  step,
 		value: min,
 	}
-	//	s.layout = &spinnerLayout{spinner: s}
 	s.upButton = newSpinnerButton(s, s.upButtonClicked)
 	return s
 }
@@ -156,6 +166,16 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 		objects: objects,
 	}
 	return r
+}
+
+func (s *Spinner) MinSize() fyne.Size {
+	th := s.Theme()
+	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
+	textSize := s.textSize()
+	tHeight := textSize.Height + padding.Height
+	upButtonHeight := tHeight - padding.Height/2
+	tWidth := textSize.Width + upButtonHeight + padding.Width
+	return fyne.NewSize(tWidth, tHeight)
 }
 
 // Tapped handles+ primary button clicks with the cursor over
@@ -218,20 +238,18 @@ func (r *spinnerRenderer) Layout(size fyne.Size) {
 	yPos := (rMinSize.Height - textSize.Height) / 2
 	r.text.Move(fyne.NewPos(xPos, yPos))
 
-	xPos += padding
+	xPos += padding / 4
 	yPos -= theme.Padding()
+	r.spinner.upButton.Resize(fyne.NewSize((textSize.Height+padding)/2,
+		(textSize.Height+padding)/2))
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
+	r.spinner.upButton.Refresh()
 	// TODO: add positioning of downButton
 }
 
 // MinSize returns the minimum size of the Spinner widget.
 func (r *spinnerRenderer) MinSize() fyne.Size {
-	th := r.spinner.Theme()
-	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
-	textSize := r.spinner.textSize()
-	tWidth := textSize.Width + r.spinner.upButton.MinSize().Width + padding.Width
-	tHeight := textSize.Height + padding.Height
-	return fyne.NewSize(tWidth, tHeight)
+	return r.spinner.MinSize()
 }
 
 // Objects returns the objects associated with the Spinner renderer.
