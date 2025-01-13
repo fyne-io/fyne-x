@@ -158,11 +158,6 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 	return r
 }
 
-// MinSize returns the minimum size of the Spinner object.
-func (s *Spinner) MinSize() fyne.Size {
-	return fyne.NewSize(30, 20)
-}
-
 // Tapped handles+ primary button clicks with the cursor over
 // the Spinner object.
 // If actually over one of the spinnerButtons, processing
@@ -174,9 +169,18 @@ func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 	}
 }
 
+// Calculate the max size of the text that can be displayed for the Spinner.
+// The size cannot be larger than the larger of the sizes for the Spinner
+// min and max values.
 func (s *Spinner) textSize() fyne.Size {
-	// TODO: calculate size based on spinner value
-	return fyne.NewSize(25, 15)
+	minText := canvas.NewText(strconv.Itoa(s.min), color.Black)
+	maxText := canvas.NewText(strconv.Itoa(s.max), color.Black)
+	minTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(minText.Text,
+		minText.TextSize, minText.TextStyle, minText.FontSource)
+	maxTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(maxText.Text,
+		maxText.TextSize, maxText.TextStyle, maxText.FontSource)
+	return fyne.NewSize(max(minTextSize.Width, maxTextSize.Width),
+		max(minTextSize.Height, maxTextSize.Height))
 }
 
 // spinnerRenderer is the renderer for the Spinner widget
@@ -194,17 +198,19 @@ func (r *spinnerRenderer) Destroy() {}
 
 // Layout positions and sizes all of the objects that make up the Spinner widget.
 func (r *spinnerRenderer) Layout(size fyne.Size) {
+	r.spinner.Refresh()
 	th := r.spinner.Theme()
 	borderSize := th.Size(theme.SizeNameInputBorder)
 	padding := th.Size(theme.SizeNameInnerPadding)
 
 	// 0.5 is removed so on low DPI it rounds down on the trailing edge
-	r.border.Resize(fyne.NewSize(size.Width-borderSize-0.5,
-		size.Height-borderSize-0.5))
+	newSize := fyne.NewSize(size.Width-0.5, size.Height-0.5)
+	topLeft := fyne.NewPos(0, 0)
+	r.box.Resize(newSize)
+	r.box.Move(topLeft)
+	r.border.Resize(newSize)
 	r.border.StrokeWidth = borderSize
-	r.border.Move(fyne.NewSquareOffsetPos(borderSize / 2))
-	r.box.Resize(size.Subtract(fyne.NewSquareSize(borderSize * 2)))
-	r.box.Move(fyne.NewSquareOffsetPos(borderSize))
+	r.border.Move(topLeft)
 
 	textSize := r.spinner.textSize()
 	rMinSize := r.MinSize()
@@ -216,7 +222,6 @@ func (r *spinnerRenderer) Layout(size fyne.Size) {
 	yPos -= theme.Padding()
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
 	// TODO: add positioning of downButton
-	r.spinner.Refresh()
 }
 
 // MinSize returns the minimum size of the Spinner widget.
@@ -250,4 +255,16 @@ func (r *spinnerRenderer) Refresh() {
 
 func (s *Spinner) upButtonClicked() {
 	fmt.Println("upButtonClicked")
+}
+
+// max returns the larger of the two arguments.
+// This can/should be replaced by the appropriate go max function
+// when the version of go used to build fyne-x is updated to version
+// 1.21 or later.
+func max(a, b float32) float32 {
+	max := a
+	if b > a {
+		max = b
+	}
+	return max
 }
