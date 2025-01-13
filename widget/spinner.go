@@ -244,12 +244,12 @@ func (r *spinnerRenderer) Layout(size fyne.Size) {
 		(textSize.Height+padding)/2-1)
 	r.spinner.upButton.Resize(buttonSize)
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
-	r.spinner.upButton.Refresh()
+	//	r.spinner.upButton.Refresh()
 
 	yPos = r.spinner.upButton.MinSize().Height + padding/4 - 1
 	r.spinner.downButton.Resize(buttonSize)
 	r.spinner.downButton.Move(fyne.NewPos(xPos, yPos))
-	r.spinner.downButton.Refresh()
+	// r.spinner.downButton.Refresh()
 }
 
 // MinSize returns the minimum size of the Spinner widget.
