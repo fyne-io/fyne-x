@@ -3,77 +3,14 @@ package widget
 import (
 	"fmt"
 	"image/color"
+	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
-
-// spinnerBox creates the Spinner background and border.
-type spinnerBox struct {
-	widget.BaseWidget
-	box    *canvas.Rectangle
-	border *canvas.Rectangle
-}
-
-func newSpinnerBox() *spinnerBox {
-	box := canvas.NewRectangle(color.Black)
-	border := canvas.NewRectangle(color.Transparent)
-	b := &spinnerBox{
-		box:    box,
-		border: border,
-	}
-	b.ExtendBaseWidget(b)
-	return b
-}
-
-// CreateRenderer is a private method to fyne which links this widget to its
-// renderer.
-func (b *spinnerBox) CreateRenderer() fyne.WidgetRenderer {
-	b.ExtendBaseWidget(b)
-	objects := []fyne.CanvasObject{b.box, b.border}
-	c := container.NewWithoutLayout(b.box, b.border)
-	r := &spinnerBoxRenderer{b: b, container: c, objects: objects}
-	return r
-}
-
-func (b *spinnerBox) Move(pos fyne.Position) {
-	b.box.Move(pos)
-	b.border.Move(pos)
-}
-
-type spinnerBoxRenderer struct {
-	b         *spinnerBox
-	container *fyne.Container
-	objects   []fyne.CanvasObject
-}
-
-// Destroy destroys any objects created for the renderer.
-func (r *spinnerBoxRenderer) Destroy() {}
-
-// Layout lays out the components of the spinnerBox.
-// Because the size and layout depend on other widgets in the
-// Spinner, this functionality is handled by the spinnerLayout.
-func (r *spinnerBoxRenderer) Layout(_ fyne.Size) {}
-
-// MinSize returns the minimum size of the spinnerBox.
-// While this method is called, its value is overridden by a call
-// to spinnerLayout.MinSize().
-func (r *spinnerBoxRenderer) MinSize() fyne.Size {
-	return fyne.NewSize(20, 30)
-
-}
-
-// Objects returns the objects that make up the spinnerBox
-func (r *spinnerBoxRenderer) Objects() []fyne.CanvasObject {
-	return r.objects
-}
-
-// Refresh redisplays the spinnerBox.
-func (r *spinnerBoxRenderer) Refresh() {
-	r.b.box.FillColor = color.Gray{Y: 128}
-}
 
 var _ fyne.Tappable = (*spinnerButton)(nil)
 
@@ -163,51 +100,32 @@ func (r *spinnerButtonRenderer) Refresh() {
 	r.button.background.FillColor = color.Gray{Y: 192}
 }
 
-// spinnerLayout is the layout for the Spinner widget.
-type spinnerLayout struct {
-	spinner *Spinner
-}
-
-// Layout resizes and positions each of the elements of the Spinner widget.
-func (l *spinnerLayout) Layout(_ []fyne.CanvasObject, _ fyne.Size) {
-	topLeft := fyne.NewPos(0, 0)
-
-	size := l.MinSize([]fyne.CanvasObject{})
-	l.spinner.box.box.Resize(size)
-	l.spinner.box.box.Move(topLeft)
-	l.spinner.box.border.Resize(size)
-	l.spinner.box.border.Move(topLeft)
-
-	topLeft.X += l.spinner.box.MinSize().Width
-	l.spinner.upButton.background.Resize(l.spinner.upButton.MinSize())
-	l.spinner.upButton.Move(topLeft)
-	l.spinner.upButton.position = topLeft
-	l.spinner.upButton.size = l.spinner.upButton.MinSize()
-}
-
-// MinSize returns the minimum size of the Spinner widget
-func (l *spinnerLayout) MinSize(_ []fyne.CanvasObject) fyne.Size {
-	return fyne.NewSize(20, 30)
-}
-
 var _ fyne.Tappable = (*Spinner)(nil)
 
 // Spinner widget has a minimum, maximum, step and current values along with spinnerButtons
 // to increment and decrement the spinner value.
 type Spinner struct {
 	widget.DisableableWidget
-	box *spinnerBox
+
+	value int
+	min   int
+	max   int
+	step  int
 
 	upButton *spinnerButton
 
-	layout *spinnerLayout
+	// layout *spinnerLayout
 }
 
 // NewSpinner creates a new Spinner widget.
-func NewSpinner() *Spinner {
-	box := newSpinnerBox()
-	s := &Spinner{box: box}
-	s.layout = &spinnerLayout{spinner: s}
+func NewSpinner(min, max, step int, tapped func()) *Spinner {
+	s := &Spinner{
+		min:   min,
+		max:   max,
+		step:  step,
+		value: min,
+	}
+	//	s.layout = &spinnerLayout{spinner: s}
 	s.upButton = newSpinnerButton(s, s.upButtonClicked)
 	return s
 }
@@ -215,24 +133,119 @@ func NewSpinner() *Spinner {
 // CreateRenderer is a private method to fyne which links this widget to its
 // renderer.
 func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
-	c := container.New(s.layout, s.box, s.upButton)
-	return widget.NewSimpleRenderer(c)
+	s.ExtendBaseWidget(s)
+	th := s.Theme()
+	v := fyne.CurrentApp().Settings().ThemeVariant()
+	box := canvas.NewRectangle(th.Color(theme.ColorNameInputBackground, v))
+	border := canvas.NewRectangle(color.Transparent)
+
+	text := canvas.NewText(strconv.Itoa(s.value), th.Color(theme.ColorNameForeground, v))
+
+	objects := []fyne.CanvasObject{
+		box,
+		border,
+		text,
+		s.upButton,
+		// TODO: add downButton
+	}
+	r := &spinnerRenderer{
+		spinner: s,
+		box:     box,
+		border:  border,
+		text:    text,
+		objects: objects,
+	}
+	return r
 }
 
 // MinSize returns the minimum size of the Spinner object.
 func (s *Spinner) MinSize() fyne.Size {
-	return fyne.NewSize(30, 100)
+	return fyne.NewSize(30, 20)
 }
 
-// Tapped handles primary button clicks with the cursor over
+// Tapped handles+ primary button clicks with the cursor over
 // the Spinner object.
 // If actually over one of the spinnerButtons, processing
 // is passed to that button for handling.
-func (b *Spinner) Tapped(evt *fyne.PointEvent) {
+func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 	fmt.Printf("evt = %v\n", evt)
-	if b.upButton.containsPoint(evt.Position) {
-		b.upButton.Tapped(evt)
+	if s.upButton.containsPoint(evt.Position) {
+		s.upButton.Tapped(evt)
 	}
+}
+
+func (s *Spinner) textSize() fyne.Size {
+	// TODO: calculate size based on spinner value
+	return fyne.NewSize(25, 15)
+}
+
+// spinnerRenderer is the renderer for the Spinner widget
+type spinnerRenderer struct {
+	spinner *Spinner
+	box     *canvas.Rectangle
+	border  *canvas.Rectangle
+	text    *canvas.Text
+	objects []fyne.CanvasObject
+}
+
+// Destroy destroys any objects that must be destroyed when the renderer is
+// destroyed.
+func (r *spinnerRenderer) Destroy() {}
+
+// Layout positions and sizes all of the objects that make up the Spinner widget.
+func (r *spinnerRenderer) Layout(size fyne.Size) {
+	th := r.spinner.Theme()
+	borderSize := th.Size(theme.SizeNameInputBorder)
+	padding := th.Size(theme.SizeNameInnerPadding)
+
+	// 0.5 is removed so on low DPI it rounds down on the trailing edge
+	r.border.Resize(fyne.NewSize(size.Width-borderSize-0.5,
+		size.Height-borderSize-0.5))
+	r.border.StrokeWidth = borderSize
+	r.border.Move(fyne.NewSquareOffsetPos(borderSize / 2))
+	r.box.Resize(size.Subtract(fyne.NewSquareSize(borderSize * 2)))
+	r.box.Move(fyne.NewSquareOffsetPos(borderSize))
+
+	textSize := r.spinner.textSize()
+	rMinSize := r.MinSize()
+	xPos := borderSize + padding + textSize.Width
+	yPos := (rMinSize.Height - textSize.Height) / 2
+	r.text.Move(fyne.NewPos(xPos, yPos))
+
+	xPos += padding
+	yPos -= theme.Padding()
+	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
+	// TODO: add positioning of downButton
+	r.spinner.Refresh()
+}
+
+// MinSize returns the minimum size of the Spinner widget.
+func (r *spinnerRenderer) MinSize() fyne.Size {
+	th := r.spinner.Theme()
+	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
+	textSize := r.spinner.textSize()
+	tWidth := textSize.Width + r.spinner.upButton.MinSize().Width + padding.Width
+	tHeight := textSize.Height + padding.Height
+	return fyne.NewSize(tWidth, tHeight)
+}
+
+// Objects returns the objects associated with the Spinner renderer.
+func (r *spinnerRenderer) Objects() []fyne.CanvasObject {
+	return r.objects
+}
+
+// Refresh refreshes (redisplays) the Spinner widget.
+func (r *spinnerRenderer) Refresh() {
+	th := r.spinner.Theme()
+	v := fyne.CurrentApp().Settings().ThemeVariant()
+
+	r.box.FillColor = th.Color(theme.ColorNameInputBackground, v)
+	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
+	r.border.CornerRadius = r.box.CornerRadius
+
+	r.border.StrokeColor = th.Color(theme.ColorNameInputBorder, v)
+	r.text.Text = strconv.Itoa(r.spinner.value)
+	r.text.Alignment = fyne.TextAlignTrailing
 }
 
 func (s *Spinner) upButtonClicked() {

@@ -12,11 +12,11 @@ import (
 
 func main() {
 	a := app.New()
-	spinner := xwidget.NewSpinner()
-	//	sButton := xwidget.NewSpinnerButton(nil, stapped)
+	spinner := xwidget.NewSpinner(1, 12, 3, stapped)
 	c := container.NewCenter(spinner)
 	b := widget.NewButton("Button", nil)
-	v := container.NewVBox(c, b)
+	e := widget.NewEntry()
+	v := container.NewVBox(c, b, e)
 	w := a.NewWindow("SpinnerDemo")
 	w.Resize(fyne.NewSize(200, 200))
 	w.SetContent(v)
