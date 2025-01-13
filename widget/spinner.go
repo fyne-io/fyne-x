@@ -271,15 +271,22 @@ func (r *spinnerRenderer) Refresh() {
 
 	r.border.StrokeColor = th.Color(theme.ColorNameInputBorder, v)
 	r.text.Text = strconv.Itoa(r.spinner.value)
+	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
 }
 
 func (s *Spinner) upButtonClicked() {
-	fmt.Println("upButtonClicked")
+	s.value += s.step
+	s.value = intMin(s.value, s.max)
+	s.Refresh()
+	fmt.Printf("Spinner value updated to %d\n", s.value)
 }
 
 func (s *Spinner) downButtonClicked() {
-	fmt.Println("downButtonClicked")
+	s.value -= s.step
+	s.value = intMax(s.value, s.min)
+	s.Refresh()
+	fmt.Printf("Spinner value updated to %d\n", s.value)
 }
 
 // max returns the larger of the two arguments.
@@ -288,7 +295,31 @@ func (s *Spinner) downButtonClicked() {
 // 1.21 or later.
 func max(a, b float32) float32 {
 	max := a
-	if b > a {
+	if a < b {
+		max = b
+	}
+	return max
+}
+
+// intMin returns the smaller of the two arguments.
+// This can/should be replaced by the appropriate go min function
+// when the version of go used to build fyne-x is updated to version
+// 1.21 or later.
+func intMin(a, b int) int {
+	min := a
+	if a > b {
+		min = b
+	}
+	return min
+}
+
+// intMax returns the smaller of the two arguments.
+// This can/should be replaced by the appropriate go min function
+// when the version of go used to build fyne-x is updated to version
+// 1.21 or later.
+func intMax(a, b int) int {
+	max := a
+	if a < b {
 		max = b
 	}
 	return max
