@@ -224,6 +224,18 @@ func (s *Spinner) MinSize() fyne.Size {
 	return fyne.NewSize(tWidth, tHeight)
 }
 
+// SetValue sets the spinner value. It ensures that the value is always >= min and
+// <= max.
+func (s *Spinner) SetValue(val int) {
+	s.value = val
+	if s.value >= s.max {
+		s.value = s.max
+	} else if s.value < s.min {
+		s.value = s.min
+	}
+	s.Refresh()
+}
+
 // Tapped handles+ primary button clicks with the cursor over
 // the Spinner object.
 // If actually over one of the spinnerButtons, processing
@@ -321,28 +333,22 @@ func (r *spinnerRenderer) Refresh() {
 	r.text.Text = strconv.Itoa(r.spinner.value)
 	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
+
+	r.spinner.upButton.Enable()
+	r.spinner.downButton.Enable()
+	if r.spinner.value == r.spinner.min {
+		r.spinner.downButton.Disable()
+	} else if r.spinner.value == r.spinner.max {
+		r.spinner.upButton.Disable()
+	}
 }
 
 func (s *Spinner) upButtonClicked() {
-	s.value += s.step
-	s.value = intMin(s.value, s.max)
-	s.downButton.Enable()
-	if s.value >= s.max {
-		s.upButton.Disable()
-	}
-	s.Refresh()
-	fmt.Printf("Spinner value updated to %d\n", s.value)
+	s.SetValue(s.value + s.step)
 }
 
 func (s *Spinner) downButtonClicked() {
-	s.value -= s.step
-	s.value = intMax(s.value, s.min)
-	s.upButton.Enable()
-	if s.value <= s.min {
-		s.downButton.Disable()
-	}
-	s.Refresh()
-	fmt.Printf("Spinner value updated to %d\n", s.value)
+	s.SetValue(s.value - s.step)
 }
 
 // blendColor blends two colors together.
@@ -375,30 +381,6 @@ func blendColor(under, over color.Color) color.Color {
 // when the version of go used to build fyne-x is updated to version
 // 1.21 or later.
 func max(a, b float32) float32 {
-	max := a
-	if a < b {
-		max = b
-	}
-	return max
-}
-
-// intMin returns the smaller of the two arguments.
-// This can/should be replaced by the appropriate go min function
-// when the version of go used to build fyne-x is updated to version
-// 1.21 or later.
-func intMin(a, b int) int {
-	min := a
-	if a > b {
-		min = b
-	}
-	return min
-}
-
-// intMax returns the smaller of the two arguments.
-// This can/should be replaced by the appropriate go min function
-// when the version of go used to build fyne-x is updated to version
-// 1.21 or later.
-func intMax(a, b int) int {
 	max := a
 	if a < b {
 		max = b
