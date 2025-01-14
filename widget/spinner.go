@@ -159,6 +159,7 @@ func (r *spinnerButtonRenderer) buttonColorNames() (
 }
 
 var _ fyne.Tappable = (*Spinner)(nil)
+var _ fyne.Focusable = (*Spinner)(nil)
 
 // Spinner widget has a minimum, maximum, step and current values along with spinnerButtons
 // to increment and decrement the spinner value.
@@ -174,6 +175,7 @@ type Spinner struct {
 	downButton *spinnerButton
 
 	hovered bool
+	focused bool
 }
 
 // NewSpinner creates a new Spinner widget.
@@ -215,6 +217,22 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 		objects: objects,
 	}
 	return r
+}
+
+// FocusGained is called when the Spinner has been given focus.
+//
+// Implements: fyne.Focusable
+func (s *Spinner) FocusGained() {
+	s.focused = true
+	s.Refresh()
+}
+
+// FocusLost is called when the Spinner has had focus removed.
+//
+// Implements: fyne.Focusable
+func (s *Spinner) FocusLost() {
+	s.focused = false
+	s.Refresh()
 }
 
 func (s *Spinner) MinSize() fyne.Size {
@@ -267,6 +285,20 @@ func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 	} else if s.downButton.containsPoint(evt.Position) {
 		s.downButton.Tapped(evt)
 	}
+}
+
+// TypedKey receives key input events when the Spinner widget has focus.
+//
+// Implements: fyne.Focusable
+func (s *Spinner) TypedKey(evt *fyne.KeyEvent) {
+	// don't do anything yet.
+}
+
+// TypedRune receives text input events when the Spinner widget is focused.
+//
+// Implements: fyne.Focusable
+func (s *Spinner) TypedRune(rune rune) {
+	// don't do anything yet.
 }
 
 // Calculate the max size of the text that can be displayed for the Spinner.
@@ -345,12 +377,12 @@ func (r *spinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	bgColor := r.spinnerBackgroundColor()
+	bgColor, borderColor := r.spinnerColors()
 	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
 
-	r.border.StrokeColor = th.Color(theme.ColorNameInputBorder, v)
+	r.border.StrokeColor = th.Color(borderColor, v)
 	r.text.Text = strconv.Itoa(r.spinner.value)
 	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
@@ -366,12 +398,15 @@ func (r *spinnerRenderer) Refresh() {
 
 // spinnerBackgroundColor returns the colors to display the button in.
 // This is based on spinnerButtonRenderer.buttonColorNames, above.
-func (r *spinnerRenderer) spinnerBackgroundColor() fyne.ThemeColorName {
-	if r.spinner.hovered {
-		return theme.ColorNameHover
-	} else {
-		return ""
+func (r *spinnerRenderer) spinnerColors() (bgColor, borderColor fyne.ThemeColorName) {
+	bgColor = ""
+	borderColor = theme.ColorNameInputBorder
+	if r.spinner.focused {
+		borderColor = theme.ColorNamePrimary
+	} else if r.spinner.hovered {
+		bgColor = theme.ColorNameHover
 	}
+	return bgColor, borderColor
 }
 
 func (s *Spinner) upButtonClicked() {
