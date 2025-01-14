@@ -289,7 +289,7 @@ func (r *spinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	r.box.FillColor = th.Color(theme.ColorNameInputBackground, v)
+	r.box.FillColor = color.Transparent
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
 
