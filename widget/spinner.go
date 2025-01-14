@@ -168,7 +168,7 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 	s.ExtendBaseWidget(s)
 	th := s.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
-	box := canvas.NewRectangle(th.Color(theme.ColorNameInputBackground, v))
+	box := canvas.NewRectangle(th.Color(theme.ColorNameBackground, v))
 	border := canvas.NewRectangle(color.Transparent)
 
 	text := canvas.NewText(strconv.Itoa(s.value), th.Color(theme.ColorNameForeground, v))
