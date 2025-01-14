@@ -171,7 +171,7 @@ func (s *Spinner) MinSize() fyne.Size {
 	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
 	textSize := s.textSize()
 	tHeight := textSize.Height + padding.Height
-	upButtonHeight := tHeight - padding.Height/2
+	upButtonHeight := (tHeight - padding.Height/2) / 2
 	tWidth := textSize.Width + upButtonHeight + padding.Width
 	return fyne.NewSize(tWidth, tHeight)
 }
