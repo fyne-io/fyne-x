@@ -130,7 +130,31 @@ func (r *spinnerButtonRenderer) Objects() []fyne.CanvasObject {
 func (r *spinnerButtonRenderer) Refresh() {
 	th := r.button.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
-	r.background.FillColor = th.Color(theme.ColorNameButton, v)
+	fgColor, bgColor, bgBlend := r.buttonColorNames()
+	backColor := th.Color(bgColor, v)
+	if bgBlend != "" {
+		backColor = blendColor(backColor, th.Color(bgBlend, v))
+	}
+	r.background.FillColor = backColor
+	r.line1.StrokeColor = th.Color(fgColor, v)
+	r.line2.StrokeColor = th.Color(fgColor, v)
+
+	r.background.Refresh()
+	r.line1.Refresh()
+	r.line2.Refresh()
+}
+
+// buttonColorNames returns the colors to display the button in.
+// This is a copy of widget.Button.buttonColorNames in fyne v2.5.3.
+func (r *spinnerButtonRenderer) buttonColorNames() (
+	fgColor, bgColor, bgBlend fyne.ThemeColorName) {
+	fgColor = theme.ColorNameForeground
+	bgColor = theme.ColorNameButton
+	if r.button.Disabled() {
+		bgColor = theme.ColorNameDisabledButton
+		fgColor = theme.ColorNameDisabled
+	}
+	return fgColor, bgColor, bgBlend
 }
 
 var _ fyne.Tappable = (*Spinner)(nil)
@@ -302,6 +326,10 @@ func (r *spinnerRenderer) Refresh() {
 func (s *Spinner) upButtonClicked() {
 	s.value += s.step
 	s.value = intMin(s.value, s.max)
+	s.downButton.Enable()
+	if s.value >= s.max {
+		s.upButton.Disable()
+	}
 	s.Refresh()
 	fmt.Printf("Spinner value updated to %d\n", s.value)
 }
@@ -309,8 +337,37 @@ func (s *Spinner) upButtonClicked() {
 func (s *Spinner) downButtonClicked() {
 	s.value -= s.step
 	s.value = intMax(s.value, s.min)
+	s.upButton.Enable()
+	if s.value <= s.min {
+		s.downButton.Disable()
+	}
 	s.Refresh()
 	fmt.Printf("Spinner value updated to %d\n", s.value)
+}
+
+// blendColor blends two colors together.
+// This is a copy of blendcolor in button.go in fyne v2.5.3.
+func blendColor(under, over color.Color) color.Color {
+	// This alpha blends with the over operator, and accounts for RGBA() returning
+	// alpha-premultiplied values
+	dstR, dstG, dstB, dstA := under.RGBA()
+	srcR, srcG, srcB, srcA := over.RGBA()
+
+	srcAlpha := float32(srcA) // 0xFFFF
+	dstAlpha := float32(dstA) // 0XFFFF
+
+	outAlpha := srcAlpha * dstAlpha * (1 - srcAlpha)
+	outR := srcR + uint32(float32(dstR)*(1-srcAlpha))
+	outG := srcG + uint32(float32(dstG)*(1-srcAlpha))
+	outB := srcB + uint32(float32(dstB)*(1-srcAlpha))
+	// We create an RGBA64 here because the color components are already alpha-
+	// premultiplied 16-bit values (they're just stored as uint32s).
+	return color.RGBA64{
+		R: uint16(outR),
+		G: uint16(outG),
+		B: uint16(outB),
+		A: uint16(outAlpha * 0xFFFF),
+	}
 }
 
 // max returns the larger of the two arguments.
