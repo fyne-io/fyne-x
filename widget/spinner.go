@@ -7,7 +7,6 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
-	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -19,8 +18,6 @@ type spinnerButton struct {
 	widget.DisableableWidget
 	spinner *Spinner
 
-	background *canvas.Rectangle
-
 	position fyne.Position
 	size     fyne.Size
 
@@ -29,7 +26,6 @@ type spinnerButton struct {
 
 func newSpinnerButton(s *Spinner, tapped func()) *spinnerButton {
 	button := &spinnerButton{spinner: s, OnTapped: tapped}
-	button.background = canvas.NewRectangle(color.Gray{192})
 	button.ExtendBaseWidget(button)
 	return button
 }
@@ -38,13 +34,12 @@ func newSpinnerButton(s *Spinner, tapped func()) *spinnerButton {
 // renderer.
 func (b *spinnerButton) CreateRenderer() fyne.WidgetRenderer {
 	b.ExtendBaseWidget(b)
-	//	b.background = canvas.NewRectangle(color.Gray{192})
-	objects := []fyne.CanvasObject{b.background}
-	c := container.NewWithoutLayout(b.background)
+	background := canvas.NewRectangle(color.Gray{192})
+	objects := []fyne.CanvasObject{background}
 	r := &spinnerButtonRenderer{
-		button:    b,
-		container: c,
-		objects:   objects,
+		button:     b,
+		background: background,
+		objects:    objects,
 	}
 	return r
 }
@@ -79,9 +74,10 @@ func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
 
 // Renderer for the spinnerButton
 type spinnerButtonRenderer struct {
-	button    *spinnerButton
-	container *fyne.Container
-	objects   []fyne.CanvasObject
+	button  *spinnerButton
+	objects []fyne.CanvasObject
+
+	background *canvas.Rectangle
 }
 
 // Destroy destroys any objects that are created for the spinnerButtonRenderer.
@@ -89,7 +85,7 @@ func (r *spinnerButtonRenderer) Destroy() {}
 
 // Layout lays out the components of the spinnerButton.
 func (r *spinnerButtonRenderer) Layout(size fyne.Size) {
-	r.button.background.Resize(size)
+	r.background.Resize(size)
 }
 
 // MinSize returns the minimum (actual) size of the spinnerButton.
@@ -106,7 +102,7 @@ func (r *spinnerButtonRenderer) Objects() []fyne.CanvasObject {
 
 // Refresh redisplays the s[innerButton.
 func (r *spinnerButtonRenderer) Refresh() {
-	r.button.background = canvas.NewRectangle(color.Gray{Y: 192})
+	r.background = canvas.NewRectangle(color.Gray{Y: 192})
 }
 
 var _ fyne.Tappable = (*Spinner)(nil)
