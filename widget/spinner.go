@@ -7,6 +7,7 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -171,6 +172,8 @@ type Spinner struct {
 
 	upButton   *spinnerButton
 	downButton *spinnerButton
+
+	hovered bool
 }
 
 // NewSpinner creates a new Spinner widget.
@@ -222,6 +225,23 @@ func (s *Spinner) MinSize() fyne.Size {
 	upButtonHeight := (tHeight - padding.Height/2) / 2
 	tWidth := textSize.Width + upButtonHeight + padding.Width
 	return fyne.NewSize(tWidth, tHeight)
+}
+
+// MouseIn is called when a desktop pointer enters the widget.
+func (s *Spinner) MouseIn(evt *desktop.MouseEvent) {
+	s.hovered = true
+	s.Refresh()
+}
+
+// MouseMoved is called when a desktop pointer hovers over the widget.
+func (s *Spinner) MouseMoved(evt *desktop.MouseEvent) {
+
+}
+
+// MouseOut is called when a desktop pointer exits the widget.
+func (s *Spinner) MouseOut() {
+	s.hovered = false
+	s.Refresh()
 }
 
 // SetValue sets the spinner value. It ensures that the value is always >= min and
@@ -325,7 +345,8 @@ func (r *spinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	r.box.FillColor = color.Transparent
+	bgColor := r.spinnerBackgroundColor()
+	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
 
@@ -340,6 +361,16 @@ func (r *spinnerRenderer) Refresh() {
 		r.spinner.downButton.Disable()
 	} else if r.spinner.value == r.spinner.max {
 		r.spinner.upButton.Disable()
+	}
+}
+
+// spinnerBackgroundColor returns the colors to display the button in.
+// This is based on spinnerButtonRenderer.buttonColorNames, above.
+func (r *spinnerRenderer) spinnerBackgroundColor() fyne.ThemeColorName {
+	if r.spinner.hovered {
+		return theme.ColorNameHover
+	} else {
+		return ""
 	}
 }
 
