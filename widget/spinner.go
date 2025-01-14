@@ -17,6 +17,7 @@ var _ fyne.Tappable = (*spinnerButton)(nil)
 type spinnerButton struct {
 	widget.DisableableWidget
 	spinner *Spinner
+	up      bool
 
 	position fyne.Position
 	size     fyne.Size
@@ -24,8 +25,12 @@ type spinnerButton struct {
 	OnTapped func() `json:"-"`
 }
 
-func newSpinnerButton(s *Spinner, tapped func()) *spinnerButton {
-	button := &spinnerButton{spinner: s, OnTapped: tapped}
+func newSpinnerButton(s *Spinner, up bool, onTapped func()) *spinnerButton {
+	button := &spinnerButton{
+		spinner:  s,
+		up:       up,
+		OnTapped: onTapped,
+	}
 	button.ExtendBaseWidget(button)
 	return button
 }
@@ -34,12 +39,20 @@ func newSpinnerButton(s *Spinner, tapped func()) *spinnerButton {
 // renderer.
 func (b *spinnerButton) CreateRenderer() fyne.WidgetRenderer {
 	b.ExtendBaseWidget(b)
-	background := canvas.NewRectangle(color.Gray{192})
-	objects := []fyne.CanvasObject{background}
+
 	r := &spinnerButtonRenderer{
-		button:     b,
-		background: background,
-		objects:    objects,
+		button: b,
+	}
+	th := b.Theme()
+	v := fyne.CurrentApp().Settings().ThemeVariant()
+	r.background = canvas.NewRectangle(th.Color(theme.ColorNameButton, v))
+	r.line1 = canvas.NewLine(th.Color(theme.ColorNameForeground, v))
+	r.line2 = canvas.NewLine(th.Color(theme.ColorNameForeground, v))
+
+	r.objects = []fyne.CanvasObject{
+		r.background,
+		r.line1,
+		r.line2,
 	}
 	return r
 }
@@ -78,6 +91,8 @@ type spinnerButtonRenderer struct {
 	objects []fyne.CanvasObject
 
 	background *canvas.Rectangle
+	line1      *canvas.Line
+	line2      *canvas.Line
 }
 
 // Destroy destroys any objects that are created for the spinnerButtonRenderer.
@@ -86,6 +101,17 @@ func (r *spinnerButtonRenderer) Destroy() {}
 // Layout lays out the components of the spinnerButton.
 func (r *spinnerButtonRenderer) Layout(size fyne.Size) {
 	r.background.Resize(size)
+	if r.button.up {
+		r.line1.Position1 = fyne.NewPos(0.2*size.Width, 0.75*size.Height)
+		r.line1.Position2 = fyne.NewPos(0.5*size.Width, 0.25*size.Height)
+		r.line2.Position1 = fyne.NewPos(0.5*size.Width, 0.25*size.Height)
+		r.line2.Position2 = fyne.NewPos(0.8*size.Width, 0.75*size.Height)
+	} else {
+		r.line1.Position1 = fyne.NewPos(0.2*size.Width, 0.25*size.Height)
+		r.line1.Position2 = fyne.NewPos(0.5*size.Width, 0.75*size.Height)
+		r.line2.Position1 = fyne.NewPos(0.5*size.Width, 0.75*size.Height)
+		r.line2.Position2 = fyne.NewPos(0.8*size.Width, 0.25*size.Height)
+	}
 }
 
 // MinSize returns the minimum (actual) size of the spinnerButton.
@@ -102,7 +128,9 @@ func (r *spinnerButtonRenderer) Objects() []fyne.CanvasObject {
 
 // Refresh redisplays the s[innerButton.
 func (r *spinnerButtonRenderer) Refresh() {
-	r.background = canvas.NewRectangle(color.Gray{Y: 192})
+	th := r.button.Theme()
+	v := fyne.CurrentApp().Settings().ThemeVariant()
+	r.background.FillColor = th.Color(theme.ColorNameButton, v)
 }
 
 var _ fyne.Tappable = (*Spinner)(nil)
@@ -129,8 +157,8 @@ func NewSpinner(min, max, step int, tapped func()) *Spinner {
 		step:  step,
 		value: min,
 	}
-	s.upButton = newSpinnerButton(s, s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, s.downButtonClicked)
+	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
 	return s
 }
 
