@@ -72,6 +72,9 @@ func (b *spinnerButton) Resize(sz fyne.Size) {
 
 // Tapped processes click events on the spinnerButton.
 func (b *spinnerButton) Tapped(*fyne.PointEvent) {
+	if b.Disabled() {
+		return
+	}
 	if onTapped := b.OnTapped; onTapped != nil {
 		onTapped()
 	}
@@ -280,6 +283,9 @@ func (s *Spinner) MouseUp(m *desktop.MouseEvent) {}
 // SetValue sets the spinner value. It ensures that the value is always >= min and
 // <= max.
 func (s *Spinner) SetValue(val int) {
+	if s.Disabled() {
+		return
+	}
 	s.value = val
 	if s.value >= s.max {
 		s.value = s.max
@@ -289,11 +295,14 @@ func (s *Spinner) SetValue(val int) {
 	s.Refresh()
 }
 
-// Tapped handles+ primary button clicks with the cursor over
+// Tapped handles primary button clicks with the cursor over
 // the Spinner object.
 // If actually over one of the spinnerButtons, processing
 // is passed to that button for handling.
 func (s *Spinner) Tapped(evt *fyne.PointEvent) {
+	if s.Disabled() {
+		return
+	}
 	fmt.Printf("evt = %v\n", evt)
 	if s.upButton.containsPoint(evt.Position) {
 		s.upButton.Tapped(evt)
@@ -399,36 +408,44 @@ func (r *spinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	bgColor, borderColor := r.spinnerColors()
+	fgColor, bgColor, borderColor := r.spinnerColors()
 	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
 
 	r.border.StrokeColor = th.Color(borderColor, v)
 	r.text.Text = strconv.Itoa(r.spinner.value)
+	r.text.Color = th.Color(fgColor, v)
 	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
 
 	r.spinner.upButton.Enable()
 	r.spinner.downButton.Enable()
-	if r.spinner.value == r.spinner.min {
+	if r.spinner.Disabled() {
+		r.spinner.upButton.Disable()
+		r.spinner.downButton.Disable()
+	} else if r.spinner.value == r.spinner.min {
 		r.spinner.downButton.Disable()
 	} else if r.spinner.value == r.spinner.max {
 		r.spinner.upButton.Disable()
 	}
 }
 
-// spinnerBackgroundColor returns the colors to display the button in.
+// spinnerColors returns the colors to display the button in.
 // This is based on spinnerButtonRenderer.buttonColorNames, above.
-func (r *spinnerRenderer) spinnerColors() (bgColor, borderColor fyne.ThemeColorName) {
+func (r *spinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor fyne.ThemeColorName) {
+	fgColor = theme.ColorNameForeground
 	bgColor = ""
 	borderColor = theme.ColorNameInputBorder
-	if r.spinner.focused {
+	if r.spinner.Disabled() {
+		fgColor = theme.ColorNameDisabled
+		borderColor = theme.ColorNameDisabled
+	} else if r.spinner.focused {
 		borderColor = theme.ColorNamePrimary
 	} else if r.spinner.hovered {
 		bgColor = theme.ColorNameHover
 	}
-	return bgColor, borderColor
+	return fgColor, bgColor, borderColor
 }
 
 func (s *Spinner) upButtonClicked() {

@@ -10,11 +10,20 @@ import (
 	xwidget "fyne.io/x/fyne/widget"
 )
 
+var spinnerDisabled bool
+
 func main() {
 	a := app.New()
 	spinner := xwidget.NewSpinner(1, 12, 3, stapped)
 	c := container.NewCenter(spinner)
-	b := widget.NewButton("Button", nil)
+	b := widget.NewButton("(En/Dis)able Spinner", func() {
+		spinnerDisabled = !spinnerDisabled
+		if spinnerDisabled {
+			spinner.Disable()
+		} else {
+			spinner.Enable()
+		}
+	})
 	e := widget.NewEntry()
 	v := container.NewVBox(c, b, e)
 	w := a.NewWindow("SpinnerDemo")
