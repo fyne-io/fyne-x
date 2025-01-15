@@ -343,17 +343,41 @@ func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 }
 
 // TypedKey receives key input events when the Spinner widget has focus.
+// Increments/decrements the Spinner's value when the up or down key is
+// pressed.
 //
 // Implements: fyne.Focusable
-func (s *Spinner) TypedKey(evt *fyne.KeyEvent) {
-	// don't do anything yet.
+func (s *Spinner) TypedKey(key *fyne.KeyEvent) {
+	if s.Disabled() || !s.focused {
+		return
+	}
+	switch key.Name {
+	case fyne.KeyUp:
+		s.SetValue(s.value + s.step)
+	case fyne.KeyDown:
+		s.SetValue(s.value - s.step)
+	default:
+		return
+	}
 }
 
 // TypedRune receives text input events when the Spinner widget is focused.
+// Increments/decrements the Spinner's value when the '+' or '-' key is
+// pressed.
 //
 // Implements: fyne.Focusable
 func (s *Spinner) TypedRune(rune rune) {
-	// don't do anything yet.
+	if s.Disabled() || !s.focused {
+		return
+	}
+	switch rune {
+	case '+':
+		s.SetValue(s.value + s.step)
+	case '-':
+		s.SetValue(s.value - s.step)
+	default:
+		return
+	}
 }
 
 func (s *Spinner) requestFocus() {
@@ -451,7 +475,13 @@ func (r *spinnerRenderer) Refresh() {
 	r.text.Alignment = fyne.TextAlignTrailing
 
 	r.spinner.upButton.Enable()
+	if r.spinner.GetValue() == r.spinner.max {
+		r.spinner.upButton.Disable()
+	}
 	r.spinner.downButton.Enable()
+	if r.spinner.GetValue() == r.spinner.min {
+		r.spinner.downButton.Disable()
+	}
 }
 
 // spinnerColors returns the colors to display the button in.
