@@ -161,6 +161,7 @@ func (r *spinnerButtonRenderer) buttonColorNames() (
 	return fgColor, bgColor, bgBlend
 }
 
+var _ fyne.Disableable = (*Spinner)(nil)
 var _ fyne.Tappable = (*Spinner)(nil)
 var _ fyne.Focusable = (*Spinner)(nil)
 var _ desktop.Mouseable = (*Spinner)(nil)
@@ -185,13 +186,13 @@ type Spinner struct {
 // NewSpinner creates a new Spinner widget.
 func NewSpinner(min, max, step int, tapped func()) *Spinner {
 	s := &Spinner{
-		min:   min,
-		max:   max,
-		step:  step,
-		value: min,
+		min:  min,
+		max:  max,
+		step: step,
 	}
 	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
 	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
+	s.SetValue(s.min)
 	return s
 }
 
@@ -221,6 +222,24 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 		objects: objects,
 	}
 	return r
+}
+
+// Disable disables the Spinner and its buttons.
+func (s *Spinner) Disable() {
+	s.downButton.Disable()
+	s.upButton.Disable()
+	s.DisableableWidget.Disable()
+}
+
+// Enable enables the Spinner and its buttons as appropriate.
+func (s *Spinner) Enable() {
+	if s.GetValue() < s.max {
+		s.upButton.Enable()
+	}
+	if s.GetValue() > s.min {
+		s.downButton.Enable()
+	}
+	s.DisableableWidget.Enable()
 }
 
 // FocusGained is called when the Spinner has been given focus.
@@ -294,8 +313,15 @@ func (s *Spinner) SetValue(val int) {
 	s.value = val
 	if s.value >= s.max {
 		s.value = s.max
-	} else if s.value < s.min {
+		s.upButton.Disable()
+	} else {
+		s.upButton.Enable()
+	}
+	if s.value <= s.min {
 		s.value = s.min
+		s.downButton.Disable()
+	} else {
+		s.downButton.Enable()
 	}
 	s.Refresh()
 }
@@ -426,14 +452,6 @@ func (r *spinnerRenderer) Refresh() {
 
 	r.spinner.upButton.Enable()
 	r.spinner.downButton.Enable()
-	if r.spinner.Disabled() {
-		r.spinner.upButton.Disable()
-		r.spinner.downButton.Disable()
-	} else if r.spinner.value == r.spinner.min {
-		r.spinner.downButton.Disable()
-	} else if r.spinner.value == r.spinner.max {
-		r.spinner.upButton.Disable()
-	}
 }
 
 // spinnerColors returns the colors to display the button in.
