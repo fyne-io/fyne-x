@@ -239,6 +239,11 @@ func (s *Spinner) FocusLost() {
 	s.Refresh()
 }
 
+// GetValue retrieves the current Spinner value.
+func (s *Spinner) GetValue() int {
+	return s.value
+}
+
 func (s *Spinner) MinSize() fyne.Size {
 	th := s.Theme()
 	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
