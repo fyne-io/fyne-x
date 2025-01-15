@@ -70,3 +70,44 @@ func TestDownButtonTapped(t *testing.T) {
 	assert.False(t, s.upButton.Disabled())
 	assert.True(t, s.downButton.Disabled())
 }
+
+func TestEnableDisabledSpinner(t *testing.T) {
+	s := NewSpinner(4, 10, 5, nil)
+	s.SetValue(7)
+	s.Disable()
+	assert.True(t, s.Disabled())
+	assert.True(t, s.upButton.Disabled())
+	assert.True(t, s.downButton.Disabled())
+	s.Enable()
+	assert.False(t, s.Disabled())
+	assert.False(t, s.upButton.Disabled())
+	assert.False(t, s.downButton.Disabled())
+}
+
+func TestEnableDisabledSpinner_UpButtonDisabled(t *testing.T) {
+	s := NewSpinner(4, 10, 5, nil)
+	s.SetValue(10)
+	assert.True(t, s.upButton.Disabled())
+	assert.False(t, s.downButton.Disabled())
+	s.Disable()
+	assert.True(t, s.upButton.Disabled())
+	assert.True(t, s.downButton.Disabled())
+
+	s.Enable()
+	assert.True(t, s.upButton.Disabled())
+	assert.False(t, s.downButton.Disabled())
+}
+
+func TestEnableDisabledSpinner_DownButtonDisabled(t *testing.T) {
+	s := NewSpinner(4, 10, 5, nil)
+	s.SetValue(4)
+	assert.False(t, s.upButton.Disabled())
+	assert.True(t, s.downButton.Disabled())
+	s.Disable()
+	assert.True(t, s.upButton.Disabled())
+	assert.True(t, s.downButton.Disabled())
+
+	s.Enable()
+	assert.False(t, s.upButton.Disabled())
+	assert.True(t, s.downButton.Disabled())
+}
