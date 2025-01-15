@@ -160,6 +160,7 @@ func (r *spinnerButtonRenderer) buttonColorNames() (
 
 var _ fyne.Tappable = (*Spinner)(nil)
 var _ fyne.Focusable = (*Spinner)(nil)
+var _ desktop.Mouseable = (*Spinner)(nil)
 
 // Spinner widget has a minimum, maximum, step and current values along with spinnerButtons
 // to increment and decrement the spinner value.
@@ -245,6 +246,15 @@ func (s *Spinner) MinSize() fyne.Size {
 	return fyne.NewSize(tWidth, tHeight)
 }
 
+// MouseDown called on mouse click.
+// This action causes the Spinner to request focus.
+//
+// Implements: desktop.Mouseable
+func (s *Spinner) MouseDown(m *desktop.MouseEvent) {
+	s.requestFocus()
+	s.Refresh()
+}
+
 // MouseIn is called when a desktop pointer enters the widget.
 func (s *Spinner) MouseIn(evt *desktop.MouseEvent) {
 	s.hovered = true
@@ -261,6 +271,11 @@ func (s *Spinner) MouseOut() {
 	s.hovered = false
 	s.Refresh()
 }
+
+// MouseUp called on mouse release.
+//
+// Implements: desktop.Mouseable
+func (s *Spinner) MouseUp(m *desktop.MouseEvent) {}
 
 // SetValue sets the spinner value. It ensures that the value is always >= min and
 // <= max.
@@ -299,6 +314,13 @@ func (s *Spinner) TypedKey(evt *fyne.KeyEvent) {
 // Implements: fyne.Focusable
 func (s *Spinner) TypedRune(rune rune) {
 	// don't do anything yet.
+}
+
+func (s *Spinner) requestFocus() {
+	if c := fyne.CurrentApp().Driver().CanvasForObject(s); c != nil {
+		c.Focus(s)
+	}
+
 }
 
 // Calculate the max size of the text that can be displayed for the Spinner.
