@@ -32,6 +32,6 @@ func main() {
 	w.ShowAndRun()
 }
 
-func stapped() {
-	fmt.Println("sbutton tapped")
+func stapped(value int) {
+	fmt.Printf("sbutton tapped with value: %v\n", value)
 }
