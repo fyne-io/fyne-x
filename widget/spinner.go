@@ -313,6 +313,20 @@ func (s *Spinner) MouseOut() {
 // Implements: desktop.Mouseable
 func (s *Spinner) MouseUp(m *desktop.MouseEvent) {}
 
+// Scrolled handles mouse scroller events.
+//
+// Implements fyne.Scrollable
+func (s *Spinner) Scrolled(evt *fyne.ScrollEvent) {
+	if s.Disabled() || !s.focused {
+		return
+	}
+	if evt.Scrolled.DY > 0 {
+		s.SetValue(s.value + s.step)
+	} else if evt.Scrolled.DY < 0 {
+		s.SetValue(s.value - s.step)
+	}
+}
+
 // SetValue sets the spinner value. It ensures that the value is always >= min and
 // <= max.
 func (s *Spinner) SetValue(val int) {
@@ -333,20 +347,6 @@ func (s *Spinner) SetValue(val int) {
 		s.downButton.Enable()
 	}
 	s.Refresh()
-}
-
-// Scrolled handles mouse scroller events.
-//
-// Implements fyne.Scrollable
-func (s *Spinner) Scrolled(evt *fyne.ScrollEvent) {
-	if s.Disabled() {
-		return
-	}
-	if evt.Scrolled.DY > 0 {
-		s.SetValue(s.value + s.step)
-	} else if evt.Scrolled.DY < 0 {
-		s.SetValue(s.value - s.step)
-	}
 }
 
 // Tapped handles primary button clicks with the cursor over

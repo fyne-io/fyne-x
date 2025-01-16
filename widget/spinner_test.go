@@ -244,6 +244,7 @@ func TestKeyDown_SpinnerNotFocused(t *testing.T) {
 
 func TestScrolled(t *testing.T) {
 	s := NewSpinner(1, 10, 1, nil)
+	s.focused = true
 	delta := fyne.Delta{DX: 0, DY: 25}
 	e := fyne.ScrollEvent{Scrolled: delta}
 	s.Scrolled(&e)
@@ -258,7 +259,16 @@ func TestScrolled(t *testing.T) {
 
 func TestScrolled_Disabled(t *testing.T) {
 	s := NewSpinner(1, 10, 1, nil)
+	s.focused = true
 	s.Disable()
+	delta := fyne.Delta{DX: 0, DY: 25}
+	e := fyne.ScrollEvent{Scrolled: delta}
+	s.Scrolled(&e)
+	assert.Equal(t, 1, s.GetValue())
+}
+
+func TestScrolled_NotFocused(t *testing.T) {
+	s := NewSpinner(1, 10, 1, nil)
 	delta := fyne.Delta{DX: 0, DY: 25}
 	e := fyne.ScrollEvent{Scrolled: delta}
 	s.Scrolled(&e)
