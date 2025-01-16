@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"fmt"
 	"image/color"
 	"strconv"
 
@@ -343,7 +342,6 @@ func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 	if s.Disabled() {
 		return
 	}
-	fmt.Printf("evt = %v\n", evt)
 	if s.upButton.containsPoint(evt.Position) {
 		s.upButton.Tapped(evt)
 	} else if s.downButton.containsPoint(evt.Position) {
