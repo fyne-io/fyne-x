@@ -241,3 +241,26 @@ func TestKeyDown_SpinnerNotFocused(t *testing.T) {
 	s.TypedKey(&key)
 	assert.Equal(t, 8, s.GetValue())
 }
+
+func TestScrolled(t *testing.T) {
+	s := NewSpinner(1, 10, 1, nil)
+	delta := fyne.Delta{DX: 0, DY: 25}
+	e := fyne.ScrollEvent{Scrolled: delta}
+	s.Scrolled(&e)
+	assert.Equal(t, 2, s.GetValue())
+	s.Scrolled(&e)
+	assert.Equal(t, 3, s.GetValue())
+	delta = fyne.Delta{DX: 0, DY: -25}
+	e = fyne.ScrollEvent{Scrolled: delta}
+	s.Scrolled(&e)
+	assert.Equal(t, 2, s.GetValue())
+}
+
+func TestScrolled_Disabled(t *testing.T) {
+	s := NewSpinner(1, 10, 1, nil)
+	s.Disable()
+	delta := fyne.Delta{DX: 0, DY: 25}
+	e := fyne.ScrollEvent{Scrolled: delta}
+	s.Scrolled(&e)
+	assert.Equal(t, 1, s.GetValue())
+}

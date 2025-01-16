@@ -168,6 +168,7 @@ var _ fyne.Disableable = (*Spinner)(nil)
 var _ fyne.Tappable = (*Spinner)(nil)
 var _ fyne.Focusable = (*Spinner)(nil)
 var _ desktop.Mouseable = (*Spinner)(nil)
+var _ fyne.Scrollable = (*Spinner)(nil)
 
 // Spinner widget has a minimum, maximum, step and current values along with spinnerButtons
 // to increment and decrement the spinner value.
@@ -332,6 +333,20 @@ func (s *Spinner) SetValue(val int) {
 		s.downButton.Enable()
 	}
 	s.Refresh()
+}
+
+// Scrolled handles mouse scroller events.
+//
+// Implements fyne.Scrollable
+func (s *Spinner) Scrolled(evt *fyne.ScrollEvent) {
+	if s.Disabled() {
+		return
+	}
+	if evt.Scrolled.DY > 0 {
+		s.SetValue(s.value + s.step)
+	} else if evt.Scrolled.DY < 0 {
+		s.SetValue(s.value - s.step)
+	}
 }
 
 // Tapped handles primary button clicks with the cursor over
