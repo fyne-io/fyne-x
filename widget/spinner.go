@@ -20,6 +20,8 @@ type spinnerButton struct {
 	spinner *Spinner
 	up      bool
 
+	hovered bool
+
 	position fyne.Position
 	size     fyne.Size
 
@@ -157,6 +159,8 @@ func (r *spinnerButtonRenderer) buttonColorNames() (
 	if r.button.Disabled() {
 		bgColor = theme.ColorNameDisabledButton
 		fgColor = theme.ColorNameDisabled
+	} else if r.button.hovered {
+		bgBlend = theme.ColorNameHover
 	}
 	return fgColor, bgColor, bgBlend
 }
@@ -290,7 +294,12 @@ func (s *Spinner) MouseIn(evt *desktop.MouseEvent) {
 
 // MouseMoved is called when a desktop pointer hovers over the widget.
 func (s *Spinner) MouseMoved(evt *desktop.MouseEvent) {
-
+	if s.Disabled() {
+		return
+	}
+	s.upButton.hovered = s.upButton.containsPoint(evt.Position)
+	s.downButton.hovered = s.downButton.containsPoint(evt.Position)
+	s.Refresh()
 }
 
 // MouseOut is called when a desktop pointer exits the widget.
@@ -482,6 +491,8 @@ func (r *spinnerRenderer) Refresh() {
 	if r.spinner.GetValue() == r.spinner.min {
 		r.spinner.downButton.Disable()
 	}
+	r.spinner.upButton.Refresh()
+	r.spinner.downButton.Refresh()
 }
 
 // spinnerColors returns the colors to display the button in.
@@ -517,15 +528,15 @@ func blendColor(under, over color.Color) color.Color {
 	dstR, dstG, dstB, dstA := under.RGBA()
 	srcR, srcG, srcB, srcA := over.RGBA()
 
-	srcAlpha := float32(srcA) // 0xFFFF
-	dstAlpha := float32(dstA) // 0XFFFF
+	srcAlpha := float32(srcA) / 0xFFFF
+	dstAlpha := float32(dstA) / 0xFFFF
 
-	outAlpha := srcAlpha * dstAlpha * (1 - srcAlpha)
+	outAlpha := srcAlpha + dstAlpha*(1-srcAlpha)
 	outR := srcR + uint32(float32(dstR)*(1-srcAlpha))
 	outG := srcG + uint32(float32(dstG)*(1-srcAlpha))
 	outB := srcB + uint32(float32(dstB)*(1-srcAlpha))
-	// We create an RGBA64 here because the color components are already alpha-
-	// premultiplied 16-bit values (they're just stored as uint32s).
+	// We create an RGBA64 here because the color components are already
+	// alpha-premultiplied 16-bit values (they're just stored in uint32s).
 	return color.RGBA64{
 		R: uint16(outR),
 		G: uint16(outG),
