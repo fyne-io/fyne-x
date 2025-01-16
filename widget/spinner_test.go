@@ -274,3 +274,22 @@ func TestScrolled_NotFocused(t *testing.T) {
 	s.Scrolled(&e)
 	assert.Equal(t, 1, s.GetValue())
 }
+
+func TestOnChanged(t *testing.T) {
+	var v int
+	s := NewSpinner(1, 10, 1, func(newVal int) {
+		v = newVal
+	})
+	s.SetValue(3)
+	assert.Equal(t, 3, v)
+}
+
+func TestOnChanged_Disabled(t *testing.T) {
+	var v int
+	s := NewSpinner(1, 10, 1, func(newVal int) {
+		v = newVal
+	})
+	s.Disable()
+	s.SetValue(3)
+	assert.Equal(t, 1, v)
+}

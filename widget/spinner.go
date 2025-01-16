@@ -185,14 +185,17 @@ type Spinner struct {
 
 	hovered bool
 	focused bool
+
+	OnChanged func(int) `json:"-"`
 }
 
 // NewSpinner creates a new Spinner widget.
-func NewSpinner(min, max, step int, tapped func()) *Spinner {
+func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 	s := &Spinner{
-		min:  min,
-		max:  max,
-		step: step,
+		min:       min,
+		max:       max,
+		step:      step,
+		OnChanged: onChanged,
 	}
 	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
 	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
@@ -347,6 +350,9 @@ func (s *Spinner) SetValue(val int) {
 		s.downButton.Enable()
 	}
 	s.Refresh()
+	if s.OnChanged != nil {
+		s.OnChanged(s.value)
+	}
 }
 
 // Tapped handles primary button clicks with the cursor over
