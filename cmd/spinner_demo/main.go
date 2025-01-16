@@ -14,7 +14,7 @@ var spinnerDisabled bool
 
 func main() {
 	a := app.New()
-	spinner := xwidget.NewSpinner(1, 12, 3, stapped)
+	spinner := xwidget.NewSpinner(1, 12, 3, changed)
 	c := container.NewCenter(spinner)
 	b := widget.NewButton("(En/Dis)able Spinner", func() {
 		spinnerDisabled = !spinnerDisabled
@@ -32,6 +32,6 @@ func main() {
 	w.ShowAndRun()
 }
 
-func stapped(value int) {
+func changed(value int) {
 	fmt.Printf("sbutton tapped with value: %v\n", value)
 }
