@@ -2,10 +2,16 @@ package widget
 
 import (
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/data/binding"
 	"github.com/stretchr/testify/assert"
 )
+
+func waitForBinding() {
+	time.Sleep(time.Millisecond * 100) // data resolves on background thread
+}
 
 func TestNewSpinner(t *testing.T) {
 	s := NewSpinner(1, 5, 2, nil)
@@ -15,6 +21,26 @@ func TestNewSpinner(t *testing.T) {
 	assert.Equal(t, 1, s.GetValue())
 	assert.False(t, s.upButton.Disabled())
 	assert.True(t, s.downButton.Disabled())
+}
+
+func TestNewSpinnerWithData(t *testing.T) {
+	data := binding.NewInt()
+	s := NewSpinnerWithData(1, 5, 2, data)
+	waitForBinding()
+	val, err := data.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, val)
+
+	s.SetValue(2)
+	waitForBinding()
+	val, err = data.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 2, val)
+
+	err = data.Set(3)
+	assert.NoError(t, err)
+	waitForBinding()
+	assert.Equal(t, 3, s.GetValue())
 }
 
 func TestSetValue(t *testing.T) {

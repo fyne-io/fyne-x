@@ -1,11 +1,13 @@
 package widget
 
 import (
+	"fmt"
 	"image/color"
 	"strconv"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/desktop"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
@@ -183,6 +185,8 @@ type Spinner struct {
 	upButton   *spinnerButton
 	downButton *spinnerButton
 
+	binder basicBinder
+
 	hovered bool
 	focused bool
 
@@ -201,6 +205,25 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
 	s.SetValue(s.min)
 	return s
+}
+
+// NewSpinnerWithData returns a new Spinner widget connected to the specified data source.
+func NewSpinnerWithData(min, max, step int, data binding.Int) *Spinner {
+	s := NewSpinner(min, max, step, nil)
+	s.Bind(data)
+	s.OnChanged = func(_ int) {
+		s.binder.CallWithData(s.writeData)
+	}
+
+	return s
+}
+
+// Bind connects the specified data source to this Spinner widget.
+// The current value will be displayed and any changes in the data will cause the widget
+// to update.
+func (s *Spinner) Bind(data binding.Int) {
+	s.binder.SetCallback(s.updateFromData)
+	s.binder.Bind(data)
 }
 
 // CreateRenderer is a private method to fyne which links this widget to its
@@ -408,6 +431,12 @@ func (s *Spinner) TypedRune(rune rune) {
 	}
 }
 
+// Unbind disconnects any configured data source from this Spinner.
+// The current value will remain at the last value of the data source.
+func (s *Spinner) Unbind() {
+	s.binder.Unbind()
+}
+
 func (s *Spinner) requestFocus() {
 	if c := fyne.CurrentApp().Driver().CanvasForObject(s); c != nil {
 		c.Focus(s)
@@ -427,6 +456,44 @@ func (s *Spinner) textSize() fyne.Size {
 		maxText.TextSize, maxText.TextStyle, maxText.FontSource)
 	return fyne.NewSize(max(minTextSize.Width, maxTextSize.Width),
 		max(minTextSize.Height, maxTextSize.Height))
+}
+
+// updateFromData updates the Spinner to the value set in the bound data.
+func (s *Spinner) updateFromData(data binding.DataItem) {
+	if data == nil {
+		return
+	}
+	textSource, ok := data.(binding.Int)
+	if !ok {
+		return
+	}
+	val, err := textSource.Get()
+	if err != nil {
+		fyne.LogError("Error getting current data value", err)
+		return
+	}
+	s.SetValue(val)
+}
+
+// writeData updates the bound data item as the result of changes in the Spinner value.
+func (s *Spinner) writeData(data binding.DataItem) {
+	if data == nil {
+		return
+	}
+	intTarget, ok := data.(binding.Int)
+	if !ok {
+		return
+	}
+	currentValue, err := intTarget.Get()
+	if err != nil {
+		return
+	}
+	if currentValue != s.GetValue() {
+		err := intTarget.Set(s.GetValue())
+		if err != nil {
+			fyne.LogError(fmt.Sprintf("Failed to set binding value to %d", s.GetValue()), err)
+		}
+	}
 }
 
 // spinnerRenderer is the renderer for the Spinner widget
