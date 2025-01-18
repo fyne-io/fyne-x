@@ -319,3 +319,18 @@ func TestOnChanged_Disabled(t *testing.T) {
 	s.SetValue(3)
 	assert.Equal(t, 1, v)
 }
+
+func TestBinding_OutsideRange(t *testing.T) {
+	val := binding.NewInt()
+	s := NewSpinnerWithData(1, 5, 2, val)
+	waitForBinding()
+	err := val.Set(7)
+	assert.NoError(t, err)
+	waitForBinding()
+
+	assert.Equal(t, 5, s.GetValue())
+
+	v, err := val.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 5, v)
+}
