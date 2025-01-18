@@ -43,16 +43,21 @@ func main() {
 	l2 := widget.NewLabel("Spinner 2:")
 	s2 := xwidget.NewSpinnerWithData(-2, 16, 1, data)
 	c := container.NewGridWithColumns(2, l1, s1, l2, s2)
-	b := widget.NewButton("(En/Dis)able Spinner 1", func() {
+	b := widget.NewButton("Disable Spinner 1", func() {})
+	b.OnTapped = func() {
 		spinnerDisabled = !spinnerDisabled
 		if spinnerDisabled {
 			s1.Disable()
+			b.SetText("Enable Spinner 1")
 		} else {
 			s1.Enable()
+			b.SetText("Disable Spinner 1")
 		}
-	})
+	}
+	bs1 := widget.NewButton("Set Spinner 1 to 5", func() { s1.SetValue(5) })
+	bs2 := widget.NewButton("Set bound value to 12", func() { data.Set(12) })
 
-	v := container.NewVBox(c, b, c2)
+	v := container.NewVBox(c, b, c2, bs1, bs2)
 	w := a.NewWindow("SpinnerDemo")
 	w.Resize(fyne.NewSize(200, 200))
 	w.SetContent(v)
