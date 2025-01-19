@@ -527,14 +527,14 @@ func (r *spinnerRenderer) Layout(size fyne.Size) {
 
 	textSize := r.spinner.textSize()
 	rMinSize := r.MinSize()
-	xPos := borderSize + padding + textSize.Width
+	buttonSize := fyne.NewSize((textSize.Height+padding)/2-1,
+		(textSize.Height+padding)/2-1)
+	xPos := size.Width - buttonSize.Width - borderSize - padding/2
 	yPos := (rMinSize.Height - textSize.Height) / 2
 	r.text.Move(fyne.NewPos(xPos, yPos))
 
 	xPos += padding / 4
 	yPos -= theme.Padding()
-	buttonSize := fyne.NewSize((textSize.Height+padding)/2-1,
-		(textSize.Height+padding)/2-1)
 	r.spinner.upButton.Resize(buttonSize)
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
 
