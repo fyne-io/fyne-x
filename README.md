@@ -216,6 +216,50 @@ m := NewMap()
 
 ![](img/map.png)
 
+### Spinner
+
+A Spinner is a widget that displays an integer value along with an up button and a down button which
+allows incrementing or decrementing the value. The value is limited to be between set minimum and
+maximum values, and the value increments or decrements by a set step value. The most typical step
+value would be 1, but it can be set to any value greater than 0. The initially displayed value is
+the set minimum value.
+
+In addition to clicking on the up and down buttons, the spinner value can be incremented or decremented using either
+keyboard keys, or the mouse scroller. Clicking on one of the buttons
+will modify the spinner value at any time, except when the spinner is disabled. Keyboard and scroller input only
+works when the spinner has focus.
+
+Here are the keyboard keys accepted by the spinner widget and their effects:
+
+| Key | Effect |
+|---|---|
+| KeyUp | Increment value by step amount |
+| + | Increment value by step amount |
+| KeyDown | Decrement value by step amount |
+| - | Decrement value by step amount |
+
+Finally, the value can be set programmatically using the `Spinner.SetValue` method.
+
+Here is simple example that creates a spinner widget:
+
+```go
+spinner := NewSpinner(2, 22, 3, valChanged)
+spinner.SetValue(6)
+```
+
+The result of executing this code is a spinner widget with the following settings:
+
+| Setting | Value |
+|---|---|
+| minimum value | 2 |
+| maximum value | 22 |
+| step | 3 |
+|initial value | 2 |
+| function called on value change | valChanged |
+| value after SetValue call | 6 |
+
+Check out the [demo](cmd/spinner_demo/main.go) program for an example of how to use the spinner widget.
+
 ### TwoStateToolbarAction
 
 A TwoStateToolbarAction displays one of two icons based on the stored state. It is similar
