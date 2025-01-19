@@ -259,7 +259,11 @@ The result of executing this code is a spinner widget with the following setting
 | function called on value change | valChanged |
 | value after SetValue call | 6 |
 
-And this is what a spinner looks like: ![](img/spinner.png)
+And this is what a spinner looks like in light and dark themes:
+
+![](img/spinner-light.png)
+
+![](img/spinner-dark.png)
 
 The spinner is normally sized to the minimum width and height required to display any value between its
 minimum and maximum values. In the case of a spinner in a grid container, the spinner width is set to
