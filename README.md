@@ -218,9 +218,10 @@ m := NewMap()
 
 ### Spinner
 
-A Spinner is a widget that displays an integer value along with an up button and a down button which
-allows incrementing or decrementing the value. The value is limited to be between set minimum and
-maximum values, and the value increments or decrements by a set step value. The most typical step
+A Spinner is a widget that displays an integer value along with an up button and a down button. These
+buttons
+allow incrementing or decrementing the value. The value is limited to be between the set minimum and
+maximum values, and the value increments or decrements by the set step value. The most typical step
 value would be 1, but it can be set to any value greater than 0. The initially displayed value is
 the set minimum value.
 
@@ -258,7 +259,13 @@ The result of executing this code is a spinner widget with the following setting
 | function called on value change | valChanged |
 | value after SetValue call | 6 |
 
-Check out the [demo](cmd/spinner_demo/main.go) program for an example of how to use the spinner widget.
+And this is what a spinner looks like: ![](img/spinner.png)
+
+The spinner is normally sized to the minimum width and height required to display any value between its
+minimum and maximum values. In the case of a spinner in a grid container, the spinner width is set to
+the grid container's column width.
+
+See the [demo](cmd/spinner_demo/main.go) program for an example of how to use the spinner widget.
 
 ### TwoStateToolbarAction
 
