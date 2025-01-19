@@ -569,13 +569,18 @@ func (r *spinnerRenderer) Refresh() {
 	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
 
-	r.spinner.upButton.Enable()
-	if r.spinner.GetValue() == r.spinner.max {
+	if r.spinner.Disabled() {
 		r.spinner.upButton.Disable()
-	}
-	r.spinner.downButton.Enable()
-	if r.spinner.GetValue() == r.spinner.min {
 		r.spinner.downButton.Disable()
+	} else {
+		r.spinner.upButton.Enable()
+		if r.spinner.GetValue() == r.spinner.max {
+			r.spinner.upButton.Disable()
+		}
+		r.spinner.downButton.Enable()
+		if r.spinner.GetValue() == r.spinner.min {
+			r.spinner.downButton.Disable()
+		}
 	}
 	r.spinner.upButton.Refresh()
 	r.spinner.downButton.Refresh()
