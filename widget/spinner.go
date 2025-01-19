@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"errors"
 	"fmt"
 	"image/color"
 	"strconv"
@@ -194,7 +195,23 @@ type Spinner struct {
 }
 
 // NewSpinner creates a new Spinner widget.
+//
+// Params:
+//
+//	min is the minimum spinner value. It may be < 0.
+//	max is the maximum spinner value. It must be > min.
+//	step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
+//	onChanged is the callback function that is called whenever the spinner value changes.
 func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
+	if min >= max {
+		panic(errors.New("spinner max must be greater than min value"))
+	}
+	if step < 1 {
+		panic(errors.New("spinner step must be greater than 0"))
+	}
+	if step > max-min {
+		panic(errors.New("spinner step must be less than or equal to max - min"))
+	}
 	s := &Spinner{
 		min:       min,
 		max:       max,
@@ -208,6 +225,13 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 }
 
 // NewSpinnerWithData returns a new Spinner widget connected to the specified data source.
+//
+// Params:
+//
+//	min is the minimum spinner value. It may be < 0.
+//	max is the maximum spinner value. It must be > min.
+//	step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
+//	data is the value that is bound to the spinner value.
 func NewSpinnerWithData(min, max, step int, data binding.Int) *Spinner {
 	s := NewSpinner(min, max, step, nil)
 	s.Bind(data)

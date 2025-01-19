@@ -23,6 +23,14 @@ func TestNewSpinner(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
+func TestNewSpinner_BadArgs(t *testing.T) {
+	assert.Panics(t, func() { NewSpinner(5, 5, 1, nil) }, "Did not panic with min == max")
+	assert.Panics(t, func() { NewSpinner(5, 4, 1, nil) }, "Did not panic with min < max")
+	assert.Panics(t, func() { NewSpinner(1, 5, 0, nil) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewSpinner(1, 5, -5, nil) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewSpinner(1, 5, 5, nil) }, "Did not panic with step > max - min")
+}
+
 func TestNewSpinnerWithData(t *testing.T) {
 	data := binding.NewInt()
 	s := NewSpinnerWithData(1, 5, 2, data)
@@ -41,6 +49,15 @@ func TestNewSpinnerWithData(t *testing.T) {
 	assert.NoError(t, err)
 	waitForBinding()
 	assert.Equal(t, 3, s.GetValue())
+}
+
+func TestNewSpinnerWithData_BadArgs(t *testing.T) {
+	boundValue := binding.NewInt()
+	assert.Panics(t, func() { NewSpinnerWithData(5, 5, 1, boundValue) }, "Did not panic with min == max")
+	assert.Panics(t, func() { NewSpinnerWithData(5, 4, 1, boundValue) }, "Did not panic with min < max")
+	assert.Panics(t, func() { NewSpinnerWithData(1, 5, 0, boundValue) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewSpinnerWithData(1, 5, -5, boundValue) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewSpinnerWithData(1, 5, 5, boundValue) }, "Did not panic with step > max - min")
 }
 
 func TestSetValue(t *testing.T) {
