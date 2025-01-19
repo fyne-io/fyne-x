@@ -105,6 +105,21 @@ func TestSetValue_DisabledSpinner(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
+func TestSetMinMaxStep(t *testing.T) {
+	s := NewSpinner(1, 6, 2, nil)
+	s.SetMinMaxStep(0, 10, 1)
+	assert.Equal(t, 0, s.min)
+	assert.Equal(t, 10, s.max)
+	assert.Equal(t, 1, s.step)
+}
+
+func TestSetMinMaxStep_BadArgs(t *testing.T) {
+	s := NewSpinner(1, 10, 1, nil)
+	assert.Panics(t, func() { s.SetMinMaxStep(11, 10, 2) })
+	assert.Panics(t, func() { s.SetMinMaxStep(1, 10, 10) })
+	assert.Panics(t, func() { s.SetMinMaxStep(1, 10, -1) })
+}
+
 func TestUpButtonTapped(t *testing.T) {
 	s := NewSpinner(4, 10, 5, nil)
 	s.upButton.Tapped(&fyne.PointEvent{})
