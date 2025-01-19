@@ -51,6 +51,18 @@ func TestNewSpinnerWithData(t *testing.T) {
 	assert.Equal(t, 3, s.GetValue())
 }
 
+func TestUnbind(t *testing.T) {
+	data := binding.NewInt()
+	s := NewSpinnerWithData(1, 5, 2, data)
+	waitForBinding()
+	s.Unbind()
+	s.SetValue(2)
+	waitForBinding()
+	val, err := data.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 1, val)
+}
+
 func TestNewSpinnerWithData_BadArgs(t *testing.T) {
 	boundValue := binding.NewInt()
 	assert.Panics(t, func() { NewSpinnerWithData(5, 5, 1, boundValue) }, "Did not panic with min == max")
