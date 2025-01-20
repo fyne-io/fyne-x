@@ -120,6 +120,42 @@ func TestSetMinMaxStep_BadArgs(t *testing.T) {
 	assert.Panics(t, func() { s.SetMinMaxStep(1, 10, -1) })
 }
 
+func TestSetMinMaxStep_OutsideRange(t *testing.T) {
+	s := NewSpinner(-2, 20, 1, nil)
+	s.SetValue(19)
+	s.SetMinMaxStep(-1, 10, 1)
+	assert.Equal(t, 10, s.GetValue())
+	s.SetValue(-1)
+	s.SetMinMaxStep(1, 10, 1)
+	assert.Equal(t, 1, s.GetValue())
+}
+
+func TestSetMinMaxStep_DataAboveRange(t *testing.T) {
+	data := binding.NewInt()
+	s := NewSpinnerWithData(-2, 20, 1, data)
+	data.Set(19)
+	waitForBinding()
+	assert.Equal(t, 19, s.GetValue())
+	s.SetMinMaxStep(-1, 10, 1)
+	waitForBinding()
+	val, err := data.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, 10, val)
+}
+
+func TestSetMinMaxStep_DataBelowRange(t *testing.T) {
+	data := binding.NewInt()
+	s := NewSpinnerWithData(-2, 20, 1, data)
+	data.Set(-2)
+	waitForBinding()
+	assert.Equal(t, -2, s.GetValue())
+	s.SetMinMaxStep(-1, 10, 1)
+	waitForBinding()
+	val, err := data.Get()
+	assert.NoError(t, err)
+	assert.Equal(t, -1, val)
+}
+
 func TestUpButtonTapped(t *testing.T) {
 	s := NewSpinner(4, 10, 5, nil)
 	s.upButton.Tapped(&fyne.PointEvent{})

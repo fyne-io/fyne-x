@@ -384,6 +384,9 @@ func (s *Spinner) Scrolled(evt *fyne.ScrollEvent) {
 //	min is the minimum spinner value. It may be < 0.
 //	max is the maximum spinner value. It must be > min.
 //	step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
+//
+// If the previously set value is less than min, then the value is set to min.
+// If the previously set value is greater than max, then the value is set to max.
 func (s *Spinner) SetMinMaxStep(min, max, step int) {
 	if max <= min {
 		panic(errors.New("spinner max must be greater than min value"))
@@ -397,6 +400,12 @@ func (s *Spinner) SetMinMaxStep(min, max, step int) {
 	s.min = min
 	s.max = max
 	s.step = step
+
+	if s.value < s.min {
+		s.SetValue(s.min)
+	} else if s.value > s.max {
+		s.SetValue(s.max)
+	}
 }
 
 // SetValue sets the spinner value. It ensures that the value is always >= min and
