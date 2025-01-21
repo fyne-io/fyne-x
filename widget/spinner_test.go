@@ -72,6 +72,17 @@ func TestNewSpinnerWithData_BadArgs(t *testing.T) {
 	assert.Panics(t, func() { NewSpinnerWithData(1, 5, 5, boundValue) }, "Did not panic with step > max - min")
 }
 
+func TestNewUninitializedSpinner(t *testing.T) {
+	s := NewSpinnerUninitialized()
+	assert.True(t, s.Disabled())
+	s.Enable()
+	assert.True(t, s.Disabled())
+	s.SetMinMaxStep(-1, 2, 1)
+	assert.True(t, s.Disabled())
+	s.Enable()
+	assert.False(t, s.Disabled())
+}
+
 func TestSetValue(t *testing.T) {
 	s := NewSpinner(1, 5, 2, nil)
 	s.SetValue(2)

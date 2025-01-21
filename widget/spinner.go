@@ -178,10 +178,11 @@ var _ fyne.Scrollable = (*Spinner)(nil)
 type Spinner struct {
 	widget.DisableableWidget
 
-	value int
-	min   int
-	max   int
-	step  int
+	value       int
+	min         int
+	max         int
+	step        int
+	initialized bool
 
 	upButton   *spinnerButton
 	downButton *spinnerButton
@@ -213,14 +214,30 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 		panic(errors.New("spinner step must be less than or equal to max - min"))
 	}
 	s := &Spinner{
-		min:       min,
-		max:       max,
-		step:      step,
-		OnChanged: onChanged,
+		min:         min,
+		max:         max,
+		step:        step,
+		initialized: true,
+		OnChanged:   onChanged,
 	}
 	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
 	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
 	s.SetValue(s.min)
+	return s
+}
+
+// NewSpinnerUninitialized returns a new uninitialized Spinner widget.
+//
+// An uninitialized Spinner widget is useful when you need to create a Spinner
+// but the initial settings are unknown.
+// Calling Enable on an uninitialized spinner will not enable the spinner; you
+// must first call SetMinMaxStep to initialize spinner values before enabling
+// the spinner widget.
+func NewSpinnerUninitialized() *Spinner {
+	s := &Spinner{initialized: false}
+	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
+	s.Disable()
 	return s
 }
 
@@ -283,10 +300,14 @@ func (s *Spinner) Disable() {
 	s.downButton.Disable()
 	s.upButton.Disable()
 	s.DisableableWidget.Disable()
+	s.Refresh()
 }
 
 // Enable enables the Spinner and its buttons as appropriate.
 func (s *Spinner) Enable() {
+	if !s.initialized {
+		return
+	}
 	if s.GetValue() < s.max {
 		s.upButton.Enable()
 	}
@@ -294,6 +315,8 @@ func (s *Spinner) Enable() {
 		s.downButton.Enable()
 	}
 	s.DisableableWidget.Enable()
+	s.SetValue(s.value)
+	s.Refresh()
 }
 
 // FocusGained is called when the Spinner has been given focus.
@@ -400,6 +423,7 @@ func (s *Spinner) SetMinMaxStep(min, max, step int) {
 	s.min = min
 	s.max = max
 	s.step = step
+	s.initialized = true
 
 	if s.value < s.min {
 		s.SetValue(s.min)

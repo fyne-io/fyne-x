@@ -3,7 +3,6 @@ package main
 import (
 	"strconv"
 
-	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/data/binding"
@@ -14,6 +13,7 @@ import (
 var spinnerDisabled bool
 var data binding.Int = binding.NewInt()
 var s1 *xwidget.Spinner
+var bs *widget.Button
 
 func main() {
 	a := app.New()
@@ -44,7 +44,9 @@ func main() {
 	s2 := xwidget.NewSpinnerWithData(-2, 16, 1, data)
 	c := container.NewGridWithColumns(2, l1, s1)
 	c1 := container.NewHBox(l2, s2)
-	s2.Resize(fyne.NewSize(75, 100))
+	l3 := widget.NewLabel("Uninitialized Spinner:")
+	s3 := xwidget.NewSpinnerUninitialized()
+	c3 := container.NewHBox(l3, s3)
 	b := widget.NewButton("Disable Spinner 1", func() {})
 	b.OnTapped = func() {
 		spinnerDisabled = !spinnerDisabled
@@ -56,10 +58,15 @@ func main() {
 			b.SetText("Disable Spinner 1")
 		}
 	}
+	bs = widget.NewButton("Initialize Spinner", func() {
+		s3.SetMinMaxStep(1, 10, 1)
+		s3.Enable()
+		bs.Disable()
+	})
 	bs1 := widget.NewButton("Set Spinner 1 to 5", func() { s1.SetValue(5) })
 	bs2 := widget.NewButton("Set bound value to 12", func() { data.Set(12) })
 
-	v := container.NewVBox(c, c1, b, c2, bs1, bs2)
+	v := container.NewVBox(c, c1, c3, b, bs, c2, bs1, bs2)
 	w := a.NewWindow("SpinnerDemo")
 	w.SetContent(v)
 	w.ShowAndRun()
