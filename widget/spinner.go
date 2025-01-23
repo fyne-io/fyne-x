@@ -14,52 +14,37 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-var _ fyne.Tappable = (*spinnerButton)(nil)
-
-// spinnerButton is a button used to increment or decrement the value in the Spinner.
+// spinnerButton widget is a specialized button for use in the Spinner widget
 type spinnerButton struct {
-	widget.DisableableWidget
+	widget.Button
 	spinner *Spinner
-	up      bool
-
-	hovered bool
 
 	position fyne.Position
 	size     fyne.Size
-
-	OnTapped func() `json:"-"`
 }
 
-func newSpinnerButton(s *Spinner, up bool, onTapped func()) *spinnerButton {
-	button := &spinnerButton{
-		spinner:  s,
-		up:       up,
-		OnTapped: onTapped,
+// newSpinnerButton creates a spinnerButton widget. It should only be called from
+// NewSpinner or NewSpinnerUninitialized.
+//
+// Params:
+//
+//	s is a pointer to the parent Spinner widget that this button is contained within.
+//	onTapped is the function to be called when the button is "tapped".
+func newSpinnerButton(s *Spinner, onTapped func()) *spinnerButton {
+	b := &spinnerButton{
+		spinner: s,
 	}
-	button.ExtendBaseWidget(button)
-	return button
-}
-
-// CreateRenderer is a private method to fyne which links this widget to its
-// renderer.
-func (b *spinnerButton) CreateRenderer() fyne.WidgetRenderer {
 	b.ExtendBaseWidget(b)
+	b.Text = ""
+	b.OnTapped = onTapped
+	return b
+}
 
-	r := &spinnerButtonRenderer{
-		button: b,
-	}
+// MinSize returns the minimum (actual) size of the spinnerButton.
+func (b *spinnerButton) MinSize() fyne.Size {
 	th := b.Theme()
-	v := fyne.CurrentApp().Settings().ThemeVariant()
-	r.background = canvas.NewRectangle(th.Color(theme.ColorNameButton, v))
-	r.line1 = canvas.NewLine(th.Color(theme.ColorNameForeground, v))
-	r.line2 = canvas.NewLine(th.Color(theme.ColorNameForeground, v))
-
-	r.objects = []fyne.CanvasObject{
-		r.background,
-		r.line1,
-		r.line2,
-	}
-	return r
+	h := b.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
+	return fyne.NewSize(h, h)
 }
 
 // Move moves the button.
@@ -74,16 +59,15 @@ func (b *spinnerButton) Resize(sz fyne.Size) {
 	b.BaseWidget.Resize(sz)
 }
 
-// Tapped processes click events on the spinnerButton.
-func (b *spinnerButton) Tapped(*fyne.PointEvent) {
-	if b.Disabled() {
-		return
-	}
-	if onTapped := b.OnTapped; onTapped != nil {
-		onTapped()
-	}
-}
-
+// containsPoint is a helper method that is called to determine if the point
+// is within the button. Returns true if point is within the widget and
+// false otherwise.
+//
+// Params:
+//
+//	pos is the position to check. This point is relative to the upper-left
+//
+// corner of the containing Spinner widget.
 func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
 	if pos.X < b.position.X || pos.X > b.position.X+b.size.Width {
 		return false
@@ -91,80 +75,6 @@ func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
 		return false
 	}
 	return true
-}
-
-// Renderer for the spinnerButton
-type spinnerButtonRenderer struct {
-	button  *spinnerButton
-	objects []fyne.CanvasObject
-
-	background *canvas.Rectangle
-	line1      *canvas.Line
-	line2      *canvas.Line
-}
-
-// Destroy destroys any objects that are created for the spinnerButtonRenderer.
-func (r *spinnerButtonRenderer) Destroy() {}
-
-// Layout lays out the components of the spinnerButton.
-func (r *spinnerButtonRenderer) Layout(size fyne.Size) {
-	r.background.Resize(size)
-	if r.button.up {
-		r.line1.Position1 = fyne.NewPos(0.2*size.Width, 0.75*size.Height)
-		r.line1.Position2 = fyne.NewPos(0.5*size.Width, 0.25*size.Height)
-		r.line2.Position1 = fyne.NewPos(0.5*size.Width, 0.25*size.Height)
-		r.line2.Position2 = fyne.NewPos(0.8*size.Width, 0.75*size.Height)
-	} else {
-		r.line1.Position1 = fyne.NewPos(0.2*size.Width, 0.25*size.Height)
-		r.line1.Position2 = fyne.NewPos(0.5*size.Width, 0.75*size.Height)
-		r.line2.Position1 = fyne.NewPos(0.5*size.Width, 0.75*size.Height)
-		r.line2.Position2 = fyne.NewPos(0.8*size.Width, 0.25*size.Height)
-	}
-}
-
-// MinSize returns the minimum (actual) size of the spinnerButton.
-func (r *spinnerButtonRenderer) MinSize() fyne.Size {
-	th := r.button.spinner.Theme()
-	h := r.button.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
-	return fyne.NewSize(h, h)
-}
-
-// Objects returns the CanvasObjects that make up the spinnerButtton.
-func (r *spinnerButtonRenderer) Objects() []fyne.CanvasObject {
-	return r.objects
-}
-
-// Refresh redisplays the s[innerButton.
-func (r *spinnerButtonRenderer) Refresh() {
-	th := r.button.Theme()
-	v := fyne.CurrentApp().Settings().ThemeVariant()
-	fgColor, bgColor, bgBlend := r.buttonColorNames()
-	backColor := th.Color(bgColor, v)
-	if bgBlend != "" {
-		backColor = blendColor(backColor, th.Color(bgBlend, v))
-	}
-	r.background.FillColor = backColor
-	r.line1.StrokeColor = th.Color(fgColor, v)
-	r.line2.StrokeColor = th.Color(fgColor, v)
-
-	r.background.Refresh()
-	r.line1.Refresh()
-	r.line2.Refresh()
-}
-
-// buttonColorNames returns the colors to display the button in.
-// This is a copy of widget.Button.buttonColorNames in fyne v2.5.3.
-func (r *spinnerButtonRenderer) buttonColorNames() (
-	fgColor, bgColor, bgBlend fyne.ThemeColorName) {
-	fgColor = theme.ColorNameForeground
-	bgColor = theme.ColorNameButton
-	if r.button.Disabled() {
-		bgColor = theme.ColorNameDisabledButton
-		fgColor = theme.ColorNameDisabled
-	} else if r.button.hovered {
-		bgBlend = theme.ColorNameHover
-	}
-	return fgColor, bgColor, bgBlend
 }
 
 var _ fyne.Disableable = (*Spinner)(nil)
@@ -220,8 +130,8 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 		initialized: true,
 		OnChanged:   onChanged,
 	}
-	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
+	s.upButton = newSpinnerButton(s, s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, s.downButtonClicked)
 	s.SetValue(s.min)
 	return s
 }
@@ -235,8 +145,8 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 // the spinner widget.
 func NewSpinnerUninitialized() *Spinner {
 	s := &Spinner{initialized: false}
-	s.upButton = newSpinnerButton(s, true, s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, false, s.downButtonClicked)
+	s.upButton = newSpinnerButton(s, s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, s.downButtonClicked)
 	s.Disable()
 	return s
 }
@@ -366,14 +276,7 @@ func (s *Spinner) MouseIn(evt *desktop.MouseEvent) {
 }
 
 // MouseMoved is called when a desktop pointer hovers over the widget.
-func (s *Spinner) MouseMoved(evt *desktop.MouseEvent) {
-	if s.Disabled() {
-		return
-	}
-	s.upButton.hovered = s.upButton.containsPoint(evt.Position)
-	s.downButton.hovered = s.downButton.containsPoint(evt.Position)
-	s.Refresh()
-}
+func (s *Spinner) MouseMoved(evt *desktop.MouseEvent) {}
 
 // MouseOut is called when a desktop pointer exits the widget.
 func (s *Spinner) MouseOut() {
@@ -688,31 +591,6 @@ func (s *Spinner) upButtonClicked() {
 
 func (s *Spinner) downButtonClicked() {
 	s.SetValue(s.value - s.step)
-}
-
-// blendColor blends two colors together.
-// This is a copy of blendcolor in button.go in fyne v2.5.3.
-func blendColor(under, over color.Color) color.Color {
-	// This alpha blends with the over operator, and accounts for RGBA() returning
-	// alpha-premultiplied values
-	dstR, dstG, dstB, dstA := under.RGBA()
-	srcR, srcG, srcB, srcA := over.RGBA()
-
-	srcAlpha := float32(srcA) / 0xFFFF
-	dstAlpha := float32(dstA) / 0xFFFF
-
-	outAlpha := srcAlpha + dstAlpha*(1-srcAlpha)
-	outR := srcR + uint32(float32(dstR)*(1-srcAlpha))
-	outG := srcG + uint32(float32(dstG)*(1-srcAlpha))
-	outB := srcB + uint32(float32(dstB)*(1-srcAlpha))
-	// We create an RGBA64 here because the color components are already
-	// alpha-premultiplied 16-bit values (they're just stored in uint32s).
-	return color.RGBA64{
-		R: uint16(outR),
-		G: uint16(outG),
-		B: uint16(outB),
-		A: uint16(outAlpha * 0xFFFF),
-	}
 }
 
 // max returns the larger of the two arguments.
