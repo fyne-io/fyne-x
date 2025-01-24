@@ -30,11 +30,12 @@ type spinnerButton struct {
 //
 //	s is a pointer to the parent Spinner widget that this button is contained within.
 //	onTapped is the function to be called when the button is "tapped".
-func newSpinnerButton(s *Spinner, onTapped func()) *spinnerButton {
+func newSpinnerButton(s *Spinner, resource fyne.Resource, onTapped func()) *spinnerButton {
 	b := &spinnerButton{
 		spinner: s,
 	}
 	b.ExtendBaseWidget(b)
+	b.Icon = resource
 	b.Text = ""
 	b.OnTapped = onTapped
 	return b
@@ -130,8 +131,8 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 		initialized: true,
 		OnChanged:   onChanged,
 	}
-	s.upButton = newSpinnerButton(s, s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, s.downButtonClicked)
+	s.upButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.SetValue(s.min)
 	return s
 }
@@ -145,8 +146,8 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 // the spinner widget.
 func NewSpinnerUninitialized() *Spinner {
 	s := &Spinner{initialized: false}
-	s.upButton = newSpinnerButton(s, s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, s.downButtonClicked)
+	s.upButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.Disable()
 	return s
 }
