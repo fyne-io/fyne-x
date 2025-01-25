@@ -14,13 +14,60 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// intSpinnerButton widget is a specialized button for use in the IntSpinner widget
-type intSpinnerButton struct {
+// baseSpinnerButton widget is the base widget for intSpinnerButton and float64SpinnerButton.
+type baseSpinnerButton struct {
 	widget.Button
-	spinner *IntSpinner
 
 	position fyne.Position
 	size     fyne.Size
+}
+
+// Move moves the button.
+func (b *baseSpinnerButton) Move(pos fyne.Position) {
+	b.position = pos
+	b.BaseWidget.Move(pos)
+}
+
+// Resize resizes the button.
+func (b *baseSpinnerButton) Resize(sz fyne.Size) {
+	b.size = sz
+	b.BaseWidget.Resize(sz)
+}
+
+// containsPoint is a helper method that is called to determine if the point
+// is within the button. Returns true if point is within the button and
+// false otherwise.
+//
+// Params:
+//
+//	pos is the position to check. This point is relative to the upper-left
+//
+// corner of the containing spinner widget.
+func (b *baseSpinnerButton) containsPoint(pos fyne.Position) bool {
+	if pos.X < b.position.X || pos.X > b.position.X+b.size.Width {
+		return false
+	} else if pos.Y < b.position.Y || pos.Y > b.position.Y+b.size.Height {
+		return false
+	}
+	return true
+}
+
+// setButtonProperties sets the button properties.
+//
+// Params:
+//
+//	resource is the Resource for the button icon.
+//	onTapped is the function to be called when the button is tapped.
+func (b *baseSpinnerButton) setButtonProperties(resource fyne.Resource, onTapped func()) {
+	b.Icon = resource
+	b.Text = ""
+	b.OnTapped = onTapped
+}
+
+// intSpinnerButton widget is a specialized button for use in the IntSpinner widget
+type intSpinnerButton struct {
+	baseSpinnerButton
+	spinner *IntSpinner
 }
 
 // newIntSpinnerButton creates an intSpinnerButton widget. It should only be called from
@@ -35,47 +82,15 @@ func newIntSpinnerButton(s *IntSpinner, resource fyne.Resource, onTapped func())
 		spinner: s,
 	}
 	b.ExtendBaseWidget(b)
-	b.Icon = resource
-	b.Text = ""
-	b.OnTapped = onTapped
+	b.setButtonProperties(resource, onTapped)
 	return b
 }
 
-// MinSize returns the minimum (actual) size of the spinnerButton.
+// MinSize returns the minimum (actual) size of the spinner button.
 func (b *intSpinnerButton) MinSize() fyne.Size {
 	th := b.Theme()
 	h := b.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
 	return fyne.NewSize(h, h)
-}
-
-// Move moves the button.
-func (b *intSpinnerButton) Move(pos fyne.Position) {
-	b.position = pos
-	b.BaseWidget.Move(pos)
-}
-
-// Resize resizes the button.
-func (b *intSpinnerButton) Resize(sz fyne.Size) {
-	b.size = sz
-	b.BaseWidget.Resize(sz)
-}
-
-// containsPoint is a helper method that is called to determine if the point
-// is within the button. Returns true if point is within the widget and
-// false otherwise.
-//
-// Params:
-//
-//	pos is the position to check. This point is relative to the upper-left
-//
-// corner of the containing IntSpinner widget.
-func (b *intSpinnerButton) containsPoint(pos fyne.Position) bool {
-	if pos.X < b.position.X || pos.X > b.position.X+b.size.Width {
-		return false
-	} else if pos.Y < b.position.Y || pos.Y > b.position.Y+b.size.Height {
-		return false
-	}
-	return true
 }
 
 var _ fyne.Disableable = (*IntSpinner)(nil)
