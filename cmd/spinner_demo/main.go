@@ -12,7 +12,7 @@ import (
 
 var spinnerDisabled bool
 var data binding.Int = binding.NewInt()
-var s1 *xwidget.Spinner
+var s1 *xwidget.IntSpinner
 var bs *widget.Button
 
 func main() {
@@ -33,7 +33,7 @@ func main() {
 
 	c2 := container.NewGridWithColumns(2, ls1, s1ValueLabel, ls2, dataValueLabel)
 	l1 := widget.NewLabel("Spinner 1:")
-	s1 = xwidget.NewSpinner(1, 12, 3, nil)
+	s1 = xwidget.NewIntSpinner(1, 12, 3, nil)
 	s1.OnChanged = func(val int) {
 		s1ValueLabel.Text = strconv.Itoa(s1.GetValue())
 		s1ValueLabel.Refresh()
@@ -41,11 +41,11 @@ func main() {
 	// OnChanged has to be called here to display initial value in s1ValueLabel.
 	s1.OnChanged(s1.GetValue())
 	l2 := widget.NewLabel("Spinner 2:")
-	s2 := xwidget.NewSpinnerWithData(-2, 16, 1, data)
+	s2 := xwidget.NewIntSpinnerWithData(-2, 16, 1, data)
 	c := container.NewGridWithColumns(2, l1, s1)
 	c1 := container.NewHBox(l2, s2)
 	l3 := widget.NewLabel("Uninitialized Spinner:")
-	s3 := xwidget.NewSpinnerUninitialized()
+	s3 := xwidget.NewIntSpinnerUninitialized()
 	c3 := container.NewHBox(l3, s3)
 	b := widget.NewButton("Disable Spinner 1", func() {})
 	b.OnTapped = func() {

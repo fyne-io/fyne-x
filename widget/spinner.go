@@ -14,24 +14,24 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// spinnerButton widget is a specialized button for use in the Spinner widget
-type spinnerButton struct {
+// intSpinnerButton widget is a specialized button for use in the IntSpinner widget
+type intSpinnerButton struct {
 	widget.Button
-	spinner *Spinner
+	spinner *IntSpinner
 
 	position fyne.Position
 	size     fyne.Size
 }
 
-// newSpinnerButton creates a spinnerButton widget. It should only be called from
-// NewSpinner or NewSpinnerUninitialized.
+// newIntSpinnerButton creates an intSpinnerButton widget. It should only be called from
+// NewIntSpinner or NewIntSpinnerUninitialized.
 //
 // Params:
 //
-//	s is a pointer to the parent Spinner widget that this button is contained within.
+//	s is a pointer to the parent IntSpinner widget that this button is contained within.
 //	onTapped is the function to be called when the button is "tapped".
-func newSpinnerButton(s *Spinner, resource fyne.Resource, onTapped func()) *spinnerButton {
-	b := &spinnerButton{
+func newIntSpinnerButton(s *IntSpinner, resource fyne.Resource, onTapped func()) *intSpinnerButton {
+	b := &intSpinnerButton{
 		spinner: s,
 	}
 	b.ExtendBaseWidget(b)
@@ -42,20 +42,20 @@ func newSpinnerButton(s *Spinner, resource fyne.Resource, onTapped func()) *spin
 }
 
 // MinSize returns the minimum (actual) size of the spinnerButton.
-func (b *spinnerButton) MinSize() fyne.Size {
+func (b *intSpinnerButton) MinSize() fyne.Size {
 	th := b.Theme()
 	h := b.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
 	return fyne.NewSize(h, h)
 }
 
 // Move moves the button.
-func (b *spinnerButton) Move(pos fyne.Position) {
+func (b *intSpinnerButton) Move(pos fyne.Position) {
 	b.position = pos
 	b.BaseWidget.Move(pos)
 }
 
 // Resize resizes the button.
-func (b *spinnerButton) Resize(sz fyne.Size) {
+func (b *intSpinnerButton) Resize(sz fyne.Size) {
 	b.size = sz
 	b.BaseWidget.Resize(sz)
 }
@@ -68,8 +68,8 @@ func (b *spinnerButton) Resize(sz fyne.Size) {
 //
 //	pos is the position to check. This point is relative to the upper-left
 //
-// corner of the containing Spinner widget.
-func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
+// corner of the containing IntSpinner widget.
+func (b *intSpinnerButton) containsPoint(pos fyne.Position) bool {
 	if pos.X < b.position.X || pos.X > b.position.X+b.size.Width {
 		return false
 	} else if pos.Y < b.position.Y || pos.Y > b.position.Y+b.size.Height {
@@ -78,15 +78,15 @@ func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
 	return true
 }
 
-var _ fyne.Disableable = (*Spinner)(nil)
-var _ fyne.Tappable = (*Spinner)(nil)
-var _ fyne.Focusable = (*Spinner)(nil)
-var _ desktop.Mouseable = (*Spinner)(nil)
-var _ fyne.Scrollable = (*Spinner)(nil)
+var _ fyne.Disableable = (*IntSpinner)(nil)
+var _ fyne.Tappable = (*IntSpinner)(nil)
+var _ fyne.Focusable = (*IntSpinner)(nil)
+var _ desktop.Mouseable = (*IntSpinner)(nil)
+var _ fyne.Scrollable = (*IntSpinner)(nil)
 
-// Spinner widget has a minimum, maximum, step and current values along with spinnerButtons
+// IntSpinner widget has a minimum, maximum, step and current values along with spinnerButtons
 // to increment and decrement the spinner value.
-type Spinner struct {
+type IntSpinner struct {
 	widget.DisableableWidget
 
 	value       int
@@ -95,8 +95,8 @@ type Spinner struct {
 	step        int
 	initialized bool
 
-	upButton   *spinnerButton
-	downButton *spinnerButton
+	upButton   *intSpinnerButton
+	downButton *intSpinnerButton
 
 	binder basicBinder
 
@@ -106,7 +106,7 @@ type Spinner struct {
 	OnChanged func(int) `json:"-"`
 }
 
-// NewSpinner creates a new Spinner widget.
+// NewIntSpinner creates a new Spinner widget.
 //
 // Params:
 //
@@ -114,7 +114,7 @@ type Spinner struct {
 //	max is the maximum spinner value. It must be > min.
 //	step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
 //	onChanged is the callback function that is called whenever the spinner value changes.
-func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
+func NewIntSpinner(min, max, step int, onChanged func(int)) *IntSpinner {
 	if min >= max {
 		panic(errors.New("spinner max must be greater than min value"))
 	}
@@ -124,15 +124,15 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 	if step > max-min {
 		panic(errors.New("spinner step must be less than or equal to max - min"))
 	}
-	s := &Spinner{
+	s := &IntSpinner{
 		min:         min,
 		max:         max,
 		step:        step,
 		initialized: true,
 		OnChanged:   onChanged,
 	}
-	s.upButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
+	s.upButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.SetValue(s.min)
 	return s
 }
@@ -144,15 +144,15 @@ func NewSpinner(min, max, step int, onChanged func(int)) *Spinner {
 // Calling Enable on an uninitialized spinner will not enable the spinner; you
 // must first call SetMinMaxStep to initialize spinner values before enabling
 // the spinner widget.
-func NewSpinnerUninitialized() *Spinner {
-	s := &Spinner{initialized: false}
-	s.upButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
-	s.downButton = newSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
+func NewIntSpinnerUninitialized() *IntSpinner {
+	s := &IntSpinner{initialized: false}
+	s.upButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.Disable()
 	return s
 }
 
-// NewSpinnerWithData returns a new Spinner widget connected to the specified data source.
+// NewIntSpinnerWithData returns a new Spinner widget connected to the specified data source.
 //
 // Params:
 //
@@ -160,8 +160,8 @@ func NewSpinnerUninitialized() *Spinner {
 //	max is the maximum spinner value. It must be > min.
 //	step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
 //	data is the value that is bound to the spinner value.
-func NewSpinnerWithData(min, max, step int, data binding.Int) *Spinner {
-	s := NewSpinner(min, max, step, nil)
+func NewIntSpinnerWithData(min, max, step int, data binding.Int) *IntSpinner {
+	s := NewIntSpinner(min, max, step, nil)
 	s.Bind(data)
 	s.OnChanged = func(_ int) {
 		s.binder.CallWithData(s.writeData)
@@ -173,14 +173,14 @@ func NewSpinnerWithData(min, max, step int, data binding.Int) *Spinner {
 // Bind connects the specified data source to this Spinner widget.
 // The current value will be displayed and any changes in the data will cause the widget
 // to update.
-func (s *Spinner) Bind(data binding.Int) {
+func (s *IntSpinner) Bind(data binding.Int) {
 	s.binder.SetCallback(s.updateFromData)
 	s.binder.Bind(data)
 }
 
 // CreateRenderer is a private method to fyne which links this widget to its
 // renderer.
-func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
+func (s *IntSpinner) CreateRenderer() fyne.WidgetRenderer {
 	s.ExtendBaseWidget(s)
 	th := s.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
@@ -196,7 +196,7 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 		s.upButton,
 		s.downButton,
 	}
-	r := &spinnerRenderer{
+	r := &intSpinnerRenderer{
 		spinner: s,
 		box:     box,
 		border:  border,
@@ -206,8 +206,8 @@ func (s *Spinner) CreateRenderer() fyne.WidgetRenderer {
 	return r
 }
 
-// Disable disables the Spinner and its buttons.
-func (s *Spinner) Disable() {
+// Disable disables the IntSpinner and its buttons.
+func (s *IntSpinner) Disable() {
 	s.downButton.Disable()
 	s.upButton.Disable()
 	s.DisableableWidget.Disable()
@@ -215,7 +215,7 @@ func (s *Spinner) Disable() {
 }
 
 // Enable enables the Spinner and its buttons as appropriate.
-func (s *Spinner) Enable() {
+func (s *IntSpinner) Enable() {
 	if !s.initialized {
 		return
 	}
@@ -233,7 +233,7 @@ func (s *Spinner) Enable() {
 // FocusGained is called when the Spinner has been given focus.
 //
 // Implements: fyne.Focusable
-func (s *Spinner) FocusGained() {
+func (s *IntSpinner) FocusGained() {
 	s.focused = true
 	s.Refresh()
 }
@@ -241,17 +241,17 @@ func (s *Spinner) FocusGained() {
 // FocusLost is called when the Spinner has had focus removed.
 //
 // Implements: fyne.Focusable
-func (s *Spinner) FocusLost() {
+func (s *IntSpinner) FocusLost() {
 	s.focused = false
 	s.Refresh()
 }
 
 // GetValue retrieves the current Spinner value.
-func (s *Spinner) GetValue() int {
+func (s *IntSpinner) GetValue() int {
 	return s.value
 }
 
-func (s *Spinner) MinSize() fyne.Size {
+func (s *IntSpinner) MinSize() fyne.Size {
 	th := s.Theme()
 	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
 	textSize := s.textSize()
@@ -265,22 +265,22 @@ func (s *Spinner) MinSize() fyne.Size {
 // This action causes the Spinner to request focus.
 //
 // Implements: desktop.Mouseable
-func (s *Spinner) MouseDown(m *desktop.MouseEvent) {
+func (s *IntSpinner) MouseDown(m *desktop.MouseEvent) {
 	s.requestFocus()
 	s.Refresh()
 }
 
 // MouseIn is called when a desktop pointer enters the widget.
-func (s *Spinner) MouseIn(evt *desktop.MouseEvent) {
+func (s *IntSpinner) MouseIn(evt *desktop.MouseEvent) {
 	s.hovered = true
 	s.Refresh()
 }
 
 // MouseMoved is called when a desktop pointer hovers over the widget.
-func (s *Spinner) MouseMoved(evt *desktop.MouseEvent) {}
+func (s *IntSpinner) MouseMoved(evt *desktop.MouseEvent) {}
 
 // MouseOut is called when a desktop pointer exits the widget.
-func (s *Spinner) MouseOut() {
+func (s *IntSpinner) MouseOut() {
 	s.hovered = false
 	s.Refresh()
 }
@@ -288,12 +288,12 @@ func (s *Spinner) MouseOut() {
 // MouseUp called on mouse release.
 //
 // Implements: desktop.Mouseable
-func (s *Spinner) MouseUp(m *desktop.MouseEvent) {}
+func (s *IntSpinner) MouseUp(m *desktop.MouseEvent) {}
 
 // Scrolled handles mouse scroller events.
 //
 // Implements fyne.Scrollable
-func (s *Spinner) Scrolled(evt *fyne.ScrollEvent) {
+func (s *IntSpinner) Scrolled(evt *fyne.ScrollEvent) {
 	if s.Disabled() || !s.focused {
 		return
 	}
@@ -314,7 +314,7 @@ func (s *Spinner) Scrolled(evt *fyne.ScrollEvent) {
 //
 // If the previously set value is less than min, then the value is set to min.
 // If the previously set value is greater than max, then the value is set to max.
-func (s *Spinner) SetMinMaxStep(min, max, step int) {
+func (s *IntSpinner) SetMinMaxStep(min, max, step int) {
 	if max <= min {
 		panic(errors.New("spinner max must be greater than min value"))
 	}
@@ -338,7 +338,7 @@ func (s *Spinner) SetMinMaxStep(min, max, step int) {
 
 // SetValue sets the spinner value. It ensures that the value is always >= min and
 // <= max.
-func (s *Spinner) SetValue(val int) {
+func (s *IntSpinner) SetValue(val int) {
 	if s.Disabled() {
 		return
 	}
@@ -365,7 +365,7 @@ func (s *Spinner) SetValue(val int) {
 // the Spinner object.
 // If actually over one of the spinnerButtons, processing
 // is passed to that button for handling.
-func (s *Spinner) Tapped(evt *fyne.PointEvent) {
+func (s *IntSpinner) Tapped(evt *fyne.PointEvent) {
 	if s.Disabled() {
 		return
 	}
@@ -381,7 +381,7 @@ func (s *Spinner) Tapped(evt *fyne.PointEvent) {
 // pressed.
 //
 // Implements: fyne.Focusable
-func (s *Spinner) TypedKey(key *fyne.KeyEvent) {
+func (s *IntSpinner) TypedKey(key *fyne.KeyEvent) {
 	if s.Disabled() || !s.focused {
 		return
 	}
@@ -400,7 +400,7 @@ func (s *Spinner) TypedKey(key *fyne.KeyEvent) {
 // pressed.
 //
 // Implements: fyne.Focusable
-func (s *Spinner) TypedRune(rune rune) {
+func (s *IntSpinner) TypedRune(rune rune) {
 	if s.Disabled() || !s.focused {
 		return
 	}
@@ -416,11 +416,11 @@ func (s *Spinner) TypedRune(rune rune) {
 
 // Unbind disconnects any configured data source from this Spinner.
 // The current value will remain at the last value of the data source.
-func (s *Spinner) Unbind() {
+func (s *IntSpinner) Unbind() {
 	s.binder.Unbind()
 }
 
-func (s *Spinner) requestFocus() {
+func (s *IntSpinner) requestFocus() {
 	if c := fyne.CurrentApp().Driver().CanvasForObject(s); c != nil {
 		c.Focus(s)
 	}
@@ -430,7 +430,7 @@ func (s *Spinner) requestFocus() {
 // Calculate the max size of the text that can be displayed for the Spinner.
 // The size cannot be larger than the larger of the sizes for the Spinner
 // min and max values.
-func (s *Spinner) textSize() fyne.Size {
+func (s *IntSpinner) textSize() fyne.Size {
 	minText := canvas.NewText(strconv.Itoa(s.min), color.Black)
 	maxText := canvas.NewText(strconv.Itoa(s.max), color.Black)
 	minTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(minText.Text,
@@ -442,7 +442,7 @@ func (s *Spinner) textSize() fyne.Size {
 }
 
 // updateFromData updates the Spinner to the value set in the bound data.
-func (s *Spinner) updateFromData(data binding.DataItem) {
+func (s *IntSpinner) updateFromData(data binding.DataItem) {
 	if data == nil {
 		return
 	}
@@ -459,7 +459,7 @@ func (s *Spinner) updateFromData(data binding.DataItem) {
 }
 
 // writeData updates the bound data item as the result of changes in the Spinner value.
-func (s *Spinner) writeData(data binding.DataItem) {
+func (s *IntSpinner) writeData(data binding.DataItem) {
 	if data == nil {
 		return
 	}
@@ -480,8 +480,8 @@ func (s *Spinner) writeData(data binding.DataItem) {
 }
 
 // spinnerRenderer is the renderer for the Spinner widget
-type spinnerRenderer struct {
-	spinner *Spinner
+type intSpinnerRenderer struct {
+	spinner *IntSpinner
 	box     *canvas.Rectangle
 	border  *canvas.Rectangle
 	text    *canvas.Text
@@ -490,10 +490,10 @@ type spinnerRenderer struct {
 
 // Destroy destroys any objects that must be destroyed when the renderer is
 // destroyed.
-func (r *spinnerRenderer) Destroy() {}
+func (r *intSpinnerRenderer) Destroy() {}
 
 // Layout positions and sizes all of the objects that make up the Spinner widget.
-func (r *spinnerRenderer) Layout(size fyne.Size) {
+func (r *intSpinnerRenderer) Layout(size fyne.Size) {
 	r.spinner.Refresh()
 	th := r.spinner.Theme()
 	borderSize := th.Size(theme.SizeNameInputBorder)
@@ -527,17 +527,17 @@ func (r *spinnerRenderer) Layout(size fyne.Size) {
 }
 
 // MinSize returns the minimum size of the Spinner widget.
-func (r *spinnerRenderer) MinSize() fyne.Size {
+func (r *intSpinnerRenderer) MinSize() fyne.Size {
 	return r.spinner.MinSize()
 }
 
 // Objects returns the objects associated with the Spinner renderer.
-func (r *spinnerRenderer) Objects() []fyne.CanvasObject {
+func (r *intSpinnerRenderer) Objects() []fyne.CanvasObject {
 	return r.objects
 }
 
 // Refresh refreshes (redisplays) the Spinner widget.
-func (r *spinnerRenderer) Refresh() {
+func (r *intSpinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
@@ -571,7 +571,7 @@ func (r *spinnerRenderer) Refresh() {
 
 // spinnerColors returns the colors to display the button in.
 // This is based on spinnerButtonRenderer.buttonColorNames, above.
-func (r *spinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor fyne.ThemeColorName) {
+func (r *intSpinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor fyne.ThemeColorName) {
 	fgColor = theme.ColorNameForeground
 	bgColor = ""
 	borderColor = theme.ColorNameInputBorder
@@ -586,11 +586,11 @@ func (r *spinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor fyne.Th
 	return fgColor, bgColor, borderColor
 }
 
-func (s *Spinner) upButtonClicked() {
+func (s *IntSpinner) upButtonClicked() {
 	s.SetValue(s.value + s.step)
 }
 
-func (s *Spinner) downButtonClicked() {
+func (s *IntSpinner) downButtonClicked() {
 	s.SetValue(s.value - s.step)
 }
 

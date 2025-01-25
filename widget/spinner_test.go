@@ -13,8 +13,8 @@ func waitForBinding() {
 	time.Sleep(time.Millisecond * 100) // data resolves on background thread
 }
 
-func TestNewSpinner(t *testing.T) {
-	s := NewSpinner(1, 5, 2, nil)
+func TestNewIntSpinner(t *testing.T) {
+	s := NewIntSpinner(1, 5, 2, nil)
 	assert.Equal(t, 1, s.min)
 	assert.Equal(t, 5, s.max)
 	assert.Equal(t, 2, s.step)
@@ -23,17 +23,17 @@ func TestNewSpinner(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
-func TestNewSpinner_BadArgs(t *testing.T) {
-	assert.Panics(t, func() { NewSpinner(5, 5, 1, nil) }, "Did not panic with min == max")
-	assert.Panics(t, func() { NewSpinner(5, 4, 1, nil) }, "Did not panic with min < max")
-	assert.Panics(t, func() { NewSpinner(1, 5, 0, nil) }, "Did not panic with step = 0")
-	assert.Panics(t, func() { NewSpinner(1, 5, -5, nil) }, "Did not panic with step = 0")
-	assert.Panics(t, func() { NewSpinner(1, 5, 5, nil) }, "Did not panic with step > max - min")
+func TestNewIntSpinner_BadArgs(t *testing.T) {
+	assert.Panics(t, func() { NewIntSpinner(5, 5, 1, nil) }, "Did not panic with min == max")
+	assert.Panics(t, func() { NewIntSpinner(5, 4, 1, nil) }, "Did not panic with min < max")
+	assert.Panics(t, func() { NewIntSpinner(1, 5, 0, nil) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewIntSpinner(1, 5, -5, nil) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewIntSpinner(1, 5, 5, nil) }, "Did not panic with step > max - min")
 }
 
 func TestNewSpinnerWithData(t *testing.T) {
 	data := binding.NewInt()
-	s := NewSpinnerWithData(1, 5, 2, data)
+	s := NewIntSpinnerWithData(1, 5, 2, data)
 	waitForBinding()
 	val, err := data.Get()
 	assert.NoError(t, err)
@@ -53,7 +53,7 @@ func TestNewSpinnerWithData(t *testing.T) {
 
 func TestUnbind(t *testing.T) {
 	data := binding.NewInt()
-	s := NewSpinnerWithData(1, 5, 2, data)
+	s := NewIntSpinnerWithData(1, 5, 2, data)
 	waitForBinding()
 	s.Unbind()
 	s.SetValue(2)
@@ -63,17 +63,17 @@ func TestUnbind(t *testing.T) {
 	assert.Equal(t, 1, val)
 }
 
-func TestNewSpinnerWithData_BadArgs(t *testing.T) {
+func TestNewIntSpinnerWithData_BadArgs(t *testing.T) {
 	boundValue := binding.NewInt()
-	assert.Panics(t, func() { NewSpinnerWithData(5, 5, 1, boundValue) }, "Did not panic with min == max")
-	assert.Panics(t, func() { NewSpinnerWithData(5, 4, 1, boundValue) }, "Did not panic with min < max")
-	assert.Panics(t, func() { NewSpinnerWithData(1, 5, 0, boundValue) }, "Did not panic with step = 0")
-	assert.Panics(t, func() { NewSpinnerWithData(1, 5, -5, boundValue) }, "Did not panic with step = 0")
-	assert.Panics(t, func() { NewSpinnerWithData(1, 5, 5, boundValue) }, "Did not panic with step > max - min")
+	assert.Panics(t, func() { NewIntSpinnerWithData(5, 5, 1, boundValue) }, "Did not panic with min == max")
+	assert.Panics(t, func() { NewIntSpinnerWithData(5, 4, 1, boundValue) }, "Did not panic with min < max")
+	assert.Panics(t, func() { NewIntSpinnerWithData(1, 5, 0, boundValue) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewIntSpinnerWithData(1, 5, -5, boundValue) }, "Did not panic with step = 0")
+	assert.Panics(t, func() { NewIntSpinnerWithData(1, 5, 5, boundValue) }, "Did not panic with step > max - min")
 }
 
-func TestNewUninitializedSpinner(t *testing.T) {
-	s := NewSpinnerUninitialized()
+func TestNewIntSpinnerUninitialized(t *testing.T) {
+	s := NewIntSpinnerUninitialized()
 	assert.True(t, s.Disabled())
 	s.Enable()
 	assert.True(t, s.Disabled())
@@ -83,32 +83,32 @@ func TestNewUninitializedSpinner(t *testing.T) {
 	assert.False(t, s.Disabled())
 }
 
-func TestSetValue(t *testing.T) {
-	s := NewSpinner(1, 5, 2, nil)
+func TestIntSpinner_SetValue(t *testing.T) {
+	s := NewIntSpinner(1, 5, 2, nil)
 	s.SetValue(2)
 	assert.Equal(t, 2, s.GetValue())
 	assert.False(t, s.upButton.Disabled())
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestSetValue_LessThanMin(t *testing.T) {
-	s := NewSpinner(4, 22, 5, nil)
+func TestIntSpinner_SetValue_LessThanMin(t *testing.T) {
+	s := NewIntSpinner(4, 22, 5, nil)
 	s.SetValue(3)
 	assert.Equal(t, 4, s.GetValue())
 	assert.True(t, s.downButton.Disabled())
 	assert.False(t, s.upButton.Disabled())
 }
 
-func TestSetValue_GreaterThanMax(t *testing.T) {
-	s := NewSpinner(4, 22, 5, nil)
+func TestIntSpinner_SetValue_GreaterThanMax(t *testing.T) {
+	s := NewIntSpinner(4, 22, 5, nil)
 	s.SetValue(23)
 	assert.Equal(t, 22, s.GetValue())
 	assert.True(t, s.upButton.Disabled())
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestSetValue_DisabledSpinner(t *testing.T) {
-	s := NewSpinner(4, 22, 5, nil)
+func TestIntSpinner_SetValue_DisabledSpinner(t *testing.T) {
+	s := NewIntSpinner(4, 22, 5, nil)
 	s.Disable()
 	s.SetValue(10)
 	assert.Equal(t, 4, s.GetValue())
@@ -116,23 +116,23 @@ func TestSetValue_DisabledSpinner(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
-func TestSetMinMaxStep(t *testing.T) {
-	s := NewSpinner(1, 6, 2, nil)
+func TestIntSpinner_SetMinMaxStep(t *testing.T) {
+	s := NewIntSpinner(1, 6, 2, nil)
 	s.SetMinMaxStep(0, 10, 1)
 	assert.Equal(t, 0, s.min)
 	assert.Equal(t, 10, s.max)
 	assert.Equal(t, 1, s.step)
 }
 
-func TestSetMinMaxStep_BadArgs(t *testing.T) {
-	s := NewSpinner(1, 10, 1, nil)
+func TestIntSpinner_SetMinMaxStep_BadArgs(t *testing.T) {
+	s := NewIntSpinner(1, 10, 1, nil)
 	assert.Panics(t, func() { s.SetMinMaxStep(11, 10, 2) })
 	assert.Panics(t, func() { s.SetMinMaxStep(1, 10, 10) })
 	assert.Panics(t, func() { s.SetMinMaxStep(1, 10, -1) })
 }
 
-func TestSetMinMaxStep_OutsideRange(t *testing.T) {
-	s := NewSpinner(-2, 20, 1, nil)
+func TestIntSpinnert_SetMinMaxStep_OutsideRange(t *testing.T) {
+	s := NewIntSpinner(-2, 20, 1, nil)
 	s.SetValue(19)
 	s.SetMinMaxStep(-1, 10, 1)
 	assert.Equal(t, 10, s.GetValue())
@@ -141,9 +141,9 @@ func TestSetMinMaxStep_OutsideRange(t *testing.T) {
 	assert.Equal(t, 1, s.GetValue())
 }
 
-func TestSetMinMaxStep_DataAboveRange(t *testing.T) {
+func TestInt_spinner_SetMinMaxStep_DataAboveRange(t *testing.T) {
 	data := binding.NewInt()
-	s := NewSpinnerWithData(-2, 20, 1, data)
+	s := NewIntSpinnerWithData(-2, 20, 1, data)
 	data.Set(19)
 	waitForBinding()
 	assert.Equal(t, 19, s.GetValue())
@@ -154,9 +154,9 @@ func TestSetMinMaxStep_DataAboveRange(t *testing.T) {
 	assert.Equal(t, 10, val)
 }
 
-func TestSetMinMaxStep_DataBelowRange(t *testing.T) {
+func TestIntSpinner_SetMinMaxStep_DataBelowRange(t *testing.T) {
 	data := binding.NewInt()
-	s := NewSpinnerWithData(-2, 20, 1, data)
+	s := NewIntSpinnerWithData(-2, 20, 1, data)
 	data.Set(-2)
 	waitForBinding()
 	assert.Equal(t, -2, s.GetValue())
@@ -167,8 +167,8 @@ func TestSetMinMaxStep_DataBelowRange(t *testing.T) {
 	assert.Equal(t, -1, val)
 }
 
-func TestUpButtonTapped(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_UpButtonTapped(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.upButton.Tapped(&fyne.PointEvent{})
 	assert.Equal(t, 9, s.GetValue())
 	s.upButton.Tapped(&fyne.PointEvent{})
@@ -177,8 +177,8 @@ func TestUpButtonTapped(t *testing.T) {
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestDownButtonTapped(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_DownButtonTapped(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.SetValue(10)
 	s.downButton.Tapped(&fyne.PointEvent{})
 	assert.Equal(t, 5, s.GetValue())
@@ -188,8 +188,8 @@ func TestDownButtonTapped(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
-func TestEnableDisabledSpinner(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_EnableDisabledSpinner(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.SetValue(7)
 	s.Disable()
 	assert.True(t, s.Disabled())
@@ -201,8 +201,8 @@ func TestEnableDisabledSpinner(t *testing.T) {
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestEnableDisabledSpinner_UpButtonDisabled(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_EnableDisabledSpinner_UpButtonDisabled(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.SetValue(10)
 	assert.True(t, s.upButton.Disabled())
 	assert.False(t, s.downButton.Disabled())
@@ -215,8 +215,8 @@ func TestEnableDisabledSpinner_UpButtonDisabled(t *testing.T) {
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestEnableDisabledSpinner_DownButtonDisabled(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_EnableDisabledSpinner_DownButtonDisabled(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.SetValue(4)
 	assert.False(t, s.upButton.Disabled())
 	assert.True(t, s.downButton.Disabled())
@@ -229,8 +229,8 @@ func TestEnableDisabledSpinner_DownButtonDisabled(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
-func TestRunePlus(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_RunePlus(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.TypedRune('+')
 	assert.Equal(t, 9, s.GetValue())
@@ -243,8 +243,8 @@ func TestRunePlus(t *testing.T) {
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestRuneMinus(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_RuneMinus(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.SetValue(10)
 	s.TypedRune('-')
@@ -258,16 +258,16 @@ func TestRuneMinus(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
-func TestRunePlus_SpinnerDisabled(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_RunePlus_SpinnerDisabled(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.Disable()
 	s.TypedRune('+')
 	assert.Equal(t, 4, s.GetValue())
 }
 
-func TestRuneMinus_SpinnerDisabled(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_RuneMinus_SpinnerDisabled(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.SetValue(8)
 	s.Disable()
@@ -275,15 +275,15 @@ func TestRuneMinus_SpinnerDisabled(t *testing.T) {
 	assert.Equal(t, 8, s.GetValue())
 }
 
-func TestRunePlus_SpinnerNotFocused(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_RunePlus_SpinnerNotFocused(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = false
 	s.TypedRune('+')
 	assert.Equal(t, 4, s.GetValue())
 }
 
-func TestRuneMinus_SpinnerNotFocused(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_RuneMinus_SpinnerNotFocused(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.SetValue(8)
 	s.focused = false
@@ -291,8 +291,8 @@ func TestRuneMinus_SpinnerNotFocused(t *testing.T) {
 	assert.Equal(t, 8, s.GetValue())
 }
 
-func TestKeyUp(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_KeyUp(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	key := fyne.KeyEvent{Name: fyne.KeyUp}
 	s.TypedKey(&key)
@@ -306,8 +306,8 @@ func TestKeyUp(t *testing.T) {
 	assert.False(t, s.downButton.Disabled())
 }
 
-func TestKeyDown(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_KeyDown(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.SetValue(10)
 	key := fyne.KeyEvent{Name: fyne.KeyDown}
@@ -322,8 +322,8 @@ func TestKeyDown(t *testing.T) {
 	assert.True(t, s.downButton.Disabled())
 }
 
-func TestKeyUp_SpinnerDisabled(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_KeyUp_SpinnerDisabled(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.Disable()
 	key := fyne.KeyEvent{Name: fyne.KeyUp}
@@ -331,8 +331,8 @@ func TestKeyUp_SpinnerDisabled(t *testing.T) {
 	assert.Equal(t, 4, s.GetValue())
 }
 
-func TestKeyDown_SpinnerDisabled(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_KeyDown_SpinnerDisabled(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.SetValue(8)
 	s.Disable()
@@ -341,16 +341,16 @@ func TestKeyDown_SpinnerDisabled(t *testing.T) {
 	assert.Equal(t, 8, s.GetValue())
 }
 
-func TestKeyUp_SpinnerNotFocused(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_KeyUp_SpinnerNotFocused(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = false
 	key := fyne.KeyEvent{Name: fyne.KeyUp}
 	s.TypedKey(&key)
 	assert.Equal(t, 4, s.GetValue())
 }
 
-func TestKeyDown_SpinnerNotFocused(t *testing.T) {
-	s := NewSpinner(4, 10, 5, nil)
+func TestIntSpinner_KeyDown_SpinnerNotFocused(t *testing.T) {
+	s := NewIntSpinner(4, 10, 5, nil)
 	s.focused = true
 	s.SetValue(8)
 	s.focused = false
@@ -359,8 +359,8 @@ func TestKeyDown_SpinnerNotFocused(t *testing.T) {
 	assert.Equal(t, 8, s.GetValue())
 }
 
-func TestScrolled(t *testing.T) {
-	s := NewSpinner(1, 10, 1, nil)
+func TestIntSpinner_Scrolled(t *testing.T) {
+	s := NewIntSpinner(1, 10, 1, nil)
 	s.focused = true
 	delta := fyne.Delta{DX: 0, DY: 25}
 	e := fyne.ScrollEvent{Scrolled: delta}
@@ -374,8 +374,8 @@ func TestScrolled(t *testing.T) {
 	assert.Equal(t, 2, s.GetValue())
 }
 
-func TestScrolled_Disabled(t *testing.T) {
-	s := NewSpinner(1, 10, 1, nil)
+func TestIntSpinner_Scrolled_Disabled(t *testing.T) {
+	s := NewIntSpinner(1, 10, 1, nil)
 	s.focused = true
 	s.Disable()
 	delta := fyne.Delta{DX: 0, DY: 25}
@@ -384,26 +384,26 @@ func TestScrolled_Disabled(t *testing.T) {
 	assert.Equal(t, 1, s.GetValue())
 }
 
-func TestScrolled_NotFocused(t *testing.T) {
-	s := NewSpinner(1, 10, 1, nil)
+func TestIntSpinner_Scrolled_NotFocused(t *testing.T) {
+	s := NewIntSpinner(1, 10, 1, nil)
 	delta := fyne.Delta{DX: 0, DY: 25}
 	e := fyne.ScrollEvent{Scrolled: delta}
 	s.Scrolled(&e)
 	assert.Equal(t, 1, s.GetValue())
 }
 
-func TestOnChanged(t *testing.T) {
+func TestIntSpinner_OnChanged(t *testing.T) {
 	var v int
-	s := NewSpinner(1, 10, 1, func(newVal int) {
+	s := NewIntSpinner(1, 10, 1, func(newVal int) {
 		v = newVal
 	})
 	s.SetValue(3)
 	assert.Equal(t, 3, v)
 }
 
-func TestOnChanged_Disabled(t *testing.T) {
+func TestIntSpinner_OnChanged_Disabled(t *testing.T) {
 	var v int
-	s := NewSpinner(1, 10, 1, func(newVal int) {
+	s := NewIntSpinner(1, 10, 1, func(newVal int) {
 		v = newVal
 	})
 	s.Disable()
@@ -411,9 +411,9 @@ func TestOnChanged_Disabled(t *testing.T) {
 	assert.Equal(t, 1, v)
 }
 
-func TestBinding_OutsideRange(t *testing.T) {
+func TestIntSpinner_Binding_OutsideRange(t *testing.T) {
 	val := binding.NewInt()
-	s := NewSpinnerWithData(1, 5, 2, val)
+	s := NewIntSpinnerWithData(1, 5, 2, val)
 	waitForBinding()
 	err := val.Set(7)
 	assert.NoError(t, err)
