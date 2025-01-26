@@ -22,6 +22,18 @@ type baseSpinnerButton struct {
 	size     fyne.Size
 }
 
+func (b *baseSpinnerButton) MinSize() fyne.Size {
+	th := b.Theme()
+	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
+	text := canvas.NewText("0", color.Black)
+	textSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(text.Text,
+		text.TextSize, text.TextStyle, text.FontSource)
+	tHeight := textSize.Height + padding.Height
+
+	h := tHeight/2 - th.Size(theme.SizeNameInputBorder) - 2
+	return fyne.NewSize(h, h)
+}
+
 // Move moves the button.
 func (b *baseSpinnerButton) Move(pos fyne.Position) {
 	b.position = pos
@@ -87,14 +99,7 @@ func newIntSpinnerButton(s *IntSpinner, resource fyne.Resource, onTapped func())
 	return b
 }
 
-// MinSize returns the minimum (actual) size of the spinner button.
-func (b *intSpinnerButton) MinSize() fyne.Size {
-	th := b.Theme()
-	h := b.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
-	return fyne.NewSize(h, h)
-}
-
-// float64SpinnerButton widget is a specialized button for use in the float64Spinner widget
+// / float64SpinnerButton widget is a specialized button for use in the float64Spinner widget
 type float64SpinnerButton struct {
 	baseSpinnerButton
 	spinner *Float64Spinner
@@ -119,13 +124,6 @@ func newFloat64SpinnerButton(s *Float64Spinner, resource fyne.Resource, onTapped
 	b.ExtendBaseWidget(b)
 	b.setButtonProperties(resource, onTapped)
 	return b
-}
-
-// MinSize returns the minimum (actual) size of the spinner button.
-func (b *float64SpinnerButton) MinSize() fyne.Size {
-	th := b.Theme()
-	h := b.spinner.MinSize().Height/2 - th.Size(theme.SizeNameInputBorder)
-	return fyne.NewSize(h, h)
 }
 
 // baseSpinner contains the basic functionality shared by IntSpinner and Float64Spinner.
@@ -326,7 +324,7 @@ func (s *IntSpinner) MinSize() fyne.Size {
 	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
 	textSize := s.textSize()
 	tHeight := textSize.Height + padding.Height
-	upButtonHeight := (tHeight - padding.Height/2) / 2
+	upButtonHeight := s.upButton.MinSize().Height
 	tWidth := textSize.Width + upButtonHeight + padding.Width
 	return fyne.NewSize(tWidth, tHeight)
 }
@@ -570,18 +568,17 @@ func (r *intSpinnerRenderer) Layout(size fyne.Size) {
 
 	textSize := r.spinner.textSize()
 	rMinSize := r.MinSize()
-	buttonSize := fyne.NewSize((textSize.Height+padding)/2-1,
-		(textSize.Height+padding)/2-1)
+	buttonSize := r.spinner.upButton.MinSize()
 	xPos := size.Width - buttonSize.Width - borderSize - padding/2
 	yPos := (rMinSize.Height - textSize.Height) / 2
 	r.text.Move(fyne.NewPos(xPos, yPos))
 
 	xPos += padding / 4
-	yPos -= theme.Padding()
+	yPos -= padding - 2
 	r.spinner.upButton.Resize(buttonSize)
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
 
-	yPos = r.spinner.upButton.MinSize().Height + padding/4 - 1
+	yPos = r.spinner.upButton.MinSize().Height + padding/2 - 1
 	r.spinner.downButton.Resize(buttonSize)
 	r.spinner.downButton.Move(fyne.NewPos(xPos, yPos))
 }
@@ -808,7 +805,7 @@ func (s *Float64Spinner) MinSize() fyne.Size {
 	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
 	textSize := s.textSize()
 	tHeight := textSize.Height + padding.Height
-	upButtonHeight := (tHeight - padding.Height/2) / 2
+	upButtonHeight := s.upButton.MinSize().Height
 	tWidth := textSize.Width + upButtonHeight + padding.Width
 	return fyne.NewSize(tWidth, tHeight)
 }
@@ -1044,18 +1041,17 @@ func (r *float64SpinnerRenderer) Layout(size fyne.Size) {
 
 	textSize := r.spinner.textSize()
 	rMinSize := r.MinSize()
-	buttonSize := fyne.NewSize((textSize.Height+padding)/2-1,
-		(textSize.Height+padding)/2-1)
+	buttonSize := r.spinner.upButton.MinSize()
 	xPos := size.Width - buttonSize.Width - borderSize - padding/2
 	yPos := (rMinSize.Height - textSize.Height) / 2
 	r.text.Move(fyne.NewPos(xPos, yPos))
 
 	xPos += padding / 4
-	yPos -= theme.Padding()
+	yPos -= padding - 2
 	r.spinner.upButton.Resize(buttonSize)
 	r.spinner.upButton.Move(fyne.NewPos(xPos, yPos))
 
-	yPos = r.spinner.upButton.MinSize().Height + padding/4 - 1
+	yPos = r.spinner.upButton.MinSize().Height + padding/2 - 1
 	r.spinner.downButton.Resize(buttonSize)
 	r.spinner.downButton.Move(fyne.NewPos(xPos, yPos))
 }
