@@ -562,7 +562,8 @@ func (r *intSpinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	fgColor, bgColor, borderColor := r.spinnerColors()
+	fgColor, bgColor, borderColor := spinnerColors(
+		r.spinner.Disabled(), r.spinner.focused, r.spinner.hovered)
 	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
@@ -588,22 +589,6 @@ func (r *intSpinnerRenderer) Refresh() {
 	}
 	r.spinner.upButton.Refresh()
 	r.spinner.downButton.Refresh()
-}
-
-// spinnerColors returns the colors to display the button in.
-func (r *intSpinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor fyne.ThemeColorName) {
-	fgColor = theme.ColorNameForeground
-	bgColor = ""
-	borderColor = theme.ColorNameInputBorder
-	if r.spinner.Disabled() {
-		fgColor = theme.ColorNameDisabled
-		borderColor = theme.ColorNameDisabled
-	} else if r.spinner.focused {
-		borderColor = theme.ColorNamePrimary
-	} else if r.spinner.hovered {
-		bgColor = theme.ColorNameHover
-	}
-	return fgColor, bgColor, borderColor
 }
 
 var _ fyne.Disableable = (*Float64Spinner)(nil)
@@ -1017,7 +1002,8 @@ func (r *float64SpinnerRenderer) Refresh() {
 	th := r.spinner.Theme()
 	v := fyne.CurrentApp().Settings().ThemeVariant()
 
-	fgColor, bgColor, borderColor := r.spinnerColors()
+	fgColor, bgColor, borderColor := spinnerColors(
+		r.spinner.Disabled(), r.spinner.focused, r.spinner.hovered)
 	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
@@ -1051,23 +1037,7 @@ func (s *Float64Spinner) downButtonClicked() {
 	s.SetValue(s.value - s.step)
 }
 
-// spinnerColors returns the colors to display the button in.
-func (r *float64SpinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor fyne.ThemeColorName) {
-	fgColor = theme.ColorNameForeground
-	bgColor = ""
-	borderColor = theme.ColorNameInputBorder
-	if r.spinner.Disabled() {
-		fgColor = theme.ColorNameDisabled
-		borderColor = theme.ColorNameDisabled
-	} else if r.spinner.focused {
-		borderColor = theme.ColorNamePrimary
-	} else if r.spinner.hovered {
-		bgColor = theme.ColorNameHover
-	}
-	return fgColor, bgColor, borderColor
-}
-
-// upButtonClicked handles tap events for the Float64Spinner's up button.
+// / upButtonClicked handles tap events for the Float64Spinner's up button.
 func (s *Float64Spinner) upButtonClicked() {
 	s.SetValue(s.value + s.step)
 }
@@ -1095,4 +1065,20 @@ func max(a, b float32) float32 {
 		max = b
 	}
 	return max
+}
+
+// spinnerColors determines display colors for spinners.
+func spinnerColors(disabled, focused, hovered bool) (fgColor, bgColor, borderColor fyne.ThemeColorName) {
+	fgColor = theme.ColorNameForeground
+	bgColor = ""
+	borderColor = theme.ColorNameInputBorder
+	if disabled {
+		fgColor = theme.ColorNameDisabled
+		borderColor = theme.ColorNameDisabled
+	} else if focused {
+		borderColor = theme.ColorNamePrimary
+	} else if hovered {
+		bgColor = theme.ColorNameHover
+	}
+	return fgColor, bgColor, borderColor
 }
