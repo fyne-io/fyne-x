@@ -22,16 +22,11 @@ type baseSpinnerButton struct {
 	size     fyne.Size
 }
 
+// MinSize returns the minimum size of the button. Because the minimum size is a constant
+// based on the spinner height and theme properties, the minimum size is calculated when
+// the button is created.
 func (b *baseSpinnerButton) MinSize() fyne.Size {
-	th := b.Theme()
-	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
-	text := canvas.NewText("0", color.Black)
-	textSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(text.Text,
-		text.TextSize, text.TextStyle, text.FontSource)
-	tHeight := textSize.Height + padding.Height
-
-	h := tHeight/2 - th.Size(theme.SizeNameInputBorder) - 2
-	return fyne.NewSize(h, h)
+	return fyne.NewSize(b.size.Height, b.size.Height)
 }
 
 // Move moves the button.
@@ -74,6 +69,18 @@ func (b *baseSpinnerButton) setButtonProperties(resource fyne.Resource, onTapped
 	b.Icon = resource
 	b.Text = ""
 	b.OnTapped = onTapped
+
+	// calculate the minimum button size (really just its height).
+	th := b.Theme()
+	padding := fyne.NewSquareSize(th.Size(theme.SizeNameInnerPadding) * 2)
+	text := canvas.NewText("0", color.Black)
+	textSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(text.Text,
+		text.TextSize, text.TextStyle, text.FontSource)
+	tHeight := textSize.Height + padding.Height
+
+	h := tHeight/2 - th.Size(theme.SizeNameInputBorder) - 2
+	b.size = fyne.NewSize(h, h)
+
 }
 
 // intSpinnerButton widget is a specialized button for use in the IntSpinner widget
