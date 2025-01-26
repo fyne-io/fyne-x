@@ -14,22 +14,22 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-// baseSpinnerButton widget is the base widget for intSpinnerButton and float64SpinnerButton.
-type baseSpinnerButton struct {
+// spinnerButton is the widget used for buttons in spinners (IntSpinner and Float64Spinner).
+type spinnerButton struct {
 	widget.Button
 
 	position fyne.Position
 	size     fyne.Size
 }
 
-// newSpinnerButton creates a spinnerButton for use in Spinner widgets.
+// newSpinnerButton creates a spinnerButton for use in spinner widgets.
 //
 // Params:
 //
 //	resource is the resource to be used as the button icon.
 //	onTapped is the callback function for button clicks.
-func newSpinnerButton(resource fyne.Resource, onTapped func()) *baseSpinnerButton {
-	b := &baseSpinnerButton{}
+func newSpinnerButton(resource fyne.Resource, onTapped func()) *spinnerButton {
+	b := &spinnerButton{}
 	b.ExtendBaseWidget(b)
 	b.setButtonProperties(resource, onTapped)
 	return b
@@ -38,18 +38,18 @@ func newSpinnerButton(resource fyne.Resource, onTapped func()) *baseSpinnerButto
 // MinSize returns the minimum size of the button. Because the minimum size is a constant
 // based on the spinner height and theme properties, the minimum size is calculated when
 // the button is created.
-func (b *baseSpinnerButton) MinSize() fyne.Size {
+func (b *spinnerButton) MinSize() fyne.Size {
 	return fyne.NewSize(b.size.Height, b.size.Height)
 }
 
 // Move moves the button.
-func (b *baseSpinnerButton) Move(pos fyne.Position) {
+func (b *spinnerButton) Move(pos fyne.Position) {
 	b.position = pos
 	b.BaseWidget.Move(pos)
 }
 
 // Resize resizes the button.
-func (b *baseSpinnerButton) Resize(sz fyne.Size) {
+func (b *spinnerButton) Resize(sz fyne.Size) {
 	b.size = sz
 	b.BaseWidget.Resize(sz)
 }
@@ -63,7 +63,7 @@ func (b *baseSpinnerButton) Resize(sz fyne.Size) {
 //	pos is the position to check. This point is relative to the upper-left
 //
 // corner of the containing spinner widget.
-func (b *baseSpinnerButton) containsPoint(pos fyne.Position) bool {
+func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
 	if pos.X < b.position.X || pos.X > b.position.X+b.size.Width {
 		return false
 	} else if pos.Y < b.position.Y || pos.Y > b.position.Y+b.size.Height {
@@ -78,7 +78,7 @@ func (b *baseSpinnerButton) containsPoint(pos fyne.Position) bool {
 //
 //	resource is the Resource for the button icon.
 //	onTapped is the function to be called when the button is tapped.
-func (b *baseSpinnerButton) setButtonProperties(resource fyne.Resource, onTapped func()) {
+func (b *spinnerButton) setButtonProperties(resource fyne.Resource, onTapped func()) {
 	b.Icon = resource
 	b.Text = ""
 	b.OnTapped = onTapped
@@ -153,8 +153,8 @@ type IntSpinner struct {
 	max   int
 	step  int
 
-	upButton   *baseSpinnerButton
-	downButton *baseSpinnerButton
+	upButton   *spinnerButton
+	downButton *spinnerButton
 
 	OnChanged func(int) `json:"-"`
 }
@@ -629,8 +629,8 @@ type Float64Spinner struct {
 	step      float64
 	precision uint
 
-	upButton   *baseSpinnerButton
-	downButton *baseSpinnerButton
+	upButton   *spinnerButton
+	downButton *spinnerButton
 
 	OnChanged func(float64) `json:"-"`
 }
