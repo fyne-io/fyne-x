@@ -48,12 +48,6 @@ func (b *spinnerButton) Move(pos fyne.Position) {
 	b.BaseWidget.Move(pos)
 }
 
-// Resize resizes the button.
-/*func (b *spinnerButton) Resize(sz fyne.Size) {
-	b.size = sz
-	b.BaseWidget.Resize(sz)
-}*/
-
 // containsPoint is a helper method that is called to determine if the point
 // is within the button. Returns true if point is within the button and
 // false otherwise.
