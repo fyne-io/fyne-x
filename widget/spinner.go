@@ -66,6 +66,26 @@ func (b *spinnerButton) containsPoint(pos fyne.Position) bool {
 	return true
 }
 
+// enableDisable enables or disables the button based on whether the button's
+// parent spinner widget is disabled, and whether the spinner's value is at its limit.
+//
+// Params:
+//
+//		parentDisabled indicates whether the button's parent spinner is disabled or not.
+//		limit indicates whether the spinner's value is at the corresponding limit for this
+//	 button. For example, for an up button, the  limit should be true if value == max, and
+//	 for a down button, the limit should be true if value == min.
+func (b *spinnerButton) enableDisable(parentDisabled, limit bool) {
+	if parentDisabled {
+		b.Disable()
+	} else {
+		b.Enable()
+		if limit {
+			b.Disable()
+		}
+	}
+}
+
 // setButtonProperties sets the button properties.
 //
 // Params:
@@ -568,26 +588,14 @@ func (r *intSpinnerRenderer) Refresh() {
 	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
-
 	r.border.StrokeColor = th.Color(borderColor, v)
+
 	r.text.Text = strconv.Itoa(r.spinner.value)
 	r.text.Color = th.Color(fgColor, v)
+	r.text.Refresh()
 
-	if r.spinner.Disabled() {
-		r.spinner.upButton.Disable()
-		r.spinner.downButton.Disable()
-	} else {
-		r.spinner.upButton.Enable()
-		if r.spinner.GetValue() == r.spinner.max {
-			r.spinner.upButton.Disable()
-		}
-		r.spinner.downButton.Enable()
-		if r.spinner.GetValue() == r.spinner.min {
-			r.spinner.downButton.Disable()
-		}
-	}
-	r.spinner.upButton.Refresh()
-	r.spinner.downButton.Refresh()
+	r.spinner.upButton.enableDisable(r.spinner.Disabled(), r.spinner.GetValue() == r.spinner.max)
+	r.spinner.downButton.enableDisable(r.spinner.Disabled(), r.spinner.GetValue() == r.spinner.min)
 }
 
 var _ fyne.Disableable = (*Float64Spinner)(nil)
@@ -1007,27 +1015,15 @@ func (r *float64SpinnerRenderer) Refresh() {
 	r.box.FillColor = th.Color(bgColor, v)
 	r.box.CornerRadius = th.Size(theme.SizeNameInputRadius)
 	r.border.CornerRadius = r.box.CornerRadius
-
 	r.border.StrokeColor = th.Color(borderColor, v)
+
 	format := fmt.Sprintf("%%.%df", r.spinner.precision)
 	r.text.Text = fmt.Sprintf(format, r.spinner.value)
 	r.text.Color = th.Color(fgColor, v)
+	r.text.Refresh()
 
-	if r.spinner.Disabled() {
-		r.spinner.upButton.Disable()
-		r.spinner.downButton.Disable()
-	} else {
-		r.spinner.upButton.Enable()
-		if r.spinner.GetValue() == r.spinner.max {
-			r.spinner.upButton.Disable()
-		}
-		r.spinner.downButton.Enable()
-		if r.spinner.GetValue() == r.spinner.min {
-			r.spinner.downButton.Disable()
-		}
-	}
-	r.spinner.upButton.Refresh()
-	r.spinner.downButton.Refresh()
+	r.spinner.upButton.enableDisable(r.spinner.Disabled(), r.spinner.GetValue() == r.spinner.max)
+	r.spinner.downButton.enableDisable(r.spinner.Disabled(), r.spinner.GetValue() == r.spinner.min)
 }
 
 // downButtonClicked handles tap events for the Float64Spinner's down button.
