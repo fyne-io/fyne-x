@@ -22,6 +22,19 @@ type baseSpinnerButton struct {
 	size     fyne.Size
 }
 
+// newSpinnerButton creates a spinnerButton for use in Spinner widgets.
+//
+// Params:
+//
+//	resource is the resource to be used as the button icon.
+//	onTapped is the callback function for button clicks.
+func newSpinnerButton(resource fyne.Resource, onTapped func()) *baseSpinnerButton {
+	b := &baseSpinnerButton{}
+	b.ExtendBaseWidget(b)
+	b.setButtonProperties(resource, onTapped)
+	return b
+}
+
 // MinSize returns the minimum size of the button. Because the minimum size is a constant
 // based on the spinner height and theme properties, the minimum size is calculated when
 // the button is created.
@@ -83,56 +96,6 @@ func (b *baseSpinnerButton) setButtonProperties(resource fyne.Resource, onTapped
 
 }
 
-// intSpinnerButton widget is a specialized button for use in the IntSpinner widget
-type intSpinnerButton struct {
-	baseSpinnerButton
-	spinner *IntSpinner
-}
-
-// newIntSpinnerButton creates an intSpinnerButton widget. It should only be called from
-// NewIntSpinner or NewIntSpinnerUninitialized.
-//
-// Params:
-//
-//		s is a pointer to the parent IntSpinner widget that this button is contained within.
-//	 resource is the resource for the button icon.
-//		onTapped is the function to be called when the button is "tapped".
-func newIntSpinnerButton(s *IntSpinner, resource fyne.Resource, onTapped func()) *intSpinnerButton {
-	b := &intSpinnerButton{
-		spinner: s,
-	}
-	b.ExtendBaseWidget(b)
-	b.setButtonProperties(resource, onTapped)
-	return b
-}
-
-// / float64SpinnerButton widget is a specialized button for use in the float64Spinner widget
-type float64SpinnerButton struct {
-	baseSpinnerButton
-	spinner *Float64Spinner
-}
-
-// newFloat64SpinnerButton creates a float64SpinnerButton widget. It should only be called from
-// NewFloat64Spinner or NewFloat64SpinnerUninitialized.
-//
-// Params:
-//
-//	s is a pointer to the parent Float64Spinner widget that this button is contained within.
-//	resource is the resource for the button icon. For the icon to be properly displayed
-//
-// for each button status (enabled/disabled, light/dark mode, etc.), the resource should be
-// a theme resource.
-//
-//	onTapped is the function to be called when the button is "tapped".
-func newFloat64SpinnerButton(s *Float64Spinner, resource fyne.Resource, onTapped func()) *float64SpinnerButton {
-	b := &float64SpinnerButton{
-		spinner: s,
-	}
-	b.ExtendBaseWidget(b)
-	b.setButtonProperties(resource, onTapped)
-	return b
-}
-
 // baseSpinner contains the basic functionality shared by IntSpinner and Float64Spinner.
 type baseSpinner struct {
 	widget.DisableableWidget
@@ -190,8 +153,8 @@ type IntSpinner struct {
 	max   int
 	step  int
 
-	upButton   *intSpinnerButton
-	downButton *intSpinnerButton
+	upButton   *baseSpinnerButton
+	downButton *baseSpinnerButton
 
 	OnChanged func(int) `json:"-"`
 }
@@ -221,8 +184,8 @@ func NewIntSpinner(min, max, step int, onChanged func(int)) *IntSpinner {
 		OnChanged: onChanged,
 	}
 	s.baseSpinner.initialized = true
-	s.upButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
-	s.downButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
+	s.upButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.SetValue(s.min)
 	return s
 }
@@ -237,8 +200,8 @@ func NewIntSpinner(min, max, step int, onChanged func(int)) *IntSpinner {
 func NewIntSpinnerUninitialized() *IntSpinner {
 	s := &IntSpinner{}
 	s.baseSpinner.initialized = false
-	s.upButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
-	s.downButton = newIntSpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
+	s.upButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.Disable()
 	return s
 }
@@ -666,8 +629,8 @@ type Float64Spinner struct {
 	step      float64
 	precision uint
 
-	upButton   *float64SpinnerButton
-	downButton *float64SpinnerButton
+	upButton   *baseSpinnerButton
+	downButton *baseSpinnerButton
 
 	OnChanged func(float64) `json:"-"`
 }
@@ -699,8 +662,8 @@ func NewFloat64Spinner(min, max, step float64, precision uint, onChanged func(fl
 		OnChanged: onChanged,
 	}
 	s.baseSpinner.initialized = true
-	s.upButton = newFloat64SpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
-	s.downButton = newFloat64SpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
+	s.upButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.SetValue(s.min)
 	return s
 }
@@ -715,8 +678,8 @@ func NewFloat64Spinner(min, max, step float64, precision uint, onChanged func(fl
 func NewFloat64SpinnerUninitialized() *Float64Spinner {
 	s := &Float64Spinner{}
 	s.baseSpinner.initialized = false
-	s.upButton = newFloat64SpinnerButton(s, theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
-	s.downButton = newFloat64SpinnerButton(s, theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
+	s.upButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
+	s.downButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.Disable()
 	return s
 }
