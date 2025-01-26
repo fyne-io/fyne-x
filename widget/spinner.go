@@ -273,8 +273,7 @@ func (s *IntSpinner) CreateRenderer() fyne.WidgetRenderer {
 	box := canvas.NewRectangle(th.Color(theme.ColorNameBackground, v))
 	border := canvas.NewRectangle(color.Transparent)
 
-	text := canvas.NewText(strconv.Itoa(s.value), th.Color(theme.ColorNameForeground, v))
-
+	text := canvas.NewText("", color.Black)
 	objects := []fyne.CanvasObject{
 		box,
 		border,
@@ -492,14 +491,9 @@ func (s *IntSpinner) requestFocus() {
 // The size cannot be larger than the larger of the sizes for the Spinner
 // min and max values.
 func (s *IntSpinner) textSize() fyne.Size {
-	minText := canvas.NewText(strconv.Itoa(s.min), color.Black)
-	maxText := canvas.NewText(strconv.Itoa(s.max), color.Black)
-	minTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(minText.Text,
-		minText.TextSize, minText.TextStyle, minText.FontSource)
-	maxTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(maxText.Text,
-		maxText.TextSize, maxText.TextStyle, maxText.FontSource)
-	return fyne.NewSize(max(minTextSize.Width, maxTextSize.Width),
-		max(minTextSize.Height, maxTextSize.Height))
+	minText := strconv.Itoa(s.min)
+	maxText := strconv.Itoa(s.max)
+	return maxTextSize(minText, maxText)
 }
 
 // upButtonClicked handles tap events for the IntSpinner's up button.
@@ -978,14 +972,7 @@ func (s *Float64Spinner) textSize() fyne.Size {
 	format := fmt.Sprintf("%%.%df", s.precision)
 	minVal := fmt.Sprintf(format, s.min)
 	maxVal := fmt.Sprintf(format, s.max)
-	minText := canvas.NewText(minVal, color.Black)
-	maxText := canvas.NewText(maxVal, color.Black)
-	minTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(minText.Text,
-		minText.TextSize, minText.TextStyle, minText.FontSource)
-	maxTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(maxText.Text,
-		maxText.TextSize, maxText.TextStyle, maxText.FontSource)
-	return fyne.NewSize(max(minTextSize.Width, maxTextSize.Width),
-		max(minTextSize.Height, maxTextSize.Height))
+	return maxTextSize(minVal, maxVal)
 }
 
 // updateFromData updates the spinner to the value set in the bound data.
@@ -1141,6 +1128,19 @@ func (r *float64SpinnerRenderer) spinnerColors() (fgColor, bgColor, borderColor 
 // upButtonClicked handles tap events for the Float64Spinner's up button.
 func (s *Float64Spinner) upButtonClicked() {
 	s.SetValue(s.value + s.step)
+}
+
+// maxTextSize calculates the larger of the canvas.Text sizes for the two string params
+func maxTextSize(minText, maxText string) fyne.Size {
+	// color does not affect the text size, so use Black.
+	minT := canvas.NewText(minText, color.Black)
+	maxT := canvas.NewText(maxText, color.Black)
+	minTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(minT.Text,
+		minT.TextSize, minT.TextStyle, minT.FontSource)
+	maxTextSize, _ := fyne.CurrentApp().Driver().RenderedTextSize(maxT.Text,
+		maxT.TextSize, maxT.TextStyle, maxT.FontSource)
+	return fyne.NewSize(max(minTextSize.Width, maxTextSize.Width),
+		max(minTextSize.Height, maxTextSize.Height))
 }
 
 // max returns the larger of the two arguments.
