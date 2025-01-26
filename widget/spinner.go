@@ -251,6 +251,7 @@ func (s *IntSpinner) CreateRenderer() fyne.WidgetRenderer {
 	border := canvas.NewRectangle(color.Transparent)
 
 	text := canvas.NewText("", color.Black)
+	text.Alignment = fyne.TextAlignTrailing
 	objects := []fyne.CanvasObject{
 		box,
 		border,
@@ -571,7 +572,6 @@ func (r *intSpinnerRenderer) Refresh() {
 	r.border.StrokeColor = th.Color(borderColor, v)
 	r.text.Text = strconv.Itoa(r.spinner.value)
 	r.text.Color = th.Color(fgColor, v)
-	r.text.Alignment = fyne.TextAlignTrailing
 
 	if r.spinner.Disabled() {
 		r.spinner.upButton.Disable()
@@ -698,6 +698,7 @@ func (s *Float64Spinner) CreateRenderer() fyne.WidgetRenderer {
 	format := fmt.Sprintf("%%.%df", s.precision)
 	value := fmt.Sprintf(format, s.value)
 	text := canvas.NewText(value, th.Color(theme.ColorNameForeground, v))
+	text.Alignment = fyne.TextAlignTrailing
 
 	objects := []fyne.CanvasObject{
 		box,
@@ -1011,7 +1012,6 @@ func (r *float64SpinnerRenderer) Refresh() {
 	format := fmt.Sprintf("%%.%df", r.spinner.precision)
 	r.text.Text = fmt.Sprintf(format, r.spinner.value)
 	r.text.Color = th.Color(fgColor, v)
-	r.text.Alignment = fyne.TextAlignTrailing
 
 	if r.spinner.Disabled() {
 		r.spinner.upButton.Disable()
