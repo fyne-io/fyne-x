@@ -154,6 +154,21 @@ func (s *baseSpinner) FocusLost() {
 	s.Refresh()
 }
 
+// MouseIn is called when a desktop pointer enters the widget.
+func (s *baseSpinner) MouseIn(evt *desktop.MouseEvent) {
+	s.hovered = true
+	s.Refresh()
+}
+
+// MouseMoved is called when a desktop pointer hovers over the widget.
+func (s *baseSpinner) MouseMoved(evt *desktop.MouseEvent) {}
+
+// MouseOut is called when a desktop pointer exits the widget.
+func (s *baseSpinner) MouseOut() {
+	s.hovered = false
+	s.Refresh()
+}
+
 var _ fyne.Disableable = (*IntSpinner)(nil)
 var _ fyne.Focusable = (*IntSpinner)(nil)
 var _ fyne.Tappable = (*IntSpinner)(nil)
@@ -323,21 +338,6 @@ func (s *IntSpinner) MinSize() fyne.Size {
 // Implements: desktop.Mouseable
 func (s *IntSpinner) MouseDown(m *desktop.MouseEvent) {
 	s.requestFocus()
-	s.Refresh()
-}
-
-// MouseIn is called when a desktop pointer enters the widget.
-func (s *IntSpinner) MouseIn(evt *desktop.MouseEvent) {
-	s.hovered = true
-	s.Refresh()
-}
-
-// MouseMoved is called when a desktop pointer hovers over the widget.
-func (s *IntSpinner) MouseMoved(evt *desktop.MouseEvent) {}
-
-// MouseOut is called when a desktop pointer exits the widget.
-func (s *IntSpinner) MouseOut() {
-	s.hovered = false
 	s.Refresh()
 }
 
@@ -825,21 +825,6 @@ func (s *Float64Spinner) MinSize() fyne.Size {
 // Implements: desktop.Mouseable
 func (s *Float64Spinner) MouseDown(m *desktop.MouseEvent) {
 	s.requestFocus()
-	s.Refresh()
-}
-
-// MouseIn is called when a desktop pointer enters the widget.
-func (s *Float64Spinner) MouseIn(evt *desktop.MouseEvent) {
-	s.hovered = true
-	s.Refresh()
-}
-
-// MouseMoved is called when a desktop pointer hovers over the widget.
-func (s *Float64Spinner) MouseMoved(evt *desktop.MouseEvent) {}
-
-// MouseOut is called when a desktop pointer exits the widget.
-func (s *Float64Spinner) MouseOut() {
-	s.hovered = false
 	s.Refresh()
 }
 
