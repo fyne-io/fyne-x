@@ -86,8 +86,8 @@ func main() {
 	s4 := xwidget.NewFloat64Spinner(-1., 400., 10.3, 1, nil)
 	c4 := container.NewHBox(l4, s4)
 
-	l5 := widget.NewLabel("Float64Spinner 2 (0., 16., 3.2, 3)")
-	s5 = xwidget.NewFloat64SpinnerWithData(0., 16., 3.2, 3, floatData)
+	l5 := widget.NewLabel("Float64Spinner 2 (0., 16., 3.215, 2)")
+	s5 = xwidget.NewFloat64SpinnerWithData(0., 16., 3.215, 2, floatData)
 	c5 := container.NewHBox(l5, s5)
 
 	v := container.NewVBox(c, c1, c3, b, bs, c2, bs1, bs2, c4, c5, c6)
