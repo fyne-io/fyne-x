@@ -571,7 +571,6 @@ func (r *intSpinnerRenderer) Refresh() {
 	r.border.StrokeColor = th.Color(borderColor, v)
 	r.text.Text = strconv.Itoa(r.spinner.value)
 	r.text.Color = th.Color(fgColor, v)
-	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
 
 	if r.spinner.Disabled() {
@@ -1012,7 +1011,6 @@ func (r *float64SpinnerRenderer) Refresh() {
 	format := fmt.Sprintf("%%.%df", r.spinner.precision)
 	r.text.Text = fmt.Sprintf(format, r.spinner.value)
 	r.text.Color = th.Color(fgColor, v)
-	r.text.Refresh()
 	r.text.Alignment = fyne.TextAlignTrailing
 
 	if r.spinner.Disabled() {
