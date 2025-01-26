@@ -95,6 +95,9 @@ type baseSpinner struct {
 	widget.DisableableWidget
 	initialized bool
 
+	upButton   *spinnerButton
+	downButton *spinnerButton
+
 	binder  basicBinder
 	hovered bool
 	focused bool
@@ -131,6 +134,21 @@ func (s *baseSpinner) MouseOut() {
 	s.Refresh()
 }
 
+// Tapped handles primary button clicks with the cursor over
+// the Spinner object.
+// If actually over one of the spinnerButtons, processing
+// is passed to that button for handling.
+func (s *baseSpinner) Tapped(evt *fyne.PointEvent) {
+	if s.Disabled() {
+		return
+	}
+	if s.upButton.containsPoint(evt.Position) {
+		s.upButton.Tapped(evt)
+	} else if s.downButton.containsPoint(evt.Position) {
+		s.downButton.Tapped(evt)
+	}
+}
+
 var _ fyne.Disableable = (*IntSpinner)(nil)
 var _ fyne.Focusable = (*IntSpinner)(nil)
 var _ fyne.Tappable = (*IntSpinner)(nil)
@@ -146,9 +164,6 @@ type IntSpinner struct {
 	min   int
 	max   int
 	step  int
-
-	upButton   *spinnerButton
-	downButton *spinnerButton
 
 	OnChanged func(int) `json:"-"`
 }
@@ -375,21 +390,6 @@ func (s *IntSpinner) SetValue(val int) {
 	s.Refresh()
 	if s.OnChanged != nil {
 		s.OnChanged(s.value)
-	}
-}
-
-// Tapped handles primary button clicks with the cursor over
-// the Spinner object.
-// If actually over one of the spinnerButtons, processing
-// is passed to that button for handling.
-func (s *IntSpinner) Tapped(evt *fyne.PointEvent) {
-	if s.Disabled() {
-		return
-	}
-	if s.upButton.containsPoint(evt.Position) {
-		s.upButton.Tapped(evt)
-	} else if s.downButton.containsPoint(evt.Position) {
-		s.downButton.Tapped(evt)
 	}
 }
 
@@ -623,9 +623,6 @@ type Float64Spinner struct {
 	step      float64
 	precision uint
 
-	upButton   *spinnerButton
-	downButton *spinnerButton
-
 	OnChanged func(float64) `json:"-"`
 }
 
@@ -856,21 +853,6 @@ func (s *Float64Spinner) SetValue(val float64) {
 	s.Refresh()
 	if s.OnChanged != nil {
 		s.OnChanged(s.value)
-	}
-}
-
-// Tapped handles primary button clicks with the cursor over
-// the spinner object.
-// If actually over one of the spinnerButtons, processing
-// is passed to that button for handling.
-func (s *Float64Spinner) Tapped(evt *fyne.PointEvent) {
-	if s.Disabled() {
-		return
-	}
-	if s.upButton.containsPoint(evt.Position) {
-		s.upButton.Tapped(evt)
-	} else if s.downButton.containsPoint(evt.Position) {
-		s.downButton.Tapped(evt)
 	}
 }
 
