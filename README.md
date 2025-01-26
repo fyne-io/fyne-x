@@ -218,17 +218,28 @@ m := NewMap()
 
 ### Spinner
 
-A Spinner is a widget that displays an integer value along with an up button and a down button. These
-buttons
-allow incrementing or decrementing the value. The value is limited to be between the set minimum and
-maximum values, and the value increments or decrements by the set step value. The most typical step
-value would be 1, but it can be set to any value greater than 0. The initially displayed value is
-the set minimum value.
+A Spinner is a widget that displays a numerical value along with an increment (up) button and a decrement (down)
+ button. These buttons
+allow incrementing or decrementing the value. 
+The spinner's value is limited to be between the set minimum and
+maximum values, and the value increments or decrements by the set step value. The initially displayed
+value is set to the minimum value, or to the bound value.
+
+There are two types of Spinner: 
+* IntSpinner for integer values.
+* Float64Spinner for float64 values.
+
+The most typical step value for an IntSpinner
+value would be 1, but the step value can be set to any value greater than 0 and less than or equal to the
+maximum value minus the minimum value.
+
+A precision parameter is specified in the NewFloat64Spinner function to set the number of digits displayed
+after the decimal point. 
 
 In addition to clicking on the up and down buttons, the spinner value can be incremented or decremented using either
-keyboard keys, or the mouse scroller. Clicking on one of the buttons
-will modify the spinner value at any time, except when the spinner is disabled. Keyboard and scroller input only
-works when the spinner has focus.
+keyboard keys, or the mouse scroller or touchpad. Clicking on one of the buttons
+will modify the spinner value at any time, except when the spinner is disabled. Keyboard, scroller, and touchpad
+input only works when the spinner has focus.
 
 Here are the keyboard keys accepted by the spinner widget and their effects:
 
@@ -244,11 +255,11 @@ Finally, the value can be set programmatically using the `Spinner.SetValue` meth
 Here is simple example that creates a spinner widget:
 
 ```go
-spinner := NewSpinner(2, 22, 3, valChanged)
+spinner := NewIntSpinner(2, 22, 3, valChanged)
 spinner.SetValue(6)
 ```
 
-The result of executing this code is a spinner widget with the following settings:
+The result of executing this code is an IntSpinner widget with the following settings:
 
 | Setting | Value |
 |---|---|
@@ -259,9 +270,11 @@ The result of executing this code is a spinner widget with the following setting
 | function called on value change | valChanged |
 | value after SetValue call | 6 |
 
-And this is what a spinner looks like in light and dark themes:
+This is what an IntSpinner looks like in light theme:
 
 ![](img/spinner-light.png)
+
+and this is a Float64Spinner in dark theme:
 
 ![](img/spinner-dark.png)
 
