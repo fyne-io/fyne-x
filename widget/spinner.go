@@ -110,65 +110,6 @@ func (b *spinnerButton) setButtonProperties(resource fyne.Resource, onTapped fun
 
 }
 
-// baseSpinner contains the basic functionality shared by IntSpinner and Float64Spinner.
-type baseSpinner struct {
-	widget.DisableableWidget
-	initialized bool
-
-	upButton   *spinnerButton
-	downButton *spinnerButton
-
-	binder  basicBinder
-	hovered bool
-	focused bool
-}
-
-// FocusGained is called when the spinner has been given focus.
-//
-// Implements: fyne.Focusable
-func (s *baseSpinner) FocusGained() {
-	s.focused = true
-	s.Refresh()
-}
-
-// FocusLost is called when the spinner has had focus removed.
-//
-// Implements: fyne.Focusable
-func (s *baseSpinner) FocusLost() {
-	s.focused = false
-	s.Refresh()
-}
-
-// MouseIn is called when a desktop pointer enters the widget.
-func (s *baseSpinner) MouseIn(evt *desktop.MouseEvent) {
-	s.hovered = true
-	s.Refresh()
-}
-
-// MouseMoved is called when a desktop pointer hovers over the widget.
-func (s *baseSpinner) MouseMoved(evt *desktop.MouseEvent) {}
-
-// MouseOut is called when a desktop pointer exits the widget.
-func (s *baseSpinner) MouseOut() {
-	s.hovered = false
-	s.Refresh()
-}
-
-// Tapped handles primary button clicks with the cursor over
-// the Spinner object.
-// If actually over one of the spinnerButtons, processing
-// is passed to that button for handling.
-func (s *baseSpinner) Tapped(evt *fyne.PointEvent) {
-	if s.Disabled() {
-		return
-	}
-	if s.upButton.containsPoint(evt.Position) {
-		s.upButton.Tapped(evt)
-	} else if s.downButton.containsPoint(evt.Position) {
-		s.downButton.Tapped(evt)
-	}
-}
-
 var _ fyne.Disableable = (*Spinner)(nil)
 var _ fyne.Focusable = (*Spinner)(nil)
 var _ fyne.Tappable = (*Spinner)(nil)
@@ -178,13 +119,21 @@ var _ fyne.Scrollable = (*Spinner)(nil)
 // Spinner widget has a minimum, maximum, step and current values along with spinnerButtons
 // to increment and decrement the spinner value.
 type Spinner struct {
-	baseSpinner
+	widget.DisableableWidget
 
 	value  float64
 	min    float64
 	max    float64
 	step   float64
 	format string
+
+	upButton   *spinnerButton
+	downButton *spinnerButton
+
+	binder      basicBinder
+	initialized bool
+	hovered     bool
+	focused     bool
 
 	OnChanged func(float64) `json:"-"`
 }
@@ -218,7 +167,7 @@ func NewSpinner(min, max, step float64, format string, onChanged func(float64)) 
 		format:    format,
 		OnChanged: onChanged,
 	}
-	s.baseSpinner.initialized = true
+	s.initialized = true
 	s.upButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
 	s.downButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.SetValue(s.min)
@@ -239,7 +188,7 @@ func NewSpinner(min, max, step float64, format string, onChanged func(float64)) 
 //	where X is an unsigned integer.
 func NewSpinnerUninitialized(format string) *Spinner {
 	s := &Spinner{format: format}
-	s.baseSpinner.initialized = false
+	s.initialized = false
 	s.upButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropUp), s.upButtonClicked)
 	s.downButton = newSpinnerButton(theme.Icon(theme.IconNameArrowDropDown), s.downButtonClicked)
 	s.Disable()
@@ -325,6 +274,22 @@ func (s *Spinner) Enable() {
 	}
 	s.DisableableWidget.Enable()
 	s.SetValue(s.value)
+	s.Refresh()
+}
+
+// FocusGained is called when the spinner has been given focus.
+//
+// Implements: fyne.Focusable
+func (s *Spinner) FocusGained() {
+	s.focused = true
+	s.Refresh()
+}
+
+// FocusLost is called when the spinner has had focus removed.
+//
+// Implements: fyne.Focusable
+func (s *Spinner) FocusLost() {
+	s.focused = false
 	s.Refresh()
 }
 
@@ -431,6 +396,21 @@ func (s *Spinner) SetValue(val float64) {
 	s.Refresh()
 	if s.OnChanged != nil {
 		s.OnChanged(s.value)
+	}
+}
+
+// Tapped handles primary button clicks with the cursor over
+// the Spinner object.
+// If actually over one of the spinnerButtons, processing
+// is passed to that button for handling.
+func (s *Spinner) Tapped(evt *fyne.PointEvent) {
+	if s.Disabled() {
+		return
+	}
+	if s.upButton.containsPoint(evt.Position) {
+		s.upButton.Tapped(evt)
+	} else if s.downButton.containsPoint(evt.Position) {
+		s.downButton.Tapped(evt)
 	}
 }
 
