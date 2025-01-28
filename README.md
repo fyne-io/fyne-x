@@ -221,20 +221,22 @@ m := NewMap()
 A Spinner is a widget that displays a numerical value along with an increment (up) button and a decrement (down)
  button. These buttons
 allow incrementing or decrementing the value. 
-The spinner's value is limited to be between the set minimum and
-maximum values, and the value increments or decrements by the set step value. The initially displayed
+The spinner's value is limited to be between the minimum and
+maximum values, and the value increments or decrements by the step value. The initially displayed
 value is set to the minimum value, or to the bound value.
 
-There are two types of Spinner: 
-* IntSpinner for integer values.
-* Float64Spinner for float64 values.
+All Spinner values (value, minumum, maximum, and step) are stored as float64 values. There is a format
+field that determines how the value is displayed in the Spinner widget. If the format contains "%d" or
+"%+d", the value is displayed as an integer. Other "%" formats assume you want to display the value as
+a floating point number. It is recommended that you use "%.Xf", where X is an unsigned integer, as the
+format for displaying floating point numbers.
 
-The most typical step value for an IntSpinner
+You may include other text in the format. For example, if the current value is 47.15, and you specify the
+format as "%d %%" then the displayed value will be "47 %"
+
+The most typical step value for an integer Spinner
 value would be 1, but the step value can be set to any value greater than 0 and less than or equal to the
 maximum value minus the minimum value.
-
-A precision parameter is specified in the NewFloat64Spinner function to set the number of digits displayed
-after the decimal point. 
 
 In addition to clicking on the up and down buttons, the spinner value can be incremented or decremented using either
 keyboard keys, or the mouse scroller or touchpad. Clicking on one of the buttons
@@ -255,7 +257,7 @@ Finally, the value can be set programmatically using the `Spinner.SetValue` meth
 Here is simple example that creates a spinner widget:
 
 ```go
-spinner := NewIntSpinner(2, 22, 3, valChanged)
+spinner := NewSpinner(2, 22, 3.14, "%.1f", valChanged)
 spinner.SetValue(6)
 ```
 
@@ -263,24 +265,24 @@ The result of executing this code is an IntSpinner widget with the following set
 
 | Setting | Value |
 |---|---|
-| minimum value | 2 |
-| maximum value | 22 |
-| step | 3 |
-|initial value | 2 |
+| minimum value | 2.0 |
+| maximum value | 22.0 |
+| step | 3.14 |
+| format | "%.1f" |
+|initial value | 2.0 |
 | function called on value change | valChanged |
-| value after SetValue call | 6 |
+| value after SetValue call | 6.0 |
 
-This is what an IntSpinner looks like in light theme:
+This is what a Spinner, with the format of "%d" and that does not have focus, looks like in light theme:
 
 ![](img/spinner-light.png)
 
-and this is a Float64Spinner in dark theme:
+and this is a focused Spinner with the format of "%.1f" in dark theme:
 
 ![](img/spinner-dark.png)
 
 The spinner is normally sized to the minimum width and height required to display any value between its
-minimum and maximum values. In the case of a spinner in a grid container, the spinner width is set to
-the grid container's column width.
+minimum and maximum values, although the width and height may be controlled by the container it is included in.
 
 See the [demo](cmd/spinner_demo/main.go) program for an example of how to use the spinner widget.
 
