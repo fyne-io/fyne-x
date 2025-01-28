@@ -55,8 +55,8 @@ func main() {
 	}
 	// OnChanged has to be called here to display initial value in s1ValueLabel.
 	s1.OnChanged(s1.GetValue())
-	l2 := widget.NewLabel("Spinner 2 With Data (-2, 16, 1, \"%-d\"):")
-	s2 := xwidget.NewSpinnerWithData(-2, 16, 1, "%-d", data)
+	l2 := widget.NewLabel("Spinner 2 With Data (-2, 16, 1, \"%+d\"):")
+	s2 := xwidget.NewSpinnerWithData(-2, 16, 1, "%+d", data)
 	c := container.NewGridWithColumns(2, l1, s1)
 	c1 := container.NewHBox(l2, s2)
 	l3 := widget.NewLabel("Uninitialized Spinner 3:")
@@ -83,7 +83,7 @@ func main() {
 	bs1 := widget.NewButton("Set Spinner 1 to 5", func() { s1.SetValue(5) })
 	bs2 := widget.NewButton("Set Spinner 3 bound value to 12", func() { data.Set(12) })
 
-	l4 := widget.NewLabel("Spinner 4 (-1., 400., 10.3, \"%.1f\"):")
+	l4 := widget.NewLabel("Spinner 4 (-1., 400., 10.3, \"%+.1f\"):")
 	s4 := xwidget.NewSpinner(-1., 400., 10.3, "%.1f", nil)
 	c4 := container.NewHBox(l4, s4)
 

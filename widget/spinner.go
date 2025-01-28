@@ -145,11 +145,9 @@ type Spinner struct {
 //		min is the minimum spinner value. It may be < 0.
 //		max is the maximum spinner value. It must be > min.
 //		step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
-//	 	format is the format to display the value in. This format must contain one of the following: "%d", "%-d", or "%.Xf"
-//
-// where X is an unsigned integer.
-//
-//	onChanged is the callback function that is called whenever the spinner value changes.
+//	 	format is the format to display the value in. This format must contain one of the following: "%d", "%+d", or "%.Xf"
+//		where X is an unsigned integer.
+//		onChanged is the callback function that is called whenever the spinner value changes.
 func NewSpinner(min, max, step float64, format string, onChanged func(float64)) *Spinner {
 	if min >= max {
 		panic(errors.New("spinner max must be greater than min value"))
@@ -184,7 +182,7 @@ func NewSpinner(min, max, step float64, format string, onChanged func(float64)) 
 //
 // Params:
 //
-//	format is the format to display the value in. This format must contain one of the following: "%d", "%-d", or "%.Xf"
+//	format is the format to display the value in. This format must contain one of the following: "%d", "%+d", or "%.Xf"
 //	where X is an unsigned integer.
 func NewSpinnerUninitialized(format string) *Spinner {
 	s := &Spinner{format: format}
@@ -202,7 +200,7 @@ func NewSpinnerUninitialized(format string) *Spinner {
 //		min is the minimum spinner value. It may be < 0.
 //		max is the maximum spinner value. It must be > min.
 //		step is the amount that the spinner increases or decreases by. It must be > 0 and less than or equal to max - min.
-//	 	format is the format to display the value in. This format must contain one of the following: "%d", "%-d", or "%.Xf"
+//	 	format is the format to display the value in. This format must contain one of the following: "%d", "%+d", or "%.Xf"
 //		where X is an unsigned integer.
 //		data is the value that is bound to the spinner value.
 func NewSpinnerWithData(min, max, step float64, format string, data binding.Float) *Spinner {
@@ -472,7 +470,7 @@ func (s *Spinner) requestFocus() {
 func (s *Spinner) textSize() fyne.Size {
 	var minVal, maxVal string
 	if strings.Contains(s.format, "%d") ||
-		strings.Contains(s.format, "%-d") {
+		strings.Contains(s.format, "%+d") {
 		minVal = fmt.Sprintf(s.format, int(s.min))
 		maxVal = fmt.Sprintf(s.format, int(s.max))
 	} else {
@@ -589,7 +587,7 @@ func (r *SpinnerRenderer) Refresh() {
 	r.border.StrokeColor = th.Color(borderColor, v)
 
 	if strings.Contains(r.spinner.format, "%d") ||
-		strings.Contains(r.spinner.format, "%-d") {
+		strings.Contains(r.spinner.format, "%+d") {
 		r.text.Text = fmt.Sprintf(r.spinner.format, int(r.spinner.value))
 	} else {
 		r.text.Text = fmt.Sprintf(r.spinner.format, r.spinner.value)
