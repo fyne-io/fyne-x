@@ -32,6 +32,7 @@ func TestNumericalnEntry_Float(t *testing.T) {
 
 func TestNumericalEntry_NegInt(t *testing.T) {
 	entry := NewNumericalEntry()
+	entry.AllowNegative = true
 
 	test.Type(entry, "-2")
 	assert.Equal(t, "-2", entry.Text)
@@ -43,6 +44,7 @@ func TestNumericalEntry_NegInt(t *testing.T) {
 
 func TestNumericalEntry_NegFloat(t *testing.T) {
 	entry := NewNumericalEntry()
+	entry.AllowNegative = true
 	entry.AllowFloat = true
 
 	test.Type(entry, "-2.4")

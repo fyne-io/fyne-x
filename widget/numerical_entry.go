@@ -13,6 +13,8 @@ import (
 type NumericalEntry struct {
 	widget.Entry
 	AllowFloat bool
+	// AllowNegative determines if negative numbers can be entered.
+	AllowNegative bool
 }
 
 // NewNumericalEntry returns an extended entry that only allows numerical input.
@@ -36,7 +38,7 @@ func (e *NumericalEntry) TypedRune(r rune) {
 		return
 	}
 
-	if r == '-' && e.Entry.CursorRow == 0 && e.Entry.CursorColumn == 0 {
+	if r == '-' && e.AllowNegative && e.Entry.CursorRow == 0 && e.Entry.CursorColumn == 0 {
 		e.Entry.TypedRune(r)
 	}
 }
