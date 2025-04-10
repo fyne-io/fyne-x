@@ -33,6 +33,11 @@ func (e *NumericalEntry) TypedRune(r rune) {
 
 	if e.AllowFloat && (r == '.' || r == ',') {
 		e.Entry.TypedRune(r)
+		return
+	}
+
+	if r == '-' && e.Entry.CursorRow == 0 && e.Entry.CursorColumn == 0 {
+		e.Entry.TypedRune(r)
 	}
 }
 
