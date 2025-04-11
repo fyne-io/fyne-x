@@ -3,7 +3,7 @@ module fyne.io/x/fyne
 go 1.19
 
 require (
-	fyne.io/fyne/v2 v2.6.0-rc2
+	fyne.io/fyne/v2 v2.6.0
 	github.com/Andrew-M-C/go.jsonvalue v1.4.1
 	github.com/eclipse/paho.mqtt.golang v1.3.5
 	github.com/gorilla/websocket v1.5.3

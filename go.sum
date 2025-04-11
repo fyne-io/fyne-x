@@ -1,5 +1,5 @@
-fyne.io/fyne/v2 v2.6.0-rc2 h1:khreEwgchrCbuJBhn54yYSn38wWWHpy+VH03vt7IcYY=
-fyne.io/fyne/v2 v2.6.0-rc2/go.mod h1:YZt7SksjvrSNJCwbWFV32WON3mE1Sr7L41D29qMZ/lU=
+fyne.io/fyne/v2 v2.6.0 h1:Rywo9yKYN4qvNuvkRuLF+zxhJYWbIFM+m4N4KV4p1pQ=
+fyne.io/fyne/v2 v2.6.0/go.mod h1:YZt7SksjvrSNJCwbWFV32WON3mE1Sr7L41D29qMZ/lU=
 fyne.io/systray v1.11.0 h1:D9HISlxSkx+jHSniMBR6fCFOUjk1x/OOOJLa9lJYAKg=
 fyne.io/systray v1.11.0/go.mod h1:RVwqP9nYMo7h5zViCBHri2FgjXF7H2cub7MAq4NSoLs=
 github.com/Andrew-M-C/go.jsonvalue v1.4.1 h1:MGtqaKy5Z7Xi/hnWaeqWDMwno79uNRt0XoCGHa1pm74=
