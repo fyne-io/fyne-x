@@ -28,6 +28,11 @@ func NewNumericalEntry() *NumericalEntry {
 //
 // Implements: fyne.Focusable
 func (e *NumericalEntry) TypedRune(r rune) {
+	if e.Entry.CursorColumn == 0 && e.Entry.CursorRow == 0 &&
+		len(e.Entry.Text) > 0 && e.Entry.Text[0] == '-' {
+		return
+	}
+
 	if r >= '0' && r <= '9' {
 		e.Entry.TypedRune(r)
 		return
