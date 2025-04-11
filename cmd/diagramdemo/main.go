@@ -19,10 +19,11 @@ func forceanim(diagramWidget *diagramwidget.DiagramWidget) {
 
 	for {
 		if forceticks > 0 {
-			diagramwidget.StepForceLayout(diagramWidget, 300)
-			diagramWidget.Refresh()
+			fyne.Do(func() {
+				diagramwidget.StepForceLayout(diagramWidget, 300)
+				diagramWidget.Refresh()
+			})
 			forceticks--
-			fmt.Printf("forceticks=%d\n", forceticks)
 		}
 
 		time.Sleep(time.Millisecond * (1000 / 30))
