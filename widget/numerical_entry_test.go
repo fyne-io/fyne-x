@@ -20,6 +20,10 @@ func TestNumericalnEntry_Int(t *testing.T) {
 	entry.CursorColumn = 0
 	test.Type(entry, "3")
 	assert.Equal(t, "3123456789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "-4")
+	assert.Equal(t, "43123456789", entry.Text)
 }
 
 func TestNumericalnEntry_Float(t *testing.T) {
@@ -36,6 +40,10 @@ func TestNumericalnEntry_Float(t *testing.T) {
 	entry.CursorColumn = 0
 	test.Type(entry, "3")
 	assert.Equal(t, "3123.456789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "-4")
+	assert.Equal(t, "43123.456789", entry.Text)
 }
 
 func TestNumericalEntry_NegInt(t *testing.T) {

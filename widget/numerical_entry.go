@@ -28,9 +28,15 @@ func NewNumericalEntry() *NumericalEntry {
 //
 // Implements: fyne.Focusable
 func (e *NumericalEntry) TypedRune(r rune) {
-	if e.Entry.CursorColumn == 0 && e.Entry.CursorRow == 0 &&
-		len(e.Entry.Text) > 0 && e.Entry.Text[0] == '-' {
-		return
+	if e.Entry.CursorColumn == 0 && e.Entry.CursorRow == 0 {
+		if e.AllowNegative {
+			if len(e.Text) > 0 && e.Text[0] == '-' {
+				return
+			} else if r == '-' {
+				e.Entry.TypedRune(r)
+				return
+			}
+		}
 	}
 
 	if r >= '0' && r <= '9' {
@@ -41,10 +47,6 @@ func (e *NumericalEntry) TypedRune(r rune) {
 	if e.AllowFloat && (r == '.' || r == ',') {
 		e.Entry.TypedRune(r)
 		return
-	}
-
-	if r == '-' && e.AllowNegative && e.Entry.CursorRow == 0 && e.Entry.CursorColumn == 0 {
-		e.Entry.TypedRune(r)
 	}
 }
 
