@@ -13,6 +13,8 @@ import (
 type NumericalEntry struct {
 	widget.Entry
 	AllowFloat bool
+	// AllowNegative determines if negative numbers can be entered.
+	AllowNegative bool
 }
 
 // NewNumericalEntry returns an extended entry that only allows numerical input.
@@ -26,6 +28,17 @@ func NewNumericalEntry() *NumericalEntry {
 //
 // Implements: fyne.Focusable
 func (e *NumericalEntry) TypedRune(r rune) {
+	if e.Entry.CursorColumn == 0 && e.Entry.CursorRow == 0 {
+		if e.AllowNegative {
+			if len(e.Text) > 0 && e.Text[0] == '-' {
+				return
+			} else if r == '-' {
+				e.Entry.TypedRune(r)
+				return
+			}
+		}
+	}
+
 	if r >= '0' && r <= '9' {
 		e.Entry.TypedRune(r)
 		return
@@ -33,6 +46,7 @@ func (e *NumericalEntry) TypedRune(r rune) {
 
 	if e.AllowFloat && (r == '.' || r == ',') {
 		e.Entry.TypedRune(r)
+		return
 	}
 }
 
