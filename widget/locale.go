@@ -1,7 +1,6 @@
 package widget
 
 import (
-	"fmt"
 	"unicode"
 
 	"fyne.io/fyne/v2"
@@ -25,28 +24,21 @@ func minusRadixThou(locale string) (rune, rune, rune) {
 	p := message.NewPrinter(lang)
 	numStr := p.Sprintf("%f", -12345.5678901)
 	runes := []rune(numStr)
+	// first rune is the "minus" sign
 	minus = runes[0]
+	// look for thousands separator
 	for _, r := range runes[1:5] {
-		if !unicode.IsDigit(r) && r != '-' && r != 0x2212 {
-			/*			if r != ' ' && // space
-						r != 0xa0 && // non-breaking space
-						r == 0xe2a8af {
-						continue
-					}*/
+		if !unicode.IsDigit(r) {
 			thou = r
 			break
 		}
 	}
+	// look for radix separator
 	for _, r := range runes[5:] {
 		if !unicode.IsDigit(r) {
 			radix = r
 			break
 		}
-		fmt.Printf("locale: %s\n", locale)
-		fmt.Printf("minus = '%v'  0x%x\n", string(minus), minus)
-		fmt.Printf("radix = '%v'  0x%x\n", string(radix), radix)
-		fmt.Printf("thou = '%v'  0x%x\n", string(thou), thou)
 	}
-	fmt.Println(numStr)
 	return minus, radix, thou
 }
