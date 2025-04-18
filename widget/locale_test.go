@@ -101,4 +101,26 @@ func Test_minusRadixThou(t *testing.T) {
 	if thou != 0xa0 {
 		t.Errorf("thou should be 0xa0 but is %x", thou)
 	}
+
+	minus, radix, thou = minusRadixThou("kea-CV")
+	if minus != '-' {
+		t.Errorf("minus should be '-' but is %x", minus)
+	}
+	if radix != ',' {
+		t.Errorf("radix should be ',' but is %x", radix)
+	}
+	if thou != 0xa0 {
+		t.Errorf("thou should be 0xa0 but is %x", thou)
+	}
+
+	minus, radix, thou = minusRadixThou("mas-KE")
+	if minus != '-' {
+		t.Errorf("minus should be '-' but is %x", minus)
+	}
+	if radix != '.' {
+		t.Errorf("radix should be '.' but is %x", radix)
+	}
+	if thou != ' ' {
+		t.Errorf("thou should be ' ' but is %x", thou)
+	}
 }
