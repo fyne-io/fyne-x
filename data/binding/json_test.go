@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"fyne.io/fyne/v2/data/binding"
+	"fyne.io/fyne/v2/test"
 	xbinding "fyne.io/x/fyne/data/binding"
 
 	"github.com/stretchr/testify/assert"
@@ -32,6 +33,7 @@ func NewListener(data binding.DataItem) chan bool {
 }
 
 func TestJSONFromStringWithString(t *testing.T) {
+	_ = test.NewTempApp(t)
 	s := binding.NewString()
 
 	assert.NotNil(t, s)

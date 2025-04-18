@@ -113,19 +113,15 @@ func centerText(rich *widget.RichText) {
 }
 
 func watchTheme(bg, footer *canvas.Rectangle) {
-	listen := make(chan fyne.Settings)
-	fyne.CurrentApp().Settings().AddChangeListener(listen)
-	go func() {
-		for range listen {
-			bgColor := withAlpha(theme.Color(theme.ColorNameBackground), 0xe0)
-			bg.FillColor = bgColor
-			bg.Refresh()
+	fyne.CurrentApp().Settings().AddListener(func(_ fyne.Settings) {
+		bgColor := withAlpha(theme.Color(theme.ColorNameBackground), 0xe0)
+		bg.FillColor = bgColor
+		bg.Refresh()
 
-			shadowColor := withAlpha(theme.Color(theme.ColorNameBackground), 0x33)
-			footer.FillColor = shadowColor
-			footer.Refresh()
-		}
-	}()
+		shadowColor := withAlpha(theme.Color(theme.ColorNameBackground), 0x33)
+		footer.FillColor = shadowColor
+		footer.Refresh()
+	})
 }
 
 func withAlpha(c color.Color, alpha uint8) color.Color {
