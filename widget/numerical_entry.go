@@ -6,6 +6,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/widget"
+
+	"github.com/cloudfoundry-attic/jibber_jabber"
 )
 
 // NumericalEntry is an extended entry that only allows numerical input.
@@ -15,11 +17,20 @@ type NumericalEntry struct {
 	AllowFloat bool
 	// AllowNegative determines if negative numbers can be entered.
 	AllowNegative bool
+	minus         rune
+	radixSep      rune
+	thouSep       rune
 }
 
 // NewNumericalEntry returns an extended entry that only allows numerical input.
 func NewNumericalEntry() *NumericalEntry {
 	entry := &NumericalEntry{}
+	userLocale, err := jibber_jabber.DetectIETF()
+	if err != nil {
+		fyne.LogError("DetectIETF error: %s\n", err)
+	} else {
+		entry.minus, entry.radixSep, entry.thouSep = minusRadixThou(userLocale)
+	}
 	entry.ExtendBaseWidget(entry)
 	return entry
 }
