@@ -771,3 +771,171 @@ func TestNumericalEntry_Append(t *testing.T) {
 		t.Errorf("expected '-1', got '%s'", e.Text)
 	}
 }
+
+func TestNumericalEntry_ValidateText(t *testing.T) {
+	e := &NumericalEntry{
+		AllowFloat:    true,
+		AllowNegative: true,
+	}
+	e.minus = '-'
+	e.radixSep = '.'
+	e.thouSep = ','
+
+	testCases := []struct {
+		name        string
+		text        string
+		expectedErr string
+	}{
+		{
+			name: "empty string",
+			text: "",
+		},
+		{
+			name: "valid integer",
+			text: "123",
+		},
+		{
+			name: "valid float",
+			text: "123.45",
+		},
+		{
+			name: "valid negative integer",
+			text: "-123",
+		},
+		{
+			name: "valid negative float",
+			text: "-123.45",
+		},
+		{
+			name: "valid number with thousand separators",
+			text: "1,234,567.89",
+		},
+		{
+			name: "valid negative number with thousand separators",
+			text: "-1,234,567.89",
+		},
+		{
+			name:        "invalid character",
+			text:        "123a",
+			expectedErr: "invalid character: 'a'",
+		},
+		{
+			name:        "minus not at the beginning",
+			text:        "1-23",
+			expectedErr: "minus must be the first character",
+		},
+		{
+			name:        "multiple radix separators",
+			text:        "12.34.56",
+			expectedErr: "only one radix separator is allowed",
+		},
+		{
+			name:        "thousand separator cannot be the first character",
+			text:        ",123",
+			expectedErr: "thousand separator cannot be the first character",
+		},
+		{
+			name:        "thousand separator cannot be the first character after minus",
+			text:        "-,123",
+			expectedErr: "thousand separator cannot be the first character after minus",
+		},
+		{
+			name:        "thousand separator cannot be immediately after radix separator",
+			text:        "123.,45",
+			expectedErr: "thousand separator cannot be immediately after radix separator",
+		},
+		{
+			name:        "thousand separator cannot be immediately after thousand separator",
+			text:        "123,,456",
+			expectedErr: "thousand separator cannot be immediately after thousand separator",
+		},
+		{
+			name:        "thousand separator cannot immediately precede radix separator",
+			text:        "123,.456",
+			expectedErr: "thousand separator cannot immediately precede radix separator",
+		},
+		{
+			name:        "negative numbers are not allowed",
+			text:        "-123",
+			expectedErr: "",
+		},
+		{
+			name:        "floating point numbers are not allowed",
+			text:        "123.45",
+			expectedErr: "",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := e.ValidateText(tc.text)
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil {
+					t.Fatalf("expected error %q, got nil", tc.expectedErr)
+				}
+				if err.Error() != tc.expectedErr {
+					t.Fatalf("expected error %q, got %q", tc.expectedErr, err.Error())
+				}
+			}
+		})
+	}
+}
+
+func TestNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
+	testCases := []struct {
+		name          string
+		allowNegative bool
+		allowFloat    bool
+		text          string
+		expectedErr   string
+	}{
+		{
+			name:          "negative numbers are not allowed",
+			allowNegative: false,
+			allowFloat:    true,
+			text:          "-123",
+			expectedErr:   "negative numbers are not allowed",
+		},
+		{
+			name:          "floating point numbers are not allowed",
+			allowNegative: true,
+			allowFloat:    false,
+			text:          "123.45",
+			expectedErr:   "floating point numbers are not allowed",
+		},
+		{
+			name:          "negative floating point numbers are not allowed",
+			allowNegative: false,
+			allowFloat:    false,
+			text:          "-123.45",
+			expectedErr:   "negative numbers are not allowed",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := &NumericalEntry{
+				AllowNegative: tc.allowNegative,
+				AllowFloat:    tc.allowFloat,
+			}
+			e.minus = '-'
+			e.radixSep = '.'
+			e.thouSep = ','
+			err := e.ValidateText(tc.text)
+			if tc.expectedErr == "" && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+			if tc.expectedErr != "" {
+				if err == nil {
+					t.Fatalf("expected error %q, got nil", tc.expectedErr)
+				}
+				if err.Error() != tc.expectedErr {
+					t.Fatalf("expected error %q, got %q", tc.expectedErr, err.Error())
+				}
+			}
+		})
+	}
+}

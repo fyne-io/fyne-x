@@ -1,6 +1,8 @@
 package widget
 
 import (
+	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 	"unicode"
@@ -34,6 +36,7 @@ func NewNumericalEntry() *NumericalEntry {
 		entry.minus, entry.radixSep, entry.thouSep = minusRadixThou(userLocale)
 	}
 	entry.ExtendBaseWidget(entry)
+	entry.Validator = entry.ValidateText
 	return entry
 }
 
@@ -75,6 +78,11 @@ func (e *NumericalEntry) SetText(text string) {
 		}
 		if rn == e.minus {
 			if !e.AllowNegative || !(len(s.String()) == 0) {
+				continue
+			}
+		}
+		if rn == e.radixSep {
+			if !e.AllowFloat {
 				continue
 			}
 		}
@@ -184,4 +192,53 @@ func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 		}
 	}
 	return 0, false
+}
+
+// ValidateText checks if the entered text is a valid numerical input
+// according to the system locale.
+func (e *NumericalEntry) ValidateText(text string) error {
+	if len(text) == 0 {
+		return nil
+	}
+	runes := []rune(text)
+	if !e.AllowNegative && runes[0] == e.minus {
+		return errors.New("negative numbers are not allowed")
+	}
+	if !e.AllowFloat && strings.Contains(text, string(e.radixSep)) {
+		return errors.New("floating point numbers are not allowed")
+	}
+	radixCount := 0
+	for i, r := range runes {
+		if unicode.IsDigit(r) {
+			continue
+		}
+		if r != e.minus && r != e.radixSep && r != e.thouSep {
+			return fmt.Errorf("invalid character: %q", r)
+		}
+		if r == e.minus && i != 0 {
+			return errors.New("minus must be the first character")
+		}
+		if r == e.radixSep {
+			radixCount++
+			if radixCount > 1 {
+				return errors.New("only one radix separator is allowed")
+			}
+			if i > 0 && runes[i-1] == e.thouSep {
+				return errors.New("thousand separator cannot immediately precede radix separator")
+			}
+		}
+		if r == e.thouSep {
+			if i == 0 {
+				return errors.New("thousand separator cannot be the first character")
+			} else if i == 1 && runes[0] == e.minus {
+				return errors.New("thousand separator cannot be the first character after minus")
+			} else if runes[i-1] == e.radixSep {
+				return errors.New("thousand separator cannot be immediately after radix separator")
+			} else if runes[i-1] == e.thouSep {
+				return errors.New("thousand separator cannot be immediately after thousand separator")
+			}
+
+		}
+	}
+	return nil
 }
