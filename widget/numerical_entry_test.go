@@ -1,53 +1,201 @@
 package widget
 
 import (
+	"fmt"
 	"testing"
 
 	"fyne.io/fyne/v2/test"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNumericalnEntry_Int(t *testing.T) {
+func TestNumericalEntry_IntHyphenStopComma(t *testing.T) {
 	entry := NewNumericalEntry()
+	entry.minus = '-'
+	entry.radixSep = '.'
+	entry.thouSep = ','
 
 	test.Type(entry, "Not a number")
 	assert.Empty(t, entry.Text)
 
-	number := "123456789"
+	number := "1" + string(rune(0x2019)) + " 23,4" + string(rune(0xa0)) + "56,789"
+	test.Type(entry, number)
+	assert.Equal(t, "123,456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "3")
+	assert.Equal(t, "3123,456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "-4")
+	assert.Equal(t, "43123,456,789", entry.Text)
+}
+
+func TestNumericalEntry_IntHyphenCommaStop(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = '-'
+	entry.radixSep = ','
+	entry.thouSep = '.'
+
+	test.Type(entry, "Not a number")
+	assert.Empty(t, entry.Text)
+
+	number := "123.456.789"
 	test.Type(entry, number)
 	assert.Equal(t, number, entry.Text)
 
 	entry.CursorColumn = 0
 	test.Type(entry, "3")
-	assert.Equal(t, "3123456789", entry.Text)
+	assert.Equal(t, "3123.456.789", entry.Text)
 
 	entry.CursorColumn = 0
 	test.Type(entry, "-4")
-	assert.Equal(t, "43123456789", entry.Text)
+	assert.Equal(t, "43123.456.789", entry.Text)
 }
 
-func TestNumericalnEntry_Float(t *testing.T) {
+func TestNumericalnEntry_FloatHyphenStopComma(t *testing.T) {
 	entry := NewNumericalEntry()
+	entry.minus = '-'
+	entry.radixSep = '.'
+	entry.thouSep = ','
+
 	entry.AllowFloat = true
 
 	test.Type(entry, "Not a number")
 	assert.Empty(t, entry.Text)
 
-	number := "123.456789"
+	number := "123.456,789"
 	test.Type(entry, number)
 	assert.Equal(t, number, entry.Text)
 
 	entry.CursorColumn = 0
 	test.Type(entry, "3")
-	assert.Equal(t, "3123.456789", entry.Text)
+	assert.Equal(t, "3123.456,789", entry.Text)
 
 	entry.CursorColumn = 0
 	test.Type(entry, "-4")
-	assert.Equal(t, "43123.456789", entry.Text)
+	assert.Equal(t, "43123.456,789", entry.Text)
 }
 
-func TestNumericalEntry_NegInt(t *testing.T) {
+func TestNumericalnEntry_FloatHyphenCommaStop(t *testing.T) {
 	entry := NewNumericalEntry()
+	entry.minus = '-'
+	entry.radixSep = ','
+	entry.thouSep = '.'
+
+	entry.AllowFloat = true
+
+	test.Type(entry, "Not a number")
+	assert.Empty(t, entry.Text)
+
+	number := "123.456,789"
+	test.Type(entry, number)
+	assert.Equal(t, number, entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "3")
+	assert.Equal(t, "3123.456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "-4")
+	assert.Equal(t, "43123.456,789", entry.Text)
+}
+
+func TestNumericalEntry_IntMathMinusStopComma(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = 0x2212
+	entry.radixSep = '.'
+	entry.thouSep = ','
+
+	test.Type(entry, "Not a number")
+	assert.Empty(t, entry.Text)
+
+	number := "123,456,789"
+	test.Type(entry, number)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "3")
+	assert.Equal(t, "3123,456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, string(entry.minus)+"4")
+	assert.Equal(t, "43123,456,789", entry.Text)
+}
+
+func TestNumericalEntry_IntMathMinusCommaStop(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = 0x2212
+	entry.radixSep = ','
+	entry.thouSep = '.'
+
+	test.Type(entry, "Not a number")
+	assert.Empty(t, entry.Text)
+
+	number := "123.456.789"
+	test.Type(entry, number)
+	assert.Equal(t, number, entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "3")
+	assert.Equal(t, "3123.456.789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, string(entry.minus)+"-4")
+	assert.Equal(t, "43123.456.789", entry.Text)
+}
+
+func TestNumericalnEntry_FloatMathMinusStopComma(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = 0x2212
+	entry.radixSep = '.'
+	entry.thouSep = ','
+
+	entry.AllowFloat = true
+
+	test.Type(entry, "Not a number")
+	assert.Empty(t, entry.Text)
+
+	number := string(rune(0x2212)) + "1" + string(rune(0xa0)) + "23.456,789"
+	test.Type(entry, number)
+	assert.Equal(t, "123.456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "3")
+	assert.Equal(t, "3123.456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, string(entry.minus)+"4")
+	assert.Equal(t, "43123.456,789", entry.Text)
+}
+
+func TestNumericalnEntry_FloatMathMinusCommaStop(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = 0x2212
+	entry.radixSep = ','
+	entry.thouSep = '.'
+
+	entry.AllowFloat = true
+
+	test.Type(entry, "Not a number")
+	assert.Empty(t, entry.Text)
+
+	number := string(rune(0x2212)) + "1" + string(rune(0xa0)) + "23.456,789"
+	test.Type(entry, number)
+	assert.Equal(t, "123.456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "3")
+	assert.Equal(t, "3123.456,789", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, string(entry.minus)+"4")
+	assert.Equal(t, "43123.456,789", entry.Text)
+}
+
+func TestNumericalEntry_NegIntMinus(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = '-'
+	entry.radixSep = ','
+	entry.thouSep = '.'
 	entry.AllowNegative = true
 
 	test.Type(entry, "-2")
@@ -63,6 +211,54 @@ func TestNumericalEntry_NegInt(t *testing.T) {
 	entry.CursorColumn = 0
 	test.Type(entry, "4")
 	assert.Equal(t, "-24", entry.Text)
+}
+
+func TestNumericalEntry_NegFloatMinus(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = '-'
+	entry.radixSep = ','
+	entry.thouSep = '.'
+	entry.AllowNegative = true
+	entry.AllowFloat = true
+
+	test.Type(entry, "-2.4")
+	assert.Equal(t, "-2.4", entry.Text)
+
+	entry.Text = ""
+	test.Type(entry, "-24.-5")
+	assert.Equal(t, "-24.5", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "-")
+	assert.Equal(t, "-24.5", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "4")
+	assert.Equal(t, "-24.5", entry.Text)
+
+}
+
+func TestNumericalEntry_NegIntMathMinus(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.minus = 0x2212
+	entry.radixSep = ','
+	entry.thouSep = '.'
+	entry.AllowNegative = true
+
+	test.Type(entry, string(entry.minus)+"2")
+	fmt.Println(entry.Text)
+	assert.Equal(t, string(entry.minus)+"2", entry.Text)
+
+	entry.Text = ""
+	test.Type(entry, "2-4"+string(rune(0x2212)))
+	assert.Equal(t, "24", entry.Text)
+	entry.CursorColumn = 0
+	test.Type(entry, string(rune(0x2212)))
+	assert.Equal(t, string(rune(0x2212))+"24", entry.Text)
+
+	entry.CursorColumn = 0
+	test.Type(entry, "4")
+	assert.Equal(t, string(rune(0x2212))+"24", entry.Text)
 }
 
 func TestNumericalEntry_NegFloat(t *testing.T) {
@@ -85,4 +281,318 @@ func TestNumericalEntry_NegFloat(t *testing.T) {
 	test.Type(entry, "4")
 	assert.Equal(t, "-24.5", entry.Text)
 
+}
+
+func TestNumericalEntry_getRuneForLocale(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.AllowNegative = true
+	entry.AllowFloat = true
+	entry.minus = '-'
+	entry.radixSep = '.'
+	entry.thouSep = ','
+
+	testCases := []struct {
+		name         string
+		minus        rune
+		radixSep     rune
+		thouSep      rune
+		input        rune
+		expectedRune rune
+		expectedBool bool
+	}{
+		{
+			name:         "digit",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        '1',
+			expectedRune: '1',
+			expectedBool: true,
+		},
+		{
+			name:         "minus - minus",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        '-',
+			expectedRune: '-',
+			expectedBool: true,
+		},
+		{
+			name:         "minus - alt minus",
+			minus:        0x2212,
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        '-',
+			expectedRune: 0x2212,
+			expectedBool: true,
+		},
+		{
+			name:         "alternative minus - minus",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        0x2212,
+			expectedRune: '-',
+			expectedBool: true,
+		},
+		{
+			name:         "alternative minus - alt minus",
+			minus:        0x2212,
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        0x2212,
+			expectedRune: 0x2212,
+			expectedBool: true,
+		},
+		{
+			name:         "radix stop - stop",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        '.',
+			expectedRune: '.',
+			expectedBool: true,
+		},
+		{
+			name:         "radix comma - comma",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      '.',
+			input:        '.',
+			expectedRune: '.',
+			expectedBool: true,
+		},
+		{
+			name:         "thou stop - stop",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      '.',
+			input:        '.',
+			expectedRune: '.',
+			expectedBool: true,
+		},
+		{
+			name:         "thou stop - space",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      '.',
+			input:        ' ',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou stop - alt space",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      '.',
+			input:        0xa0,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou stop - apostrophe",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      '.',
+			input:        0x2019,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou comma - comma",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        ',',
+			expectedRune: ',',
+			expectedBool: true,
+		},
+		{
+			name:         "thou comma - space",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        ' ',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou comma - alt space",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        0xa0,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou comma - apostrophe",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ',',
+			input:        0x2019,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou space - space",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ' ',
+			input:        ' ',
+			expectedRune: ' ',
+			expectedBool: true,
+		},
+		{
+			name:         "thou space - stop",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      ' ',
+			input:        '.',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou space - comma",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ' ',
+			input:        ',',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou space - apostrophe",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      ' ',
+			input:        0x2019,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou space - non-breaking space",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      ' ',
+			input:        0xa0,
+			expectedRune: ' ',
+			expectedBool: true,
+		},
+		{
+			name:         "thou non-breaking space - non-breaking space",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0xa0,
+			input:        0xa0,
+			expectedRune: 0xa0,
+			expectedBool: true,
+		},
+		{
+			name:         "thou non-breaking space - space",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0xa0,
+			input:        ' ',
+			expectedRune: 0xa0,
+			expectedBool: true,
+		},
+		{
+			name:         "thou non-breaking space - stop",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      0xa0,
+			input:        '.',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou non-breaking space - comma",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0xa0,
+			input:        ',',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou non-breaking space - apostrophe",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      0xa0,
+			input:        0x2019,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou apostrophe - apostrophe",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0x2019,
+			input:        0x2019,
+			expectedRune: 0x2019,
+			expectedBool: true,
+		},
+		{
+			name:         "thou apostrophe - stop",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      0x2019,
+			input:        '.',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou apostrophe - comma",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0x2019,
+			input:        ',',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou apostrophe - space",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      0x2019,
+			input:        ' ',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "thou apostrophe - non-breaking space",
+			minus:        '-',
+			radixSep:     ',',
+			thouSep:      0x2019,
+			input:        0xa0,
+			expectedRune: 0,
+			expectedBool: false,
+		},
+		{
+			name:         "invalid rune",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0x2019,
+			input:        'a',
+			expectedRune: 0,
+			expectedBool: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			entry.minus = tc.minus
+			entry.radixSep = tc.radixSep
+			entry.thouSep = tc.thouSep
+			actualRune, actualBool := entry.getRuneForLocale(tc.input)
+			if actualRune != tc.expectedRune {
+				t.Errorf("Expected rune %q, but got %q", tc.expectedRune, actualRune)
+			}
+			if actualBool != tc.expectedBool {
+				t.Errorf("Expected bool %v, but got %v", tc.expectedBool, actualBool)
+			}
+		})
+	}
 }

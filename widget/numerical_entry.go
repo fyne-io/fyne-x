@@ -2,6 +2,7 @@ package widget
 
 import (
 	"strconv"
+	"unicode"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver/mobile"
@@ -39,24 +40,33 @@ func NewNumericalEntry() *NumericalEntry {
 //
 // Implements: fyne.Focusable
 func (e *NumericalEntry) TypedRune(r rune) {
+	rn, ok := e.getRuneForLocale(r)
+	if !ok {
+		return
+	}
 	if e.Entry.CursorColumn == 0 && e.Entry.CursorRow == 0 {
 		if e.AllowNegative {
-			if len(e.Text) > 0 && e.Text[0] == '-' {
+			if len(e.Text) > 0 && []rune(e.Text)[0] == e.minus {
 				return
-			} else if r == '-' {
-				e.Entry.TypedRune(r)
+			} else if rn == e.minus {
+				e.Entry.TypedRune(rn)
 				return
 			}
 		}
 	}
 
-	if r >= '0' && r <= '9' {
-		e.Entry.TypedRune(r)
+	if unicode.IsDigit(rn) {
+		e.Entry.TypedRune(rn)
 		return
 	}
 
-	if e.AllowFloat && (r == '.' || r == ',') {
-		e.Entry.TypedRune(r)
+	if e.AllowFloat && rn == e.radixSep {
+		e.Entry.TypedRune(rn)
+		return
+	}
+
+	if rn == e.thouSep {
+		e.Entry.TypedRune(rn)
 		return
 	}
 }
@@ -91,4 +101,40 @@ func (e *NumericalEntry) isNumber(content string) bool {
 
 	_, err := strconv.Atoi(content)
 	return err == nil
+}
+
+// getRuneForLocale checks if a rune is valid for the entry,
+// and returns the correct rune for the locale.
+func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
+	if unicode.IsDigit(r) {
+		return r, true
+	}
+
+	switch r {
+	case '-': // hyphen - minus
+		fallthrough
+	case 0x2212: //mathematical minus
+		if e.AllowNegative {
+			return e.minus, true
+		} else {
+			return 0, false
+		}
+	case '.': // full stop
+		fallthrough
+	case ',': // comma
+		if r == e.radixSep || r == e.thouSep {
+			return r, true
+		}
+	case ' ': // space
+		fallthrough
+	case 0xa0: // non-breaking space
+		if e.thouSep == ' ' || e.thouSep == 0xa0 {
+			return e.thouSep, true
+		}
+	case 0x2019: // right single quote mark
+		if r == e.thouSep {
+			return r, true
+		}
+	}
+	return 0, false
 }
