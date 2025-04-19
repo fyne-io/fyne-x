@@ -55,7 +55,7 @@ func Test_minusRadixThou(t *testing.T) {
 		t.Errorf("radix should be ',' but is %x", radix)
 	}
 	if thou != 0xa0 {
-		t.Errorf("thou should be ' ' or 0xa0 but is %x", thou)
+		t.Errorf("thou should be 0xa0 but is %x", thou)
 	}
 
 	minus, radix, thou = minusRadixThou("et-EE")
@@ -120,7 +120,7 @@ func Test_minusRadixThou(t *testing.T) {
 	if radix != '.' {
 		t.Errorf("radix should be '.' but is %x", radix)
 	}
-	if thou != ' ' {
-		t.Errorf("thou should be ' ' but is %x", thou)
+	if thou != ',' {
+		t.Errorf("thou should be ',' but is %x", thou)
 	}
 }
