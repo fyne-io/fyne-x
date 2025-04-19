@@ -596,3 +596,109 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 		})
 	}
 }
+
+func TestNumericalEntry_SetText(t *testing.T) {
+	e := NewNumericalEntry()
+	e.AllowNegative = true
+
+	// Test with valid numerical input
+	e.SetText("123")
+	if e.Text != "123" {
+		t.Errorf("Expected '123', got '%s'", e.Text)
+	}
+
+	// Test with invalid characters - should be filtered out
+	e.SetText("1a2b3c")
+	if e.Text != "123" {
+		t.Errorf("Expected '123', got '%s'", e.Text)
+	}
+
+	// Test with negative sign
+	e.SetText("-456")
+	if e.Text != "-456" {
+		t.Errorf("Expected '-456', got '%s'", e.Text)
+	}
+
+	// Test with negative sign when AllowNegative is false
+	e.AllowNegative = false
+	e.SetText("-789")
+	if e.Text != "789" {
+		t.Errorf("Expected '789', got '%s'", e.Text)
+	}
+
+	// Test with empty string
+	e.SetText("")
+	if e.Text != "" {
+		t.Errorf("Expected '', got '%s'", e.Text)
+	}
+
+	// Test with minus sign in the middle of the number when AllowNegative is true
+	e.AllowNegative = true
+	e.SetText("1-23")
+	if e.Text != "123" {
+		t.Errorf("Expected '123', got '%s'", e.Text)
+	}
+
+	// Test with leading and trailing spaces
+	e.SetText("  123  ")
+	if e.Text != "123" {
+		t.Errorf("Expected '123', got '%s'", e.Text)
+	}
+
+	// Test with only spaces
+	e.SetText("   ")
+	if e.Text != "" {
+		t.Errorf("Expected '', got '%s'", e.Text)
+	}
+}
+
+func TestNumericalEntry_SetText_Locale(t *testing.T) {
+	e := NewNumericalEntry()
+	e.AllowNegative = true
+	e.minus = '−' // Different minus sign
+
+	// Test with different minus sign
+	e.SetText("−123")
+	if e.Text != "−123" {
+		t.Errorf("Expected '−123', got '%s'", e.Text)
+	}
+
+	// Test with regular minus sign when custom minus is set
+	e.SetText("-456")
+	if e.Text != "−456" {
+		t.Errorf("Expected '−456', got '%s'", e.Text)
+	}
+}
+
+func TestNumericalEntry_SetText_Filtering(t *testing.T) {
+	e := NewNumericalEntry()
+
+	e.SetText("abc123def456")
+	if e.Text != "123456" {
+		t.Errorf("Expected '123456', got '%s'", e.Text)
+	}
+
+	e.SetText("123.45") // Assuming only integers are allowed
+	if e.Text != "12345" {
+		t.Errorf("Expected '12345', got '%s'", e.Text)
+	}
+}
+
+func TestNumericalEntry_SetText_Callbacks(t *testing.T) {
+	e := NewNumericalEntry()
+	var callbackCalled bool
+	e.OnChanged = func(string) {
+		callbackCalled = true
+	}
+
+	e.SetText("123")
+	if !callbackCalled {
+		t.Error("Expected OnChanged callback to be called")
+	}
+
+	callbackCalled = false
+	e.SetText("abc") // Should still call callback even if text is filtered
+	if !callbackCalled {
+		t.Error("Expected OnChanged callback to be called even with invalid input")
+	}
+}

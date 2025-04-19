@@ -2,6 +2,7 @@ package widget
 
 import (
 	"strconv"
+	"strings"
 	"unicode"
 
 	"fyne.io/fyne/v2"
@@ -34,6 +35,31 @@ func NewNumericalEntry() *NumericalEntry {
 	}
 	entry.ExtendBaseWidget(entry)
 	return entry
+}
+
+// SetText manually sets the text of the Entry.
+// The text will be filtered to allow only numerical input
+// according to the current locale.
+func (e *NumericalEntry) SetText(text string) {
+	var s strings.Builder
+	for _, r := range text {
+		rn, ok := e.getRuneForLocale(r)
+		if !ok {
+			continue
+		}
+		if rn == e.minus {
+			if !e.AllowNegative || !(len(s.String()) == 0) {
+				continue
+			}
+		}
+		if rn == e.radixSep {
+			if !e.AllowFloat {
+				continue
+			}
+		}
+		s.WriteRune(rn)
+	}
+	e.Entry.SetText(s.String())
 }
 
 // TypedRune is called when this item receives a char event.
