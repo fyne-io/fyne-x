@@ -702,3 +702,72 @@ func TestNumericalEntry_SetText_Callbacks(t *testing.T) {
 		t.Error("Expected OnChanged callback to be called even with invalid input")
 	}
 }
+
+func TestNumericalEntry_Append(t *testing.T) {
+	e := NewNumericalEntry()
+	e.AllowFloat = true
+	e.AllowNegative = true
+	e.minus = '-'
+	e.radixSep = '.'
+	e.thouSep = ','
+
+	e.SetText("")
+	e.Append("123")
+	if e.Text != "123" {
+		t.Errorf("expected '123', got '%s'", e.Text)
+	}
+
+	e.Append(".45")
+	if e.Text != "123.45" {
+		t.Errorf("expected '123.45', got '%s'", e.Text)
+	}
+
+	e = NewNumericalEntry()
+	e.AllowFloat = false
+	e.AllowNegative = false
+	e.minus = '-'
+	e.radixSep = '.'
+	e.thouSep = ','
+
+	e.SetText("")
+	e.Append("123.45")
+	if e.Text != "12345" {
+		t.Errorf("expected '12345', got '%s'", e.Text)
+	}
+
+	e = NewNumericalEntry()
+	e.AllowFloat = false
+	e.AllowNegative = true
+	e.minus = '-'
+	e.radixSep = '.'
+	e.thouSep = ','
+
+	e.SetText("")
+	e.Append("-123")
+	if e.Text != "-123" {
+		t.Errorf("expected '-123', got '%s'", e.Text)
+	}
+
+	e.Append(".45")
+	if e.Text != "-12345" {
+		t.Errorf("expected '-12345', got '%s'", e.Text)
+	}
+
+	e = NewNumericalEntry()
+	e.AllowFloat = true
+	e.AllowNegative = true
+	e.minus = '-'
+	e.radixSep = '.'
+	e.thouSep = ','
+	e.Text = ""
+
+	e.Append("-")
+	if e.Text != "-" {
+		t.Errorf("expected '-', got '%s'", e.Text)
+	}
+
+	e.Append("1")
+	if e.Text != "-1" {
+		t.Errorf("expected '-1', got '%s'", e.Text)
+	}
+}

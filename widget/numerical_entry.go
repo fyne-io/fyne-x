@@ -37,6 +37,32 @@ func NewNumericalEntry() *NumericalEntry {
 	return entry
 }
 
+// Append appends text to the entry, filtering out non-numerical characters
+// based on the current locale and allowed input types (negative, float).
+func (e *NumericalEntry) Append(text string) {
+	var s strings.Builder
+	for _, r := range text {
+		rn, ok := e.getRuneForLocale(r)
+		if !ok {
+			continue
+		}
+		if rn == e.minus {
+			if !e.AllowNegative || !(len(e.Text) == 0) {
+				continue
+			}
+		}
+		if rn == e.radixSep {
+			if !e.AllowFloat {
+				continue
+
+			}
+
+		}
+		s.WriteRune(rn)
+	}
+	e.Entry.Append(s.String())
+}
+
 // SetText manually sets the text of the Entry.
 // The text will be filtered to allow only numerical input
 // according to the current locale.
@@ -49,11 +75,6 @@ func (e *NumericalEntry) SetText(text string) {
 		}
 		if rn == e.minus {
 			if !e.AllowNegative || !(len(s.String()) == 0) {
-				continue
-			}
-		}
-		if rn == e.radixSep {
-			if !e.AllowFloat {
 				continue
 			}
 		}
