@@ -197,6 +197,8 @@ func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 		if e.thouSep == ' ' || e.thouSep == 0xa0 {
 			return e.thouSep, true
 		}
+	case '\'': // single quote
+		fallthrough
 	case 0x2019: // right single quote mark
 		if r == e.thouSep {
 			return r, true

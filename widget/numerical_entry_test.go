@@ -392,7 +392,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou stop - apostrophe",
+			name:         "thou stop - right single quote",
 			minus:        '-',
 			radixSep:     ',',
 			thouSep:      '.',
@@ -428,7 +428,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou comma - apostrophe",
+			name:         "thou comma - right single quote",
 			minus:        '-',
 			radixSep:     '.',
 			thouSep:      ',',
@@ -464,7 +464,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou space - apostrophe",
+			name:         "thou space - right single quote",
 			minus:        '-',
 			radixSep:     ',',
 			thouSep:      ' ',
@@ -518,7 +518,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou non-breaking space - apostrophe",
+			name:         "thou non-breaking space - right single quote",
 			minus:        '-',
 			radixSep:     ',',
 			thouSep:      0xa0,
@@ -527,7 +527,16 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou apostrophe - apostrophe",
+			name:         "thou right single quote - quote",
+			minus:        '-',
+			radixSep:     '.',
+			thouSep:      0x2019,
+			input:        '\'',
+			expectedRune: 0x2019,
+			expectedBool: true,
+		},
+		{
+			name:         "thou right single quote - right single quote",
 			minus:        '-',
 			radixSep:     '.',
 			thouSep:      0x2019,
@@ -536,7 +545,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: true,
 		},
 		{
-			name:         "thou apostrophe - stop",
+			name:         "thou right single quote - stop",
 			minus:        '-',
 			radixSep:     ',',
 			thouSep:      0x2019,
@@ -545,7 +554,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou apostrophe - comma",
+			name:         "thou right single quote - comma",
 			minus:        '-',
 			radixSep:     '.',
 			thouSep:      0x2019,
@@ -554,7 +563,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou apostrophe - space",
+			name:         "thou right single quote - space",
 			minus:        '-',
 			radixSep:     ',',
 			thouSep:      0x2019,
@@ -563,7 +572,7 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 			expectedBool: false,
 		},
 		{
-			name:         "thou apostrophe - non-breaking space",
+			name:         "thou right single quote - non-breaking space",
 			minus:        '-',
 			radixSep:     ',',
 			thouSep:      0x2019,
