@@ -43,27 +43,8 @@ func NewNumericalEntry() *NumericalEntry {
 // Append appends text to the entry, filtering out non-numerical characters
 // based on the current locale and allowed input types (negative, float).
 func (e *NumericalEntry) Append(text string) {
-	var s strings.Builder
-	for _, r := range text {
-		rn, ok := e.getRuneForLocale(r)
-		if !ok {
-			continue
-		}
-		if rn == e.minus {
-			if !e.AllowNegative || !(len(e.Text) == 0) {
-				continue
-			}
-		}
-		if rn == e.radixSep {
-			if !e.AllowFloat {
-				continue
-
-			}
-
-		}
-		s.WriteRune(rn)
-	}
-	e.Entry.Append(s.String())
+	s := e.getValidText(e.Text, text)
+	e.Entry.Append(s)
 }
 
 // ParseFloat parses the text content of the entry as a float64.
@@ -80,25 +61,8 @@ func (e *NumericalEntry) ParseFloat() (float64, error) {
 // The text will be filtered to allow only numerical input
 // according to the current locale.
 func (e *NumericalEntry) SetText(text string) {
-	var s strings.Builder
-	for _, r := range text {
-		rn, ok := e.getRuneForLocale(r)
-		if !ok {
-			continue
-		}
-		if rn == e.minus {
-			if !e.AllowNegative || !(len(s.String()) == 0) {
-				continue
-			}
-		}
-		if rn == e.radixSep {
-			if !e.AllowFloat {
-				continue
-			}
-		}
-		s.WriteRune(rn)
-	}
-	e.Entry.SetText(s.String())
+	s := e.getValidText("", text)
+	e.Entry.SetText(s)
 }
 
 // TypedRune is called when this item receives a char event.
@@ -251,6 +215,30 @@ func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 		}
 	}
 	return 0, false
+}
+
+func (e *NumericalEntry) getValidText(curText, text string) string {
+	var s strings.Builder
+	for i, r := range text {
+		rn, ok := e.getRuneForLocale(r)
+		if !ok {
+			continue
+		}
+		if rn == e.minus {
+			if !e.AllowNegative || !(len(curText) == 0) || i != 0 {
+				continue
+			}
+		}
+		if rn == e.radixSep {
+			if !e.AllowFloat {
+				continue
+
+			}
+
+		}
+		s.WriteRune(rn)
+	}
+	return s.String()
 }
 
 // makeParsable prepares the text for parsing by removing thousand separators,
