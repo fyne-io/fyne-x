@@ -66,6 +66,16 @@ func (e *NumericalEntry) Append(text string) {
 	e.Entry.Append(s.String())
 }
 
+// ParseFloat parses the text content of the entry as a float64.
+// It returns the parsed float and an error if parsing fails.
+func (e *NumericalEntry) ParseFloat() (float64, error) {
+	t, err := e.makeParsable(e.Text)
+	if err != nil {
+		return 0, err
+	}
+	return strconv.ParseFloat(t, 64)
+}
+
 // SetText manually sets the text of the Entry.
 // The text will be filtered to allow only numerical input
 // according to the current locale.
@@ -243,6 +253,9 @@ func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 	return 0, false
 }
 
+// makeParsable prepares the text for parsing by removing thousand separators,
+// replacing the minus sign with a standard minus, and replacing the radix
+// separator with a period. It also validates the text before processing.
 func (e *NumericalEntry) makeParsable(text string) (string, error) {
 	err := e.ValidateText(text)
 	if err != nil {

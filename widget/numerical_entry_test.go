@@ -960,3 +960,45 @@ func TestNumericalEntryMakeParsable(t *testing.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, "", tt)
 }
+
+func TestNumericalEntry_ParseFloat(t *testing.T) {
+	entry := &NumericalEntry{}
+	entry.AllowFloat = true
+	entry.AllowNegative = true
+	entry.minus = 0x2212
+	entry.radixSep = ','
+	entry.thouSep = '.'
+
+	entry.Text = "123.45"
+	val, err := entry.ParseFloat()
+	if err != nil {
+		t.Fatalf("ParseFloat failed: %v", err)
+	}
+	if val != 12345 {
+		t.Errorf("Expected 12345, got %v", val)
+	}
+
+	entry.Text = string(rune(0x2212)) + "123,45"
+	val, err = entry.ParseFloat()
+	if err != nil {
+		t.Fatalf("ParseFloat failed: %v", err)
+	}
+	if val != -123.45 {
+		t.Errorf("Expected -123.45, got %v", val)
+	}
+
+	entry.Text = "abc"
+	_, err = entry.ParseFloat()
+	if err == nil {
+		t.Errorf("Expected error, got nil")
+	}
+
+	entry.Text = ""
+	val, err = entry.ParseFloat()
+	if err == nil {
+		t.Fatalf("ParseFloat failed: should have returned error")
+	}
+	if val != 0 {
+		t.Errorf("Expected 0, got %v", val)
+	}
+}
