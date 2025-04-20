@@ -148,52 +148,6 @@ func (e *NumericalEntry) Keyboard() mobile.KeyboardType {
 	return mobile.NumberKeyboard
 }
 
-func (e *NumericalEntry) isNumber(content string) bool {
-	if e.AllowFloat {
-		_, err := strconv.ParseFloat(content, 64)
-		return err == nil
-	}
-
-	_, err := strconv.Atoi(content)
-	return err == nil
-}
-
-// getRuneForLocale checks if a rune is valid for the entry,
-// and returns the correct rune for the locale.
-func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
-	if unicode.IsDigit(r) {
-		return r, true
-	}
-
-	switch r {
-	case '-': // hyphen - minus
-		fallthrough
-	case 0x2212: //mathematical minus
-		if e.AllowNegative {
-			return e.minus, true
-		} else {
-			return 0, false
-		}
-	case '.': // full stop
-		fallthrough
-	case ',': // comma
-		if r == e.radixSep || r == e.thouSep {
-			return r, true
-		}
-	case ' ': // space
-		fallthrough
-	case 0xa0: // non-breaking space
-		if e.thouSep == ' ' || e.thouSep == 0xa0 {
-			return e.thouSep, true
-		}
-	case 0x2019: // right single quote mark
-		if r == e.thouSep {
-			return r, true
-		}
-	}
-	return 0, false
-}
-
 // ValidateText checks if the entered text is a valid numerical input
 // according to the system locale.
 func (e *NumericalEntry) ValidateText(text string) error {
@@ -241,4 +195,62 @@ func (e *NumericalEntry) ValidateText(text string) error {
 		}
 	}
 	return nil
+}
+
+func (e *NumericalEntry) isNumber(content string) bool {
+	if e.AllowFloat {
+		_, err := strconv.ParseFloat(content, 64)
+		return err == nil
+	}
+
+	_, err := strconv.Atoi(content)
+	return err == nil
+}
+
+// getRuneForLocale checks if a rune is valid for the entry,
+// and returns the correct rune for the locale.
+func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
+	if unicode.IsDigit(r) {
+		return r, true
+	}
+
+	switch r {
+	case '-': // hyphen - minus
+		fallthrough
+	case 0x2212: //mathematical minus
+		if e.AllowNegative {
+			return e.minus, true
+		} else {
+			return 0, false
+		}
+	case '.': // full stop
+		fallthrough
+	case ',': // comma
+		if r == e.radixSep || r == e.thouSep {
+			return r, true
+		}
+	case ' ': // space
+		fallthrough
+	case 0xa0: // non-breaking space
+		if e.thouSep == ' ' || e.thouSep == 0xa0 {
+			return e.thouSep, true
+		}
+	case 0x2019: // right single quote mark
+		if r == e.thouSep {
+			return r, true
+		}
+	}
+	return 0, false
+}
+
+func (e *NumericalEntry) makeParsable(text string) (string, error) {
+	err := e.ValidateText(text)
+	if err != nil {
+		return "", err
+	}
+	t := text
+	t = strings.ReplaceAll(text, string(e.thouSep), "")
+	t = strings.Replace(t, string(e.minus), "-", -1)
+	t = strings.Replace(t, string(e.radixSep), ".", -1)
+	return t, nil
 }

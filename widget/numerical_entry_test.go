@@ -939,3 +939,24 @@ func TestNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
 		})
 	}
 }
+
+func TestNumericalEntryMakeParsable(t *testing.T) {
+	entry := NewNumericalEntry()
+	entry.AllowNegative = true
+	entry.AllowFloat = true
+	entry.minus = 0x2212
+	entry.radixSep = ','
+	entry.thouSep = '.'
+
+	tt, err := entry.makeParsable("1.234,5")
+	assert.Equal(t, "1234.5", tt)
+	assert.Nil(t, err)
+
+	tt, err = entry.makeParsable(string(rune(0x2212)) + "1.234,5")
+	assert.Equal(t, "-1234.5", tt)
+	assert.Nil(t, err)
+
+	tt, err = entry.makeParsable("1 234.5")
+	assert.NotNil(t, err)
+	assert.Equal(t, "", tt)
+}
