@@ -106,23 +106,6 @@ func (e *NumericalEntry) TypedRune(r rune) {
 //
 // Implements: fyne.Shortcutable
 func (e *NumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
-	/*	cCol := e.CursorColumn
-		// make sure this is NumericalEntry shortcut
-		paste, ok := shortcut.(*fyne.ShortcutPaste)
-		if ok {
-			cRunes := []rune(paste.Clipboard.Content())
-			tRunes := []rune(e.Text)
-			// if entry text and clipboard text both begin with a minus sign and
-			// insertion point is at 0, then clipboad content is invalid, so just
-			// ignore it.
-			if cCol == 0 &&
-				len(cRunes) > 0 && (cRunes[0] == '-' || cRunes[0] == 0x2212) &&
-				len(tRunes) > 0 && tRunes[0] == e.minus {
-				return
-			}
-		}
-		// clipboard text OK, so pass it to the base widget for processing. This is necessary
-		// to handle replacement of text selection because these methods are not exported.*/
 	e.Entry.TypedShortcut(shortcut)
 	// now reprocess the NumericalEntry's Text to change characters to locale-specific values
 	// and delete those that are not valid.
