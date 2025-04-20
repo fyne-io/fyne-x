@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"testing"
 
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/test"
 	"github.com/stretchr/testify/assert"
 )
@@ -1001,4 +1002,42 @@ func TestNumericalEntry_ParseFloat(t *testing.T) {
 	if val != 0 {
 		t.Errorf("Expected 0, got %v", val)
 	}
+}
+
+func TestNumericalEntry_OnPaste(t *testing.T) {
+	clipboard := test.NewClipboard()
+	shortcut := &fyne.ShortcutPaste{Clipboard: clipboard}
+	entry := NewNumericalEntry()
+	entry.AllowFloat = true
+	entry.AllowNegative = true
+	entry.minus = 0x2212
+	entry.radixSep = ','
+	entry.thouSep = '.'
+	clipboard.SetContent("")
+	entry.TypedShortcut(shortcut)
+	assert.Equal(t, "", entry.Text)
+
+	clipboard.SetContent("123,456.789")
+	entry.TypedShortcut(shortcut)
+	assert.Equal(t, "123,456.789", entry.Text)
+	assert.Equal(t, 11, entry.CursorColumn)
+
+	entry.CursorColumn = 5
+	clipboard.SetContent("-2.d3")
+	entry.TypedShortcut(shortcut)
+	assert.Equal(t, "123,42.356.789", entry.Text)
+
+	entry.SetText(string(rune(0x2212)) + "2.34")
+	entry.CursorColumn = 0
+	clipboard.SetContent("-4.5")
+	entry.TypedShortcut(shortcut)
+	assert.Equal(t, string(entry.minus)+"4.52.34", entry.Text)
+
+	entry.SetText("2.34")
+	entry.CursorColumn = 0
+	clipboard.SetContent("-4.5")
+	entry.TypedShortcut(shortcut)
+	assert.Equal(t, string(entry.minus)+"4.52.34", entry.Text)
+	assert.Equal(t, 4, entry.CursorColumn)
+
 }

@@ -104,15 +104,28 @@ func (e *NumericalEntry) TypedRune(r rune) {
 //
 // Implements: fyne.Shortcutable
 func (e *NumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
-	paste, ok := shortcut.(*fyne.ShortcutPaste)
-	if !ok {
-		e.Entry.TypedShortcut(shortcut)
-		return
-	}
-
-	if e.isNumber(paste.Clipboard.Content()) {
-		e.Entry.TypedShortcut(shortcut)
-	}
+	/*	cCol := e.CursorColumn
+		// make sure this is NumericalEntry shortcut
+		paste, ok := shortcut.(*fyne.ShortcutPaste)
+		if ok {
+			cRunes := []rune(paste.Clipboard.Content())
+			tRunes := []rune(e.Text)
+			// if entry text and clipboard text both begin with a minus sign and
+			// insertion point is at 0, then clipboad content is invalid, so just
+			// ignore it.
+			if cCol == 0 &&
+				len(cRunes) > 0 && (cRunes[0] == '-' || cRunes[0] == 0x2212) &&
+				len(tRunes) > 0 && tRunes[0] == e.minus {
+				return
+			}
+		}
+		// clipboard text OK, so pass it to the base widget for processing. This is necessary
+		// to handle replacement of text selection because these methods are not exported.*/
+	e.Entry.TypedShortcut(shortcut)
+	// now reprocess the NumericalEntry's Text to change characters to locale-specific values
+	// and delete those that are not valid.
+	t := e.Text
+	e.SetText(t)
 }
 
 // Keyboard sets up the right keyboard to use on mobile.
@@ -169,16 +182,6 @@ func (e *NumericalEntry) ValidateText(text string) error {
 		}
 	}
 	return nil
-}
-
-func (e *NumericalEntry) isNumber(content string) bool {
-	if e.AllowFloat {
-		_, err := strconv.ParseFloat(content, 64)
-		return err == nil
-	}
-
-	_, err := strconv.Atoi(content)
-	return err == nil
 }
 
 // getRuneForLocale checks if a rune is valid for the entry,
