@@ -10,6 +10,8 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/widget"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 
 	"github.com/cloudfoundry-attic/jibber_jabber"
 )
@@ -257,4 +259,39 @@ func (e *NumericalEntry) makeParsable(text string) (string, error) {
 	t = strings.Replace(t, string(e.minus), "-", -1)
 	t = strings.Replace(t, string(e.radixSep), ".", -1)
 	return t, nil
+}
+
+// minusRadixThou determines the minus sign, radix, and thousand separator
+// characters for a given locale by formatting a number and extracting
+// the relevant characters. It returns the minus sign, radix, and thousand
+// separator runes.
+func minusRadixThou(locale string) (rune, rune, rune) {
+	minus := '-'
+	thou := ','
+	radix := '.'
+	lang, err := language.Parse(locale)
+	if err != nil {
+		fyne.LogError("Parse error: %s\n", err)
+		return minus, radix, thou
+	}
+	p := message.NewPrinter(lang)
+	numStr := p.Sprintf("%f", -12345.5678901)
+	runes := []rune(numStr)
+	// first rune is the "minus" sign
+	minus = runes[0]
+	// look for thousands separator
+	for _, r := range runes[1:5] {
+		if !unicode.IsDigit(r) {
+			thou = r
+			break
+		}
+	}
+	// look for radix separator
+	for _, r := range runes[5:] {
+		if !unicode.IsDigit(r) {
+			radix = r
+			break
+		}
+	}
+	return minus, radix, thou
 }
