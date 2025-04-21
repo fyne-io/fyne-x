@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNumericalEntry_IntHyphenStopComma(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_IntHyphenStopComma(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = '-'
 	entry.radixSep = '.'
 	entry.thouSep = ','
@@ -31,8 +31,8 @@ func TestNumericalEntry_IntHyphenStopComma(t *testing.T) {
 	assert.Equal(t, "43123,456,789", entry.Text)
 }
 
-func TestNumericalEntry_IntHyphenCommaStop(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_IntHyphenCommaStop(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = '-'
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -54,7 +54,7 @@ func TestNumericalEntry_IntHyphenCommaStop(t *testing.T) {
 }
 
 func TestNumericalnEntry_FloatHyphenStopComma(t *testing.T) {
-	entry := NewNumericalEntry()
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = '-'
 	entry.radixSep = '.'
 	entry.thouSep = ','
@@ -78,7 +78,7 @@ func TestNumericalnEntry_FloatHyphenStopComma(t *testing.T) {
 }
 
 func TestNumericalnEntry_FloatHyphenCommaStop(t *testing.T) {
-	entry := NewNumericalEntry()
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = '-'
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -101,8 +101,8 @@ func TestNumericalnEntry_FloatHyphenCommaStop(t *testing.T) {
 	assert.Equal(t, "43123.456,789", entry.Text)
 }
 
-func TestNumericalEntry_IntMathMinusStopComma(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_IntMathMinusStopComma(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = 0x2212
 	entry.radixSep = '.'
 	entry.thouSep = ','
@@ -122,8 +122,8 @@ func TestNumericalEntry_IntMathMinusStopComma(t *testing.T) {
 	assert.Equal(t, "43123,456,789", entry.Text)
 }
 
-func TestNumericalEntry_IntMathMinusCommaStop(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_IntMathMinusCommaStop(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = 0x2212
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -145,7 +145,7 @@ func TestNumericalEntry_IntMathMinusCommaStop(t *testing.T) {
 }
 
 func TestNumericalnEntry_FloatMathMinusStopComma(t *testing.T) {
-	entry := NewNumericalEntry()
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = 0x2212
 	entry.radixSep = '.'
 	entry.thouSep = ','
@@ -169,7 +169,7 @@ func TestNumericalnEntry_FloatMathMinusStopComma(t *testing.T) {
 }
 
 func TestNumericalnEntry_FloatMathMinusCommaStop(t *testing.T) {
-	entry := NewNumericalEntry()
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = 0x2212
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -192,8 +192,8 @@ func TestNumericalnEntry_FloatMathMinusCommaStop(t *testing.T) {
 	assert.Equal(t, "43123.456,789", entry.Text)
 }
 
-func TestNumericalEntry_NegIntMinus(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_NegIntMinus(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = '-'
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -214,8 +214,8 @@ func TestNumericalEntry_NegIntMinus(t *testing.T) {
 	assert.Equal(t, "-24", entry.Text)
 }
 
-func TestNumericalEntry_NegFloatMinus(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_NegFloatMinus(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = '-'
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -239,8 +239,8 @@ func TestNumericalEntry_NegFloatMinus(t *testing.T) {
 
 }
 
-func TestNumericalEntry_NegIntMathMinus(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_NegIntMathMinus(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.minus = 0x2212
 	entry.radixSep = ','
 	entry.thouSep = '.'
@@ -262,8 +262,8 @@ func TestNumericalEntry_NegIntMathMinus(t *testing.T) {
 	assert.Equal(t, string(rune(0x2212))+"24", entry.Text)
 }
 
-func TestNumericalEntry_NegFloat(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_NegFloat(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.AllowNegative = true
 	entry.AllowFloat = true
 
@@ -284,8 +284,8 @@ func TestNumericalEntry_NegFloat(t *testing.T) {
 
 }
 
-func TestNumericalEntry_getRuneForLocale(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntry_getRuneForLocale(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.AllowNegative = true
 	entry.AllowFloat = true
 	entry.minus = '-'
@@ -607,8 +607,8 @@ func TestNumericalEntry_getRuneForLocale(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_SetText(t *testing.T) {
-	e := NewNumericalEntry()
+func TestLocalizedNumericalEntry_SetText(t *testing.T) {
+	e := NewLocalizedNumericalEntry()
 	e.AllowNegative = true
 
 	// Test with valid numerical input
@@ -662,8 +662,8 @@ func TestNumericalEntry_SetText(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_SetText_Locale(t *testing.T) {
-	e := NewNumericalEntry()
+func TestLocalizedNumericalEntry_SetText_Locale(t *testing.T) {
+	e := NewLocalizedNumericalEntry()
 	e.AllowNegative = true
 	e.minus = '−' // Different minus sign
 
@@ -680,8 +680,8 @@ func TestNumericalEntry_SetText_Locale(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_SetText_Filtering(t *testing.T) {
-	e := NewNumericalEntry()
+func TestLocalizedNumericalEntry_SetText_Filtering(t *testing.T) {
+	e := NewLocalizedNumericalEntry()
 
 	e.SetText("abc123def456")
 	if e.Text != "123456" {
@@ -694,8 +694,8 @@ func TestNumericalEntry_SetText_Filtering(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_SetText_Callbacks(t *testing.T) {
-	e := NewNumericalEntry()
+func TestLocalizedNumericalEntry_SetText_Callbacks(t *testing.T) {
+	e := NewLocalizedNumericalEntry()
 	var callbackCalled bool
 	e.OnChanged = func(string) {
 		callbackCalled = true
@@ -713,8 +713,8 @@ func TestNumericalEntry_SetText_Callbacks(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_Append(t *testing.T) {
-	e := NewNumericalEntry()
+func TestLocalizedNumericalEntry_Append(t *testing.T) {
+	e := NewLocalizedNumericalEntry()
 	e.AllowFloat = true
 	e.AllowNegative = true
 	e.minus = '-'
@@ -732,7 +732,7 @@ func TestNumericalEntry_Append(t *testing.T) {
 		t.Errorf("expected '123.45', got '%s'", e.Text)
 	}
 
-	e = NewNumericalEntry()
+	e = NewLocalizedNumericalEntry()
 	e.AllowFloat = false
 	e.AllowNegative = false
 	e.minus = '-'
@@ -745,7 +745,7 @@ func TestNumericalEntry_Append(t *testing.T) {
 		t.Errorf("expected '12345', got '%s'", e.Text)
 	}
 
-	e = NewNumericalEntry()
+	e = NewLocalizedNumericalEntry()
 	e.AllowFloat = false
 	e.AllowNegative = true
 	e.minus = '-'
@@ -763,7 +763,7 @@ func TestNumericalEntry_Append(t *testing.T) {
 		t.Errorf("expected '-12345', got '%s'", e.Text)
 	}
 
-	e = NewNumericalEntry()
+	e = NewLocalizedNumericalEntry()
 	e.AllowFloat = true
 	e.AllowNegative = true
 	e.minus = '-'
@@ -782,8 +782,8 @@ func TestNumericalEntry_Append(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_ValidateText(t *testing.T) {
-	e := &NumericalEntry{
+func TestLocalizedNumericalEntry_ValidateText(t *testing.T) {
+	e := &LocalizedNumericalEntry{
 		AllowFloat:    true,
 		AllowNegative: true,
 	}
@@ -894,7 +894,7 @@ func TestNumericalEntry_ValidateText(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
+func TestLocalizedNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
 	testCases := []struct {
 		name          string
 		allowNegative bool
@@ -927,7 +927,7 @@ func TestNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			e := &NumericalEntry{
+			e := &LocalizedNumericalEntry{
 				AllowNegative: tc.allowNegative,
 				AllowFloat:    tc.allowFloat,
 			}
@@ -950,8 +950,8 @@ func TestNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
 	}
 }
 
-func TestNumericalEntryMakeParsable(t *testing.T) {
-	entry := NewNumericalEntry()
+func TestLocalizedNumericalEntryMakeParsable(t *testing.T) {
+	entry := NewLocalizedNumericalEntry()
 	entry.AllowNegative = true
 	entry.AllowFloat = true
 	entry.minus = 0x2212
@@ -971,8 +971,8 @@ func TestNumericalEntryMakeParsable(t *testing.T) {
 	assert.Equal(t, "", tt)
 }
 
-func TestNumericalEntry_ParseFloat(t *testing.T) {
-	entry := &NumericalEntry{}
+func TestLocalizedNumericalEntry_ParseFloat(t *testing.T) {
+	entry := &LocalizedNumericalEntry{}
 	entry.AllowFloat = true
 	entry.AllowNegative = true
 	entry.minus = 0x2212
@@ -1013,10 +1013,10 @@ func TestNumericalEntry_ParseFloat(t *testing.T) {
 	}
 }
 
-func TestNumericalEntry_OnPaste(t *testing.T) {
+func TestLocalizedNumericalEntry_OnPaste(t *testing.T) {
 	clipboard := test.NewClipboard()
 	shortcut := &fyne.ShortcutPaste{Clipboard: clipboard}
-	entry := NewNumericalEntry()
+	entry := NewLocalizedNumericalEntry()
 	entry.AllowFloat = true
 	entry.AllowNegative = true
 	entry.minus = 0x2212

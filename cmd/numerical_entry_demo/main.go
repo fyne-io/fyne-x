@@ -11,9 +11,9 @@ import (
 
 func main() {
 	a := app.New()
-	w := a.NewWindow("NumericalEntry Demo")
+	w := a.NewWindow("LocalizedNumericalEntry Demo")
 
-	nE := xwidget.NewNumericalEntry()
+	nE := xwidget.NewLocalizedNumericalEntry()
 	nE.AllowFloat = true
 	nE.AllowNegative = true
 	w.Clipboard().SetContent("92.f65")
