@@ -35,7 +35,7 @@ func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
 	if err != nil {
 		fyne.LogError("DetectIETF error: %s\n", err)
 	} else {
-		entry.minus, entry.radixSep, entry.thouSep = minusRadixThou(userLocale)
+		entry.getLocaleRunes(userLocale)
 	}
 	entry.ExtendBaseWidget(entry)
 	entry.Validator = entry.ValidateText
@@ -254,33 +254,32 @@ func (e *LocalizedNumericalEntry) makeParsable(text string) (string, error) {
 // characters for a given locale by formatting a number and extracting
 // the relevant characters. It returns the minus sign, radix, and thousand
 // separator runes.
-func minusRadixThou(locale string) (rune, rune, rune) {
-	minus := '-'
-	thou := ','
-	radix := '.'
+func (e *LocalizedNumericalEntry) getLocaleRunes(locale string) {
+	e.minus = '-'
+	e.thouSep = ','
+	e.radixSep = '.'
 	lang, err := language.Parse(locale)
 	if err != nil {
 		fyne.LogError("Parse error: %s\n", err)
-		return minus, radix, thou
+		return
 	}
 	p := message.NewPrinter(lang)
 	numStr := p.Sprintf("%f", -12345.5678901)
 	runes := []rune(numStr)
 	// first rune is the "minus" sign
-	minus = runes[0]
+	e.minus = runes[0]
 	// look for thousands separator
 	for _, r := range runes[1:5] {
 		if !unicode.IsDigit(r) {
-			thou = r
+			e.thouSep = r
 			break
 		}
 	}
 	// look for radix separator
 	for _, r := range runes[5:] {
 		if !unicode.IsDigit(r) {
-			radix = r
+			e.radixSep = r
 			break
 		}
 	}
-	return minus, radix, thou
 }
