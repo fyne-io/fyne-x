@@ -8,6 +8,7 @@ import (
 	"unicode"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/widget"
 	"golang.org/x/text/language"
@@ -26,20 +27,38 @@ type LocalizedNumericalEntry struct {
 	minus         rune
 	radixSep      rune
 	thouSep       rune
+
+	binder basicBinder
+	locale string
 }
 
 // NewLocalizedNumericalEntry returns an extended entry that only allows numerical input.
 func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
 	entry := &LocalizedNumericalEntry{}
-	userLocale, err := jibber_jabber.DetectIETF()
+	var err error
+	entry.locale, err = jibber_jabber.DetectIETF()
 	if err != nil {
 		fyne.LogError("DetectIETF error: %s\n", err)
 	} else {
-		entry.getLocaleRunes(userLocale)
+		entry.getLocaleRunes(entry.locale)
 	}
 	entry.ExtendBaseWidget(entry)
 	entry.Validator = entry.ValidateText
 	return entry
+}
+
+// NewLocalizedNumericalEntryWithData creates a numerical entry that is bound to a
+// data source and can allow or disallow float and negative numbers.
+func NewLocalizedNumericalEntryWithData(allowFloat bool, allowNegative bool, data binding.Float) *LocalizedNumericalEntry {
+	e := NewLocalizedNumericalEntry()
+	e.AllowFloat = allowFloat
+	e.AllowNegative = allowNegative
+	e.Bind(data)
+	e.OnChanged = func(string) {
+		e.binder.CallWithData(e.writeData)
+	}
+
+	return e
 }
 
 // Append appends text to the entry, filtering out non-numerical characters
@@ -47,6 +66,14 @@ func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
 func (e *LocalizedNumericalEntry) Append(text string) {
 	s := e.getValidText(e.Text, text)
 	e.Entry.Append(s)
+}
+
+// Bind connects the specified data source to this Spinner widget.
+// The current value will be displayed and any changes in the data will cause the widget
+// to update.
+func (e *LocalizedNumericalEntry) Bind(data binding.Float) {
+	e.binder.SetCallback(e.updateFromData)
+	e.binder.Bind(data)
 }
 
 // ParseFloat parses the text content of the entry as a float64.
@@ -118,6 +145,12 @@ func (e *LocalizedNumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
 // Implements: mobile.Keyboardable
 func (e *LocalizedNumericalEntry) Keyboard() mobile.KeyboardType {
 	return mobile.NumberKeyboard
+}
+
+// Unbind disconnects the entry from the bound data.
+// This will remove the data updates and allow the entry to be used independently.
+func (e *LocalizedNumericalEntry) Unbind() {
+	e.binder.Unbind()
 }
 
 // ValidateText checks if the entered text is a valid numerical input
@@ -211,6 +244,8 @@ func (e *LocalizedNumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 	return 0, false
 }
 
+// getValidText filters the input text to allow only valid characters
+// based on the current locale and the entry's configuration.
 func (e *LocalizedNumericalEntry) getValidText(curText, text string) string {
 	var s strings.Builder
 	for i, r := range text {
@@ -282,4 +317,54 @@ func (e *LocalizedNumericalEntry) getLocaleRunes(locale string) {
 			break
 		}
 	}
+}
+
+// updateFromData updates the entry's text with the value from the data source.
+func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
+	if data == nil {
+		return
+	}
+	textSource, ok := data.(binding.Float)
+	if !ok {
+		return
+	}
+	val, err := textSource.Get()
+	if err != nil {
+		fyne.LogError("Error getting current data value", err)
+		return
+	}
+	lang, err := language.Parse(e.locale)
+	if err != nil {
+		fyne.LogError("Parse error: %s\n", err)
+		return
+	}
+	p := message.NewPrinter(lang)
+	numStr := p.Sprintf("%f", val)
+
+	e.SetText(numStr)
+}
+
+// writeData writes the entry's parsed float value to the specified data binding.
+func (e *LocalizedNumericalEntry) writeData(data binding.DataItem) {
+	if data == nil {
+		return
+	}
+	if err := e.Validator(e.Text); err != nil {
+		return
+	}
+	val, err := e.ParseFloat()
+	if err != nil {
+		return
+	}
+	flt, ok := data.(binding.Float)
+	if !ok {
+		return
+	}
+
+	dVal, err := flt.Get()
+	if err != nil || dVal == val {
+		return
+	}
+
+	flt.Set(val)
 }

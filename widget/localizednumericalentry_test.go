@@ -3,11 +3,17 @@ package widget
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/test"
 	"github.com/stretchr/testify/assert"
 )
+
+func waitForBinding() {
+	time.Sleep(time.Millisecond * 100) // data resolves on background thread
+}
 
 func TestLocalizedNumericalEntry_IntHyphenStopComma(t *testing.T) {
 	entry := NewLocalizedNumericalEntry()
@@ -1050,7 +1056,7 @@ func TestLocalizedNumericalEntry_OnPaste(t *testing.T) {
 	assert.Equal(t, 4, entry.CursorColumn)
 }
 
-func Test_minusRadixThou(t *testing.T) {
+func TestLocalizedNumericalEntry_getLocaleRunes(t *testing.T) {
 	e := NewLocalizedNumericalEntry()
 	e.AllowNegative = true
 	e.AllowFloat = true
@@ -1175,4 +1181,40 @@ func Test_minusRadixThou(t *testing.T) {
 	if e.thouSep != ',' {
 		t.Errorf("thou should be ',' but is %x", e.thouSep)
 	}
+}
+
+func TestLocalizedNumericalEntry_Binding(t *testing.T) {
+	value := binding.NewFloat()
+	entry := NewLocalizedNumericalEntryWithData(true, true, value)
+	value.Set(-46222.9)
+	waitForBinding()
+	v, err := entry.ParseFloat()
+	assert.Nil(t, err)
+	assert.Equal(t, -46222.9, v)
+
+	entry.SetText("22")
+	v, err = entry.ParseFloat()
+	assert.Nil(t, err)
+	assert.Equal(t, 22., v)
+	waitForBinding()
+	val, err := value.Get()
+	assert.Nil(t, err)
+	assert.Equal(t, 22., val)
+
+	entry.Unbind()
+	value.Set(-9.3)
+	waitForBinding()
+	val, err = value.Get()
+	assert.Nil(t, err)
+	assert.Equal(t, -9.3, val)
+	v, err = entry.ParseFloat()
+	assert.Nil(t, err)
+	assert.Equal(t, 22., v)
+
+	entry.Bind(value)
+	waitForBinding()
+	v, err = entry.ParseFloat()
+	assert.Nil(t, err)
+	assert.Equal(t, -9.3, v)
+
 }
