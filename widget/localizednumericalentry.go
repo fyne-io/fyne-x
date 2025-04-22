@@ -86,6 +86,25 @@ func (e *LocalizedNumericalEntry) ParseFloat() (float64, error) {
 	return strconv.ParseFloat(t, 64)
 }
 
+// SetValue sets the entry's text to the string representation of the given float64 value,
+// formatted according to the entry's locale.
+func (e *LocalizedNumericalEntry) SetValue(value float64) {
+	lang, err := language.Parse(e.locale)
+	if err != nil {
+		fyne.LogError("Parse error: %s\n", err)
+		return
+	}
+	p := message.NewPrinter(lang)
+	var numStr string
+	if e.AllowFloat {
+		numStr = p.Sprintf("%f", value)
+	} else {
+		numStr = p.Sprintf("&d", value)
+	}
+
+	e.SetText(numStr)
+}
+
 // SetText manually sets the text of the Entry.
 // The text will be filtered to allow only numerical input
 // according to the current locale.
@@ -324,24 +343,16 @@ func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
 	if data == nil {
 		return
 	}
-	textSource, ok := data.(binding.Float)
+	fltSource, ok := data.(binding.Float)
 	if !ok {
 		return
 	}
-	val, err := textSource.Get()
+	val, err := fltSource.Get()
 	if err != nil {
 		fyne.LogError("Error getting current data value", err)
 		return
 	}
-	lang, err := language.Parse(e.locale)
-	if err != nil {
-		fyne.LogError("Parse error: %s\n", err)
-		return
-	}
-	p := message.NewPrinter(lang)
-	numStr := p.Sprintf("%f", val)
-
-	e.SetText(numStr)
+	e.SetValue(val)
 }
 
 // writeData writes the entry's parsed float value to the specified data binding.

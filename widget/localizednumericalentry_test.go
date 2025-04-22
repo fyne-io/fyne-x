@@ -1192,7 +1192,7 @@ func TestLocalizedNumericalEntry_Binding(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, -46222.9, v)
 
-	entry.SetText("22")
+	entry.SetValue(22.)
 	v, err = entry.ParseFloat()
 	assert.Nil(t, err)
 	assert.Equal(t, 22., v)
