@@ -30,6 +30,7 @@ type LocalizedNumericalEntry struct {
 
 	binder basicBinder
 	locale string
+	mPr    *message.Printer
 }
 
 // NewLocalizedNumericalEntry returns an extended entry that only allows numerical input.
@@ -39,7 +40,15 @@ func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
 	entry.locale, err = jibber_jabber.DetectIETF()
 	if err != nil {
 		fyne.LogError("DetectIETF error: %s\n", err)
+		return nil
 	} else {
+		lang, err := language.Parse(entry.locale)
+		if err != nil {
+			fyne.LogError("Language parse error: ", err)
+			return nil
+		}
+		entry.mPr = message.NewPrinter(lang)
+
 		entry.getLocaleRunes(entry.locale)
 	}
 	entry.ExtendBaseWidget(entry)
@@ -89,19 +98,15 @@ func (e *LocalizedNumericalEntry) ParseFloat() (float64, error) {
 // SetValue sets the entry's text to the string representation of the given float64 value,
 // formatted according to the entry's locale.
 func (e *LocalizedNumericalEntry) SetValue(value float64) {
-	lang, err := language.Parse(e.locale)
-	if err != nil {
-		fyne.LogError("Parse error: %s\n", err)
+	if e.mPr == nil {
 		return
 	}
-	p := message.NewPrinter(lang)
 	var numStr string
 	if e.AllowFloat {
-		numStr = p.Sprintf("%f", value)
+		numStr = e.mPr.Sprintf("%f", value)
 	} else {
-		numStr = p.Sprintf("&d", value)
+		numStr = e.mPr.Sprintf("&d", int(value))
 	}
-
 	e.SetText(numStr)
 }
 
@@ -314,7 +319,7 @@ func (e *LocalizedNumericalEntry) getLocaleRunes(locale string) {
 	e.radixSep = '.'
 	lang, err := language.Parse(locale)
 	if err != nil {
-		fyne.LogError("Parse error: %s\n", err)
+		fyne.LogError("Language parse error: ", err)
 		return
 	}
 	p := message.NewPrinter(lang)

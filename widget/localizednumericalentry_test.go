@@ -1216,5 +1216,4 @@ func TestLocalizedNumericalEntry_Binding(t *testing.T) {
 	v, err = entry.ParseFloat()
 	assert.Nil(t, err)
 	assert.Equal(t, -9.3, v)
-
 }
