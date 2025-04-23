@@ -1046,7 +1046,7 @@ func TestLocalizedNumericalEntry_OnPaste(t *testing.T) {
 	entry.CursorColumn = 0
 	clipboard.SetContent("-4.5")
 	entry.TypedShortcut(shortcut)
-	assert.Equal(t, string(entry.minus)+"4.52.34", entry.Text)
+	assert.Equal(t, string(entry.minus)+"2.34", entry.Text)
 
 	entry.SetText("2.34")
 	entry.CursorColumn = 0

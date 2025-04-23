@@ -157,6 +157,12 @@ func (e *LocalizedNumericalEntry) TypedRune(r rune) {
 //
 // Implements: fyne.Shortcutable
 func (e *LocalizedNumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
+	runes := []rune(e.Text)
+	_, ok := shortcut.(*fyne.ShortcutPaste)
+	if ok && len(runes) > 0 && e.CursorColumn == 0 && runes[0] == e.minus {
+		return
+	}
+
 	e.Entry.TypedShortcut(shortcut)
 	// now reprocess the LocalizedNumericalEntry's Text to change characters to locale-specific values
 	// and delete those that are not valid.
