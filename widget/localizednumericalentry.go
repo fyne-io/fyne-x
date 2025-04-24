@@ -315,7 +315,7 @@ func (e *LocalizedNumericalEntry) makeParsable(text string) (string, error) {
 	return t, nil
 }
 
-// minusRadixThou determines the minus sign, radix, and thousand separator
+// getLocaleRunes determines the minus sign, radix, and thousand separator
 // characters for a given locale by formatting a number and extracting
 // the relevant characters. It returns the minus sign, radix, and thousand
 // separator runes.
@@ -343,13 +343,32 @@ func (e *LocalizedNumericalEntry) getLocaleRunes(locale string) {
 	}
 
 	// first rune is the "minus" sign
-	e.minus = runes[0]
+	if len(runes) > 0 {
+		e.minus = runes[0]
+	}
 
 	// look for thousands separator
-	e.thouSep = findSeparator(runes[1:6])
+	if len(runes) > 1 {
+		e.thouSep = findSeparator(runes[1:min(6, len(runes))])
+	}
 
 	// look for radix separator
-	e.radixSep = findSeparator(runes[6:])
+	if len(runes) > 6 {
+		e.radixSep = findSeparator(runes[6:])
+		if e.radixSep == 0 && e.thouSep != 0 {
+			// If no radix separator is found, and thousand separator is present,
+			// use the last non-digit character as radix separator
+			e.radixSep = findSeparator(runes[len(runes)-7:])
+		}
+	}
+}
+
+// min returns the smaller of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 // updateFromData updates the entry's text with the value from the data source.
