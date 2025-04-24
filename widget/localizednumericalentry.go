@@ -389,6 +389,7 @@ func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
 }
 
 // writeData writes the entry's parsed float value to the specified data binding.
+// It validates the text, parses it as a float, and updates the binding if the value has changed.
 func (e *LocalizedNumericalEntry) writeData(data binding.DataItem) {
 	if data == nil {
 		return
@@ -406,9 +407,16 @@ func (e *LocalizedNumericalEntry) writeData(data binding.DataItem) {
 	}
 
 	dVal, err := flt.Get()
-	if err != nil || dVal == val {
+	if err != nil {
+		fyne.LogError("Error getting float value: ", err)
 		return
 	}
 
-	flt.Set(val)
+	if dVal == val {
+		return
+	}
+
+	if err := flt.Set(val); err != nil {
+		fyne.LogError("Error setting float value: ", err)
+	}
 }
