@@ -342,12 +342,15 @@ call to the `SetText` or `Append` methods, or via paste from the clipboard.
 
 Here are the specific conditions that result in validation failure:
 
-* Minus sign in any postion other than at the start of the entry.
-* More than one radix separator in the text. 
-* Thousands separator in first character position.
-* Thousands separator immediately following the minus sign.
-* Two thousands separators next to each other.
-* Thousands separator on either side of the radix separator.
+| Condition                                     | Example Input | Valid? |
+| --------------------------------------------- | ------------- | ------ |
+| Minus sign not at the start                   | `1-23`        | No     |
+| More than one radix separator                 | `1.2.3`       | No     |
+| Thousands separator as first character       | `,123`        | No     |
+| Thousands separator after minus sign          | `-,123`       | No     |
+| Two thousands separators next to each other | `1,,234`      | No     |
+| Thousands separator next to radix separator | `1,.23`       | No     |
+| Valid input (en-US locale)                    | `-1,234.56`   | Yes    |
 
 Validation failure has different results depending on how input is being done. For example:
 
