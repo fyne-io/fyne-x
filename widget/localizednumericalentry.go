@@ -372,6 +372,7 @@ func min(a, b int) int {
 }
 
 // updateFromData updates the entry's text with the value from the data source.
+// It checks if the current value is different before updating to prevent unnecessary refreshes.
 func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
 	if data == nil {
 		return
@@ -385,6 +386,12 @@ func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
 		fyne.LogError("Error getting current data value", err)
 		return
 	}
+
+	currentVal, _ := e.ParseFloat()
+	if currentVal == val {
+		return
+	}
+
 	e.SetValue(val)
 }
 
