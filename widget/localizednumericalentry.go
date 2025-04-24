@@ -40,17 +40,17 @@ func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
 	entry.locale, err = jibber_jabber.DetectIETF()
 	if err != nil {
 		fyne.LogError("DetectIETF error: %s\n", err)
-		return nil
-	} else {
-		lang, err := language.Parse(entry.locale)
-		if err != nil {
-			fyne.LogError("Language parse error: ", err)
-			return nil
-		}
-		entry.mPr = message.NewPrinter(lang)
-
-		entry.getLocaleRunes(entry.locale)
+		entry.locale = "en-US" // Fallback to en-US
 	}
+	lang, err := language.Parse(entry.locale)
+	if err != nil {
+		fyne.LogError("Language parse error: ", err)
+		lang = language.English // Fallback to English
+		entry.locale = "en-US"
+	}
+	entry.mPr = message.NewPrinter(lang)
+
+	entry.getLocaleRunes(entry.locale)
 	entry.ExtendBaseWidget(entry)
 	entry.Validator = entry.ValidateText
 	return entry
