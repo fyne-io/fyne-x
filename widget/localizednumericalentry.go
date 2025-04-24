@@ -331,22 +331,25 @@ func (e *LocalizedNumericalEntry) getLocaleRunes(locale string) {
 	p := message.NewPrinter(lang)
 	numStr := p.Sprintf("%f", -12345.5678901)
 	runes := []rune(numStr)
+
+	// Define helper function to find separator
+	findSeparator := func(runes []rune) rune {
+		for _, r := range runes {
+			if !unicode.IsDigit(r) && r != e.minus {
+				return r
+			}
+		}
+		return 0 // Return 0 if no separator is found
+	}
+
 	// first rune is the "minus" sign
 	e.minus = runes[0]
+
 	// look for thousands separator
-	for _, r := range runes[1:5] {
-		if !unicode.IsDigit(r) {
-			e.thouSep = r
-			break
-		}
-	}
+	e.thouSep = findSeparator(runes[1:6])
+
 	// look for radix separator
-	for _, r := range runes[5:] {
-		if !unicode.IsDigit(r) {
-			e.radixSep = r
-			break
-		}
-	}
+	e.radixSep = findSeparator(runes[6:])
 }
 
 // updateFromData updates the entry's text with the value from the data source.
