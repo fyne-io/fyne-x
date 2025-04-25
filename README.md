@@ -372,6 +372,10 @@ checkmark as shown in the first image, above is displayed always. If the text is
 widget has focus, the checkmark is not displayed. If the text is invalid and the widget does
 not have focus, the widget is displayed as in the second image above.
 
+[Demo](./cmd/localizednumericalentry_demo/main.go)
+
+## Dialogs
+
 ### About
 
 A cool parallax about dialog that pulls data from the app metadata and includes
