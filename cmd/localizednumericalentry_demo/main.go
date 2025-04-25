@@ -16,7 +16,7 @@ func main() {
 	nE := xwidget.NewLocalizedNumericalEntry()
 	nE.AllowFloat = true
 	nE.AllowNegative = true
-	w.Clipboard().SetContent("92.f65")
+	a.Clipboard().SetContent("92.f65")
 
 	valL := widget.NewLabel("ParseFloat value:")
 	nE.OnChanged = func(s string) {
