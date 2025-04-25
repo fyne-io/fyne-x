@@ -1062,125 +1062,54 @@ func TestLocalizedNumericalEntry_getLocaleRunes(t *testing.T) {
 	e.AllowFloat = true
 
 	e.getLocaleRunes("en-US")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != '.' {
-		t.Errorf("radix should be '.' but is %x", e.radixSep)
-	}
-	if e.thouSep != ',' {
-		t.Errorf("thou should be ',' but is %x", e.thouSep)
-	}
-
-	e.getLocaleRunes("de-DE")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != '.' {
-		t.Errorf("thou should be '.' but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, '.', e.radixSep)
+	assert.Equal(t, ',', e.thouSep)
 
 	e.getLocaleRunes("de-AT")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != 0xa0 {
-		t.Errorf("thou should be '0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, rune(0xa0), e.thouSep)
 
 	e.getLocaleRunes("de-LI")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != '.' {
-		t.Errorf("radix should be '.' but is %x", e.radixSep)
-	}
-	if e.thouSep != 0x2019 {
-		t.Errorf("thou should be 0x2019 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, '.', e.radixSep)
+	assert.Equal(t, rune(0x2019), e.thouSep)
 
 	e.getLocaleRunes("fr-FR")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != 0xa0 {
-		t.Errorf("thou should be 0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, rune(0xa0), e.thouSep)
 
 	e.getLocaleRunes("et-EE")
-	if e.minus != 0x2212 {
-		t.Errorf("minus should be 0x2212 but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != 0xa0 {
-		t.Errorf("thou should be 0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, rune(0x2212), e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, rune(0xa0), e.thouSep)
 
 	e.getLocaleRunes("rw-RW")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != '.' {
-		t.Errorf("thou should be 0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, '.', e.thouSep)
 
 	e.getLocaleRunes("tr-TR")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != '.' {
-		t.Errorf("thou should be 0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, '.', e.thouSep)
 
 	e.getLocaleRunes("tk-TM")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != 0xa0 {
-		t.Errorf("thou should be 0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, rune(0xa0), e.thouSep)
 
 	e.getLocaleRunes("kea-CV")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != ',' {
-		t.Errorf("radix should be ',' but is %x", e.radixSep)
-	}
-	if e.thouSep != 0xa0 {
-		t.Errorf("thou should be 0xa0 but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, ',', e.radixSep)
+	assert.Equal(t, rune(0xa0), e.thouSep)
 
 	e.getLocaleRunes("mas-KE")
-	if e.minus != '-' {
-		t.Errorf("minus should be '-' but is %x", e.minus)
-	}
-	if e.radixSep != '.' {
-		t.Errorf("radix should be '.' but is %x", e.radixSep)
-	}
-	if e.thouSep != ',' {
-		t.Errorf("thou should be ',' but is %x", e.thouSep)
-	}
+	assert.Equal(t, '-', e.minus)
+	assert.Equal(t, '.', e.radixSep)
+	assert.Equal(t, ',', e.thouSep)
 }
 
 func TestLocalizedNumericalEntry_Binding(t *testing.T) {
