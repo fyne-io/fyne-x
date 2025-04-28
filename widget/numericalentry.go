@@ -17,9 +17,9 @@ import (
 	"github.com/cloudfoundry-attic/jibber_jabber"
 )
 
-// LocalizedNumericalEntry is an extended entry that only allows numerical input.
+// NumericalEntry is an extended entry that only allows numerical input.
 // Only integers are allowed by default. Support for floats can be enabled by setting AllowFloat.
-type LocalizedNumericalEntry struct {
+type NumericalEntry struct {
 	widget.Entry
 	AllowFloat bool
 	// AllowNegative determines if negative numbers can be entered.
@@ -33,9 +33,9 @@ type LocalizedNumericalEntry struct {
 	mPr    *message.Printer
 }
 
-// NewLocalizedNumericalEntry returns an extended entry that only allows numerical input.
-func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
-	entry := &LocalizedNumericalEntry{}
+// NewNumericalEntry returns an extended entry that only allows numerical input.
+func NewNumericalEntry() *NumericalEntry {
+	entry := &NumericalEntry{}
 	var err error
 	entry.locale, err = jibber_jabber.DetectIETF()
 	if err != nil {
@@ -56,10 +56,10 @@ func NewLocalizedNumericalEntry() *LocalizedNumericalEntry {
 	return entry
 }
 
-// NewLocalizedNumericalEntryWithData creates a numerical entry that is bound to a
+// NewNumericalEntryWithData creates a numerical entry that is bound to a
 // data source and can allow or disallow float and negative numbers.
-func NewLocalizedNumericalEntryWithData(allowFloat bool, allowNegative bool, data binding.Float) *LocalizedNumericalEntry {
-	e := NewLocalizedNumericalEntry()
+func NewNumericalEntryWithData(allowFloat bool, allowNegative bool, data binding.Float) *NumericalEntry {
+	e := NewNumericalEntry()
 	e.AllowFloat = allowFloat
 	e.AllowNegative = allowNegative
 	e.Bind(data)
@@ -72,7 +72,7 @@ func NewLocalizedNumericalEntryWithData(allowFloat bool, allowNegative bool, dat
 
 // Append appends text to the entry, filtering out non-numerical characters
 // based on the current locale and allowed input types (negative, float).
-func (e *LocalizedNumericalEntry) Append(text string) {
+func (e *NumericalEntry) Append(text string) {
 	s := e.getValidText(e.Text, text)
 	e.Entry.Append(s)
 }
@@ -80,14 +80,14 @@ func (e *LocalizedNumericalEntry) Append(text string) {
 // Bind connects the specified data source to this Spinner widget.
 // The current value will be displayed and any changes in the data will cause the widget
 // to update.
-func (e *LocalizedNumericalEntry) Bind(data binding.Float) {
+func (e *NumericalEntry) Bind(data binding.Float) {
 	e.binder.SetCallback(e.updateFromData)
 	e.binder.Bind(data)
 }
 
 // ParseFloat parses the text content of the entry as a float64.
 // It returns the parsed float and an error if parsing fails.
-func (e *LocalizedNumericalEntry) ParseFloat() (float64, error) {
+func (e *NumericalEntry) ParseFloat() (float64, error) {
 	t, err := e.makeParsable(e.Text)
 	if err != nil {
 		return 0, err
@@ -97,7 +97,7 @@ func (e *LocalizedNumericalEntry) ParseFloat() (float64, error) {
 
 // SetValue sets the entry's text to the string representation of the given float64 value,
 // formatted according to the entry's locale.
-func (e *LocalizedNumericalEntry) SetValue(value float64) {
+func (e *NumericalEntry) SetValue(value float64) {
 	if e.mPr == nil {
 		return
 	}
@@ -113,7 +113,7 @@ func (e *LocalizedNumericalEntry) SetValue(value float64) {
 // SetText manually sets the text of the Entry.
 // The text will be filtered to allow only numerical input
 // according to the current locale.
-func (e *LocalizedNumericalEntry) SetText(text string) {
+func (e *NumericalEntry) SetText(text string) {
 	s := e.getValidText("", text)
 	e.Entry.SetText(s)
 }
@@ -121,7 +121,7 @@ func (e *LocalizedNumericalEntry) SetText(text string) {
 // TypedRune is called when this item receives a char event.
 //
 // Implements: fyne.Focusable
-func (e *LocalizedNumericalEntry) TypedRune(r rune) {
+func (e *NumericalEntry) TypedRune(r rune) {
 	rn, ok := e.getRuneForLocale(r)
 	if !ok {
 		return
@@ -156,7 +156,7 @@ func (e *LocalizedNumericalEntry) TypedRune(r rune) {
 // TypedShortcut handles the registered shortcuts.
 //
 // Implements: fyne.Shortcutable
-func (e *LocalizedNumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
+func (e *NumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
 	runes := []rune(e.Text)
 	_, ok := shortcut.(*fyne.ShortcutPaste)
 	if ok && len(runes) > 0 && e.CursorColumn == 0 && runes[0] == e.minus {
@@ -164,7 +164,7 @@ func (e *LocalizedNumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
 	}
 
 	e.Entry.TypedShortcut(shortcut)
-	// now reprocess the LocalizedNumericalEntry's Text to change characters to locale-specific values
+	// now reprocess the NumericalEntry's Text to change characters to locale-specific values
 	// and delete those that are not valid.
 	t := e.Text
 	e.SetText(t)
@@ -173,19 +173,19 @@ func (e *LocalizedNumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
 // Keyboard sets up the right keyboard to use on mobile.
 //
 // Implements: mobile.Keyboardable
-func (e *LocalizedNumericalEntry) Keyboard() mobile.KeyboardType {
+func (e *NumericalEntry) Keyboard() mobile.KeyboardType {
 	return mobile.NumberKeyboard
 }
 
 // Unbind disconnects the entry from the bound data.
 // This will remove the data updates and allow the entry to be used independently.
-func (e *LocalizedNumericalEntry) Unbind() {
+func (e *NumericalEntry) Unbind() {
 	e.binder.Unbind()
 }
 
 // ValidateText checks if the entered text is a valid numerical input
 // according to the system locale.
-func (e *LocalizedNumericalEntry) ValidateText(text string) error {
+func (e *NumericalEntry) ValidateText(text string) error {
 	if len(text) == 0 {
 		return nil
 	}
@@ -234,7 +234,7 @@ func (e *LocalizedNumericalEntry) ValidateText(text string) error {
 
 // getRuneForLocale checks if a rune is valid for the entry,
 // and returns the correct rune for the locale.
-func (e *LocalizedNumericalEntry) getRuneForLocale(r rune) (rune, bool) {
+func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 	if unicode.IsDigit(r) {
 		return r, true
 	}
@@ -276,7 +276,7 @@ func (e *LocalizedNumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 
 // getValidText filters the input text to allow only valid characters
 // based on the current locale and the entry's configuration.
-func (e *LocalizedNumericalEntry) getValidText(curText, text string) string {
+func (e *NumericalEntry) getValidText(curText, text string) string {
 	var s strings.Builder
 	for i, r := range text {
 		rn, ok := e.getRuneForLocale(r)
@@ -303,7 +303,7 @@ func (e *LocalizedNumericalEntry) getValidText(curText, text string) string {
 // makeParsable prepares the text for parsing by removing thousand separators,
 // replacing the minus sign with a standard minus, and replacing the radix
 // separator with a period. It also validates the text before processing.
-func (e *LocalizedNumericalEntry) makeParsable(text string) (string, error) {
+func (e *NumericalEntry) makeParsable(text string) (string, error) {
 	err := e.ValidateText(text)
 	if err != nil {
 		return "", err
@@ -319,7 +319,7 @@ func (e *LocalizedNumericalEntry) makeParsable(text string) (string, error) {
 // characters for a given locale by formatting a number and extracting
 // the relevant characters. It returns the minus sign, radix, and thousand
 // separator runes.
-func (e *LocalizedNumericalEntry) getLocaleRunes(locale string) {
+func (e *NumericalEntry) getLocaleRunes(locale string) {
 	e.minus = '-'
 	e.thouSep = ','
 	e.radixSep = '.'
@@ -373,7 +373,7 @@ func min(a, b int) int {
 
 // updateFromData updates the entry's text with the value from the data source.
 // It checks if the current value is different before updating to prevent unnecessary refreshes.
-func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
+func (e *NumericalEntry) updateFromData(data binding.DataItem) {
 	if data == nil {
 		return
 	}
@@ -397,7 +397,7 @@ func (e *LocalizedNumericalEntry) updateFromData(data binding.DataItem) {
 
 // writeData writes the entry's parsed float value to the specified data binding.
 // It validates the text, parses it as a float, and updates the binding if the value has changed.
-func (e *LocalizedNumericalEntry) writeData(data binding.DataItem) {
+func (e *NumericalEntry) writeData(data binding.DataItem) {
 	if data == nil {
 		return
 	}
