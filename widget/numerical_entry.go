@@ -44,7 +44,7 @@ func NewNumericalEntry() *NumericalEntry {
 	}
 	entry.mPr = message.NewPrinter(lang)
 
-	entry.getLocaleRunes(locale)
+	entry.setup(locale)
 	entry.ExtendBaseWidget(entry)
 	entry.Validator = entry.validateText
 	return entry
@@ -317,11 +317,11 @@ func (e *NumericalEntry) makeParsable(text string) (string, error) {
 	return t, nil
 }
 
-// getLocaleRunes determines the minus sign, radix, and thousand separator
+// setup determines the minus sign, radix, and thousand separator
 // characters for a given locale by formatting a number and extracting
 // the relevant characters. It returns the minus sign, radix, and thousand
 // separator runes.
-func (e *NumericalEntry) getLocaleRunes(locale string) {
+func (e *NumericalEntry) setup(locale string) {
 	e.minus = '-'
 	e.thouSep = ','
 	e.radixSep = '.'

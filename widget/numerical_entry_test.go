@@ -1057,57 +1057,57 @@ func TestNumericalEntry_OnPaste(t *testing.T) {
 	assert.Equal(t, 4, entry.CursorColumn)
 }
 
-func TestNumericalEntry_getLocaleRunes(t *testing.T) {
+func TestNumericalEntry_setup(t *testing.T) {
 	e := NewNumericalEntry()
 	e.AllowNegative = true
 	e.AllowFloat = true
 
-	e.getLocaleRunes("en-US")
+	e.setup("en-US")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, '.', e.radixSep)
 	assert.Equal(t, ',', e.thouSep)
 
-	e.getLocaleRunes("de-AT")
+	e.setup("de-AT")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.getLocaleRunes("de-LI")
+	e.setup("de-LI")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, '.', e.radixSep)
 	assert.Equal(t, rune(0x2019), e.thouSep)
 
-	e.getLocaleRunes("fr-FR")
+	e.setup("fr-FR")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.getLocaleRunes("et-EE")
+	e.setup("et-EE")
 	assert.Equal(t, rune(0x2212), e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.getLocaleRunes("rw-RW")
+	e.setup("rw-RW")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, '.', e.thouSep)
 
-	e.getLocaleRunes("tr-TR")
+	e.setup("tr-TR")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, '.', e.thouSep)
 
-	e.getLocaleRunes("tk-TM")
+	e.setup("tk-TM")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.getLocaleRunes("kea-CV")
+	e.setup("kea-CV")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.getLocaleRunes("mas-KE")
+	e.setup("mas-KE")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, '.', e.radixSep)
 	assert.Equal(t, ',', e.thouSep)
