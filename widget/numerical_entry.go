@@ -34,7 +34,6 @@ type NumericalEntry struct {
 // NewNumericalEntry returns an extended entry that only allows numerical input.
 func NewNumericalEntry() *NumericalEntry {
 	entry := &NumericalEntry{}
-	entry.setup()
 	entry.ExtendBaseWidget(entry)
 	return entry
 }
@@ -56,6 +55,9 @@ func NewNumericalEntryWithData(allowFloat bool, allowNegative bool, data binding
 // Append appends text to the entry, filtering out non-numerical characters
 // based on the current locale and allowed input types (negative, float).
 func (e *NumericalEntry) Append(text string) {
+	if e.Validator == nil {
+		e.Validator = e.validateText
+	}
 	s := e.getValidText(e.Text, text)
 	e.Entry.Append(s)
 }
@@ -66,6 +68,13 @@ func (e *NumericalEntry) Append(text string) {
 func (e *NumericalEntry) Bind(data binding.Float) {
 	e.binder.SetCallback(e.updateFromData)
 	e.binder.Bind(data)
+}
+
+func (e *NumericalEntry) FocusLost() {
+	if e.Validator == nil {
+		e.Validator = e.validateText
+	}
+	e.Entry.FocusLost()
 }
 
 // Value parses the text content of the entry as a float64.
@@ -81,8 +90,9 @@ func (e *NumericalEntry) Value() (float64, error) {
 // SetValue sets the entry's text to the string representation of the given float64 value,
 // formatted according to the entry's locale.
 func (e *NumericalEntry) SetValue(value float64) {
-	if e.mPr == nil {
-		return
+	// if radixSep == 0, then setup has not been called, so call it now.
+	if e.radixSep == 0 {
+		e.setup()
 	}
 	var numStr string
 	if e.AllowFloat {
@@ -97,14 +107,21 @@ func (e *NumericalEntry) SetValue(value float64) {
 // The text will be filtered to allow only numerical input
 // according to the current locale.
 func (e *NumericalEntry) SetText(text string) {
+	if e.Validator == nil {
+		e.Validator = e.validateText
+	}
 	s := e.getValidText("", text)
 	e.Entry.SetText(s)
+	e.Refresh()
 }
 
 // TypedRune is called when this item receives a char event.
 //
 // Implements: fyne.Focusable
 func (e *NumericalEntry) TypedRune(r rune) {
+	if e.Validator == nil {
+		e.Validator = e.validateText
+	}
 	rn, ok := e.getRuneForLocale(r)
 	if !ok {
 		return
@@ -140,6 +157,9 @@ func (e *NumericalEntry) TypedRune(r rune) {
 //
 // Implements: fyne.Shortcutable
 func (e *NumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
+	if e.Validator == nil {
+		e.Validator = e.validateText
+	}
 	runes := []rune(e.Text)
 	_, ok := shortcut.(*fyne.ShortcutPaste)
 	if ok && len(runes) > 0 && e.CursorColumn == 0 && runes[0] == e.minus {
@@ -166,27 +186,14 @@ func (e *NumericalEntry) Unbind() {
 	e.binder.Unbind()
 }
 
-// Validate checks that the text in the entry contains only digits and the locale-specific
-// minus, thousand separator, and radix, or their alternative characters.
-// If there is no error, then any additional validation specified in the Validator field
-// is performed.
-func (e *NumericalEntry) Validate() error {
-	// validateText should only return an error if the value was set directly using e.Text.
-	// If set using e.SetText, etc., invalid characters are rejected.
-	if err := e.validateText(e.Text); err != nil {
-		return err
-	}
-	if e.Validator != nil {
-		return e.Validator(e.Text)
-	}
-	return nil
-}
-
 // validateText checks if the entered text is a valid numerical input
 // according to the system locale.
 func (e *NumericalEntry) validateText(text string) error {
 	if len(text) == 0 {
 		return nil
+	}
+	if e.radixSep == 0 {
+		e.setup()
 	}
 	runes := []rune(text)
 	if !e.AllowNegative && runes[0] == e.minus {
@@ -234,6 +241,10 @@ func (e *NumericalEntry) validateText(text string) error {
 // getRuneForLocale checks if a rune is valid for the entry,
 // and returns the correct rune for the locale.
 func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
+	// if radixSep == 0, then setup has not been called, so call it now.
+	if e.radixSep == 0 {
+		e.setup()
+	}
 	if unicode.IsDigit(r) {
 		return r, true
 	}
@@ -296,6 +307,7 @@ func (e *NumericalEntry) getValidText(curText, text string) string {
 // separator with a period. It also validates the text before processing.
 func (e *NumericalEntry) makeParsable(text string) (string, error) {
 	err := e.validateText(text)
+	e.SetValidationError(err)
 	if err != nil {
 		return "", err
 	}

@@ -1,8 +1,8 @@
 package widget
 
 import (
-	"errors"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -676,14 +676,22 @@ func TestNumericalEntry_SetText_Locale(t *testing.T) {
 
 	// Test with different minus sign
 	e.SetText("−123")
-	if e.Text != "−123" {
-		t.Errorf("Expected '−123', got '%s'", e.Text)
+	var s strings.Builder
+	s.WriteRune(e.minus)
+	s.WriteString("123")
+	text := s.String()
+	if e.Text != text {
+		t.Errorf("Expected '%s', got '%s'", text, e.Text)
 	}
 
 	// Test with regular minus sign when custom minus is set
 	e.SetText("-456")
-	if e.Text != "−456" {
-		t.Errorf("Expected '−456', got '%s'", e.Text)
+	var s2 strings.Builder
+	s2.WriteRune(e.minus)
+	s2.WriteString("456")
+	text = s2.String()
+	if e.Text != text {
+		t.Errorf("Expected '%s', got '%s'", text, e.Text)
 	}
 }
 
@@ -1146,23 +1154,4 @@ func TestNumericalEntry_Binding(t *testing.T) {
 	v, err = entry.Value()
 	assert.Nil(t, err)
 	assert.Equal(t, -9.3, v)
-}
-
-func TestNumericalEntry_Validate(t *testing.T) {
-	e := NewNumericalEntry()
-	e.AllowNegative = true
-	e.AllowFloat = true
-	e.Validator = func(s string) error {
-		return errors.New("solid error")
-	}
-	e.Text = "1!23.45"
-	err := e.Validate()
-	assert.NotNil(t, err)
-	assert.Equal(t, "invalid character: '!'", err.Error())
-
-	e.Text = "-123.45"
-	err = e.Validate()
-	assert.NotNil(t, err)
-	assert.Equal(t, "solid error", err.Error())
-
 }
