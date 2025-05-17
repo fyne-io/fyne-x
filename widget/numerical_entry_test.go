@@ -1062,52 +1062,52 @@ func TestNumericalEntry_setup(t *testing.T) {
 	e.AllowNegative = true
 	e.AllowFloat = true
 
-	e.setup("en-US")
+	e.setupRunes("en-US")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, '.', e.radixSep)
 	assert.Equal(t, ',', e.thouSep)
 
-	e.setup("de-AT")
+	e.setupRunes("de-AT")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.setup("de-LI")
+	e.setupRunes("de-LI")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, '.', e.radixSep)
 	assert.Equal(t, rune(0x2019), e.thouSep)
 
-	e.setup("fr-FR")
+	e.setupRunes("fr-FR")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.setup("et-EE")
+	e.setupRunes("et-EE")
 	assert.Equal(t, rune(0x2212), e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.setup("rw-RW")
+	e.setupRunes("rw-RW")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, '.', e.thouSep)
 
-	e.setup("tr-TR")
+	e.setupRunes("tr-TR")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, '.', e.thouSep)
 
-	e.setup("tk-TM")
+	e.setupRunes("tk-TM")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.setup("kea-CV")
+	e.setupRunes("kea-CV")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, ',', e.radixSep)
 	assert.Equal(t, rune(0xa0), e.thouSep)
 
-	e.setup("mas-KE")
+	e.setupRunes("mas-KE")
 	assert.Equal(t, '-', e.minus)
 	assert.Equal(t, '.', e.radixSep)
 	assert.Equal(t, ',', e.thouSep)

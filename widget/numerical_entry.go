@@ -34,17 +34,7 @@ type NumericalEntry struct {
 // NewNumericalEntry returns an extended entry that only allows numerical input.
 func NewNumericalEntry() *NumericalEntry {
 	entry := &NumericalEntry{}
-	var err error
-	locale := lang.SystemLocale().String()
-	lang, err := language.Parse(locale)
-	if err != nil {
-		fyne.LogError("Language parse error: ", err)
-		lang = language.English // Fallback to English
-		locale = "en-US"
-	}
-	entry.mPr = message.NewPrinter(lang)
-
-	entry.setup(locale)
+	entry.setup()
 	entry.ExtendBaseWidget(entry)
 	return entry
 }
@@ -316,19 +306,26 @@ func (e *NumericalEntry) makeParsable(text string) (string, error) {
 	return t, nil
 }
 
-// setup determines the minus sign, radix, and thousand separator
-// characters for a given locale by formatting a number and extracting
-// the relevant characters. It returns the minus sign, radix, and thousand
-// separator runes.
-func (e *NumericalEntry) setup(locale string) {
-	e.minus = '-'
-	e.thouSep = ','
-	e.radixSep = '.'
+// setup determines the system locale and calls setupRunes to determine the
+// locale's minus sign, radix, and thousands separator.
+func (e *NumericalEntry) setup() {
+	locale := lang.SystemLocale().String()
+	e.setupRunes(locale)
+}
+
+// setupRunes determines the minus sign, radix, and thousand separator for
+// the specified locale.
+func (e *NumericalEntry) setupRunes(locale string) {
 	lang, err := language.Parse(locale)
 	if err != nil {
 		fyne.LogError("Language parse error: ", err)
-		return
+		lang = language.English // Fallback to English
+		locale = "en-US"
 	}
+	e.mPr = message.NewPrinter(lang)
+	e.minus = '-'
+	e.thouSep = ','
+	e.radixSep = '.'
 	p := message.NewPrinter(lang)
 	numStr := p.Sprintf("%f", -12345.5678901)
 	runes := []rune(numStr)
