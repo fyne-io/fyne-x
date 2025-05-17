@@ -18,10 +18,10 @@ func main() {
 	nE.AllowNegative = true
 	a.Clipboard().SetContent("92.f65")
 
-	valL := widget.NewLabel("ParseFloat value:")
+	valL := widget.NewLabel("Value as float:")
 	nE.OnChanged = func(s string) {
-		f, _ := nE.ParseFloat()
-		valL.SetText(fmt.Sprintf("ParseFloat value: %f", f))
+		f, _ := nE.Float()
+		valL.SetText(fmt.Sprintf("Value as float: %f", f))
 		valL.Refresh()
 	}
 

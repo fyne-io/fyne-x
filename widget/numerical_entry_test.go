@@ -986,7 +986,7 @@ func TestNumericalEntry_ParseFloat(t *testing.T) {
 	entry.thouSep = '.'
 
 	entry.Text = "123.45"
-	val, err := entry.ParseFloat()
+	val, err := entry.Float()
 	if err != nil {
 		t.Fatalf("ParseFloat failed: %v", err)
 	}
@@ -995,7 +995,7 @@ func TestNumericalEntry_ParseFloat(t *testing.T) {
 	}
 
 	entry.Text = string(rune(0x2212)) + "123,45"
-	val, err = entry.ParseFloat()
+	val, err = entry.Float()
 	if err != nil {
 		t.Fatalf("ParseFloat failed: %v", err)
 	}
@@ -1004,13 +1004,13 @@ func TestNumericalEntry_ParseFloat(t *testing.T) {
 	}
 
 	entry.Text = "abc"
-	_, err = entry.ParseFloat()
+	_, err = entry.Float()
 	if err == nil {
 		t.Errorf("Expected error, got nil")
 	}
 
 	entry.Text = ""
-	val, err = entry.ParseFloat()
+	val, err = entry.Float()
 	if err == nil {
 		t.Fatalf("ParseFloat failed: should have returned error")
 	}
@@ -1117,12 +1117,12 @@ func TestNumericalEntry_Binding(t *testing.T) {
 	entry := NewNumericalEntryWithData(true, true, value)
 	value.Set(-46222.9)
 	waitForBinding()
-	v, err := entry.ParseFloat()
+	v, err := entry.Float()
 	assert.Nil(t, err)
 	assert.Equal(t, -46222.9, v)
 
 	entry.SetValue(22.)
-	v, err = entry.ParseFloat()
+	v, err = entry.Float()
 	assert.Nil(t, err)
 	assert.Equal(t, 22., v)
 	waitForBinding()
@@ -1136,13 +1136,13 @@ func TestNumericalEntry_Binding(t *testing.T) {
 	val, err = value.Get()
 	assert.Nil(t, err)
 	assert.Equal(t, -9.3, val)
-	v, err = entry.ParseFloat()
+	v, err = entry.Float()
 	assert.Nil(t, err)
 	assert.Equal(t, 22., v)
 
 	entry.Bind(value)
 	waitForBinding()
-	v, err = entry.ParseFloat()
+	v, err = entry.Float()
 	assert.Nil(t, err)
 	assert.Equal(t, -9.3, v)
 }
