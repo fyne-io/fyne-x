@@ -10,11 +10,10 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/data/binding"
 	"fyne.io/fyne/v2/driver/mobile"
+	"fyne.io/fyne/v2/lang"
 	"fyne.io/fyne/v2/widget"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
-
-	"github.com/cloudfoundry-attic/jibber_jabber"
 )
 
 // NumericalEntry is an extended entry that only allows numerical input.
@@ -29,7 +28,6 @@ type NumericalEntry struct {
 	thouSep       rune
 
 	binder basicBinder
-	locale string
 	mPr    *message.Printer
 }
 
@@ -37,20 +35,16 @@ type NumericalEntry struct {
 func NewNumericalEntry() *NumericalEntry {
 	entry := &NumericalEntry{}
 	var err error
-	entry.locale, err = jibber_jabber.DetectIETF()
-	if err != nil {
-		fyne.LogError("DetectIETF error: %s\n", err)
-		entry.locale = "en-US" // Fallback to en-US
-	}
-	lang, err := language.Parse(entry.locale)
+	locale := lang.SystemLocale().String()
+	lang, err := language.Parse(locale)
 	if err != nil {
 		fyne.LogError("Language parse error: ", err)
 		lang = language.English // Fallback to English
-		entry.locale = "en-US"
+		locale = "en-US"
 	}
 	entry.mPr = message.NewPrinter(lang)
 
-	entry.getLocaleRunes(entry.locale)
+	entry.getLocaleRunes(locale)
 	entry.ExtendBaseWidget(entry)
 	entry.Validator = entry.ValidateText
 	return entry
