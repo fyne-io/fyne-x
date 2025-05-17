@@ -43,9 +43,6 @@ func NewNumericalEntry() *NumericalEntry {
 func NewNumericalEntryWithData(data binding.Float) *NumericalEntry {
 	e := NewNumericalEntry()
 	e.Bind(data)
-	e.OnChanged = func(string) {
-		e.binder.CallWithData(e.writeData)
-	}
 
 	return e
 }
@@ -66,6 +63,9 @@ func (e *NumericalEntry) Append(text string) {
 func (e *NumericalEntry) Bind(data binding.Float) {
 	e.binder.SetCallback(e.updateFromData)
 	e.binder.Bind(data)
+	e.OnChanged = func(string) {
+		e.binder.CallWithData(e.writeData)
+	}
 }
 
 func (e *NumericalEntry) FocusLost() {
@@ -182,6 +182,7 @@ func (e *NumericalEntry) Keyboard() mobile.KeyboardType {
 // This will remove the data updates and allow the entry to be used independently.
 func (e *NumericalEntry) Unbind() {
 	e.binder.Unbind()
+	e.OnChanged = nil
 }
 
 // validateText checks if the entered text is a valid numerical input
