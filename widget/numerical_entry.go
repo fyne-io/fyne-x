@@ -365,14 +365,6 @@ func (e *NumericalEntry) getLocaleRunes(locale string) {
 	}
 }
 
-// min returns the smaller of two integers
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 // updateFromData updates the entry's text with the value from the data source.
 // It checks if the current value is different before updating to prevent unnecessary refreshes.
 func (e *NumericalEntry) updateFromData(data binding.DataItem) {
@@ -428,4 +420,12 @@ func (e *NumericalEntry) writeData(data binding.DataItem) {
 	if err := flt.Set(val); err != nil {
 		fyne.LogError("Error setting float value: ", err)
 	}
+}
+
+// min returns the smaller of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
