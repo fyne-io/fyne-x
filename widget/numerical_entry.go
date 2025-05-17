@@ -39,11 +39,9 @@ func NewNumericalEntry() *NumericalEntry {
 }
 
 // NewNumericalEntryWithData creates a numerical entry that is bound to a
-// data source and can allow or disallow float and negative numbers.
-func NewNumericalEntryWithData(allowFloat bool, allowNegative bool, data binding.Float) *NumericalEntry {
+// data source.
+func NewNumericalEntryWithData(data binding.Float) *NumericalEntry {
 	e := NewNumericalEntry()
-	e.AllowFloat = allowFloat
-	e.AllowNegative = allowNegative
 	e.Bind(data)
 	e.OnChanged = func(string) {
 		e.binder.CallWithData(e.writeData)

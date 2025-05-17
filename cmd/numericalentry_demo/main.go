@@ -13,9 +13,10 @@ func main() {
 	a := app.New()
 	w := a.NewWindow("NumericalEntry Demo")
 
-	nE := xwidget.NewNumericalEntry()
-	nE.AllowFloat = true
-	nE.AllowNegative = true
+	nE := &xwidget.NumericalEntry{}
+	nE.ExtendBaseWidget(nE)
+	nE.AllowFloat = false
+	nE.AllowNegative = false
 	a.Clipboard().SetContent("92.f65")
 
 	valL := widget.NewLabel("Value as float:")
@@ -25,10 +26,11 @@ func main() {
 		valL.SetText(fmt.Sprintf("Value as float: %f", f))
 		valL.Refresh()
 	}
-	nE.Text = "1!23.45"
+	nE.Text = "-1!23.45"
 
 	sep := widget.NewSeparator()
 	setB := widget.NewButton("Set Entry to -2.35,4", func() {
+		nE.AllowNegative = true
 		nE.SetText("-2.35,4")
 	})
 	appB := widget.NewButton("Append -3,6.5 to Entry", func() {

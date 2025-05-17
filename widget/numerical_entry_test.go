@@ -1123,7 +1123,10 @@ func TestNumericalEntry_setup(t *testing.T) {
 
 func TestNumericalEntry_Binding(t *testing.T) {
 	value := binding.NewFloat()
-	entry := NewNumericalEntryWithData(true, true, value)
+	entry := NewNumericalEntryWithData(value)
+	entry.AllowFloat = true
+	entry.AllowNegative = true
+
 	value.Set(-46222.9)
 	waitForBinding()
 	v, err := entry.Value()
