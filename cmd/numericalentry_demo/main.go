@@ -33,7 +33,7 @@ func main() {
 			eText.Text = err.Error()
 		}
 		eText.Refresh()
-		f, _ := nE.Float()
+		f, _ := nE.Value()
 		valL.SetText(fmt.Sprintf("Value as float: %f", f))
 		valL.Refresh()
 	}

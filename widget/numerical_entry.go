@@ -79,9 +79,9 @@ func (e *NumericalEntry) Bind(data binding.Float) {
 	e.binder.Bind(data)
 }
 
-// Float parses the text content of the entry as a float64.
+// Value parses the text content of the entry as a float64.
 // It returns the parsed float and an error if parsing fails.
-func (e *NumericalEntry) Float() (float64, error) {
+func (e *NumericalEntry) Value() (float64, error) {
 	t, err := e.makeParsable(e.Text)
 	if err != nil {
 		return 0, err
@@ -381,7 +381,7 @@ func (e *NumericalEntry) updateFromData(data binding.DataItem) {
 		return
 	}
 
-	currentVal, _ := e.Float()
+	currentVal, _ := e.Value()
 	if currentVal == val {
 		return
 	}
@@ -398,7 +398,7 @@ func (e *NumericalEntry) writeData(data binding.DataItem) {
 	if err := e.Validator(e.Text); err != nil {
 		return
 	}
-	val, err := e.Float()
+	val, err := e.Value()
 	if err != nil {
 		return
 	}
