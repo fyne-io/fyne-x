@@ -46,7 +46,6 @@ func NewNumericalEntry() *NumericalEntry {
 
 	entry.setup(locale)
 	entry.ExtendBaseWidget(entry)
-	entry.Validator = entry.validateText
 	return entry
 }
 
@@ -395,7 +394,7 @@ func (e *NumericalEntry) writeData(data binding.DataItem) {
 	if data == nil {
 		return
 	}
-	if err := e.Validator(e.Text); err != nil {
+	if err := e.Validate(); err != nil {
 		return
 	}
 	val, err := e.Value()
