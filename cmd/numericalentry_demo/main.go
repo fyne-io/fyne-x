@@ -24,7 +24,7 @@ func main() {
 
 	valL := widget.NewLabel("Value as float:")
 	// Should call nE.SetText
-	nE.SetText("1!23.45")
+	nE.Text = "1!23.45"
 	nE.OnChanged = func(s string) {
 		err := nE.Validate()
 		if err == nil {

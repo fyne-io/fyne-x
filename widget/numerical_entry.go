@@ -250,29 +250,21 @@ func (e *NumericalEntry) getRuneForLocale(r rune) (rune, bool) {
 	}
 
 	switch r {
-	case '-': // hyphen - minus
-		fallthrough
-	case 0x2212: //mathematical minus
+	case '-', 0x2212:
 		if e.AllowNegative {
 			return e.minus, true
 		} else {
 			return 0, false
 		}
-	case '.': // full stop
-		fallthrough
-	case ',': // comma
+	case '.', ',':
 		if r == e.radixSep || r == e.thouSep {
 			return r, true
 		}
-	case ' ': // space
-		fallthrough
-	case 0xa0: // non-breaking space
+	case ' ', 0xa0:
 		if e.thouSep == ' ' || e.thouSep == 0xa0 {
 			return e.thouSep, true
 		}
-	case '\'': // single quote
-		fallthrough
-	case 0x2019: // right single quote mark
+	case '\'', 0x2019:
 		if e.thouSep == '\'' || e.thouSep == 0x2019 {
 			return e.thouSep, true
 		}
