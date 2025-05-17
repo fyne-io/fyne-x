@@ -46,7 +46,7 @@ func NewNumericalEntry() *NumericalEntry {
 
 	entry.getLocaleRunes(locale)
 	entry.ExtendBaseWidget(entry)
-	entry.Validator = entry.ValidateText
+	entry.Validator = entry.validateText
 	return entry
 }
 
@@ -177,9 +177,25 @@ func (e *NumericalEntry) Unbind() {
 	e.binder.Unbind()
 }
 
-// ValidateText checks if the entered text is a valid numerical input
+// Validate checks that the text in the entry contains only digits and the locale-specific
+// minus, thousand separator, and radix, or their alternative characters.
+// If there is no error, then any additional validation specified in the Validator field
+// is performed.
+func (e *NumericalEntry) Validate() error {
+	// validateText should only return an error if the value was set directly using e.Text.
+	// If set using e.SetText, etc., invalid characters are rejected.
+	if err := e.validateText(e.Text); err != nil {
+		return err
+	}
+	if e.Validator != nil {
+		return e.Validator(e.Text)
+	}
+	return nil
+}
+
+// validateText checks if the entered text is a valid numerical input
 // according to the system locale.
-func (e *NumericalEntry) ValidateText(text string) error {
+func (e *NumericalEntry) validateText(text string) error {
 	if len(text) == 0 {
 		return nil
 	}
@@ -298,7 +314,7 @@ func (e *NumericalEntry) getValidText(curText, text string) string {
 // replacing the minus sign with a standard minus, and replacing the radix
 // separator with a period. It also validates the text before processing.
 func (e *NumericalEntry) makeParsable(text string) (string, error) {
-	err := e.ValidateText(text)
+	err := e.validateText(text)
 	if err != nil {
 		return "", err
 	}

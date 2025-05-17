@@ -18,8 +18,21 @@ func main() {
 	nE.AllowNegative = true
 	a.Clipboard().SetContent("92.f65")
 
+	errL := widget.NewLabel("Error: ")
+	eText := widget.NewLabel("")
+	errC := container.NewHBox(errL, eText)
+
 	valL := widget.NewLabel("Value as float:")
+	// Should call nE.SetText
+	nE.SetText("1!23.45")
 	nE.OnChanged = func(s string) {
+		err := nE.Validate()
+		if err == nil {
+			eText.Text = ""
+		} else {
+			eText.Text = err.Error()
+		}
+		eText.Refresh()
 		f, _ := nE.Float()
 		valL.SetText(fmt.Sprintf("Value as float: %f", f))
 		valL.Refresh()
@@ -35,7 +48,7 @@ func main() {
 	pasteL := widget.NewLabel("Clipboard contains \"92.f65\".\n" +
 		"Paste this into the Entry widget at\ndifferent locations to see the effect.")
 
-	vc := container.NewVBox(nE, valL, sep, setB, appB, pasteL)
+	vc := container.NewVBox(nE, errC, valL, sep, setB, appB, pasteL)
 	w.SetContent(vc)
 	w.ShowAndRun()
 }

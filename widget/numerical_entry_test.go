@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -884,7 +885,7 @@ func TestNumericalEntry_ValidateText(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := e.ValidateText(tc.text)
+			err := e.validateText(tc.text)
 			if tc.expectedErr == "" && err != nil {
 				t.Fatalf("expected no error, got %v", err)
 			}
@@ -940,7 +941,7 @@ func TestNumericalEntry_ValidateText_AllowNegative_AllowFloat(t *testing.T) {
 			e.minus = '-'
 			e.radixSep = '.'
 			e.thouSep = ','
-			err := e.ValidateText(tc.text)
+			err := e.validateText(tc.text)
 			if tc.expectedErr == "" && err != nil {
 				t.Fatalf("expected no error, got %v", err)
 			}
@@ -1145,4 +1146,23 @@ func TestNumericalEntry_Binding(t *testing.T) {
 	v, err = entry.Float()
 	assert.Nil(t, err)
 	assert.Equal(t, -9.3, v)
+}
+
+func TestNumericalEntry_Validate(t *testing.T) {
+	e := NewNumericalEntry()
+	e.AllowNegative = true
+	e.AllowFloat = true
+	e.Validator = func(s string) error {
+		return errors.New("solid error")
+	}
+	e.Text = "1!23.45"
+	err := e.Validate()
+	assert.NotNil(t, err)
+	assert.Equal(t, "invalid character: '!'", err.Error())
+
+	e.Text = "-123.45"
+	err = e.Validate()
+	assert.NotNil(t, err)
+	assert.Equal(t, "solid error", err.Error())
+
 }
