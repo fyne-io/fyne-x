@@ -20,11 +20,9 @@ func main() {
 	a.Clipboard().SetContent("92.f65")
 
 	valL := widget.NewLabel("Value as float:")
-	// Should call nE.SetText
 	nE.OnChanged = func(s string) {
 		f, _ := nE.Value()
 		valL.SetText(fmt.Sprintf("Value as float: %f", f))
-		valL.Refresh()
 	}
 	nE.Text = "-1!23.45"
 
