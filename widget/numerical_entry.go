@@ -76,7 +76,7 @@ func (e *NumericalEntry) FocusLost() {
 }
 
 // Value parses the text content of the entry as a float64.
-// It returns the parsed float and an error if parsing fails.e
+// It returns the parsed float and an error if parsing fails.
 func (e *NumericalEntry) Value() (float64, error) {
 	t, err := e.makeParsable(e.Text)
 	if err != nil {
