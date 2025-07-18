@@ -27,8 +27,9 @@ type NumericalEntry struct {
 	radixSep      rune
 	thouSep       rune
 
-	binder basicBinder
-	mPr    *message.Printer
+	data     binding.Float
+	listener binding.DataListener
+	mPr      *message.Printer
 }
 
 // NewNumericalEntry returns an extended entry that only allows numerical input.
@@ -61,11 +62,10 @@ func (e *NumericalEntry) Append(text string) {
 // The current value will be displayed and any changes in the data will cause the widget
 // to update.
 func (e *NumericalEntry) Bind(data binding.Float) {
-	e.binder.SetCallback(e.updateFromData)
-	e.binder.Bind(data)
-	e.OnChanged = func(string) {
-		e.binder.CallWithData(e.writeData)
-	}
+	e.data = data
+	e.listener = binding.NewDataListener(e.updateFromData)
+	data.AddListener(e.listener)
+	e.OnChanged = e.writeData
 }
 
 func (e *NumericalEntry) FocusLost() {
@@ -76,7 +76,7 @@ func (e *NumericalEntry) FocusLost() {
 }
 
 // Value parses the text content of the entry as a float64.
-// It returns the parsed float and an error if parsing fails.
+// It returns the parsed float and an error if parsing fails.e
 func (e *NumericalEntry) Value() (float64, error) {
 	t, err := e.makeParsable(e.Text)
 	if err != nil {
@@ -181,7 +181,12 @@ func (e *NumericalEntry) Keyboard() mobile.KeyboardType {
 // Unbind disconnects the entry from the bound data.
 // This will remove the data updates and allow the entry to be used independently.
 func (e *NumericalEntry) Unbind() {
-	e.binder.Unbind()
+	if e.data == nil {
+		return
+	}
+	e.data.RemoveListener(e.listener)
+	e.data = nil
+	e.listener = nil
 	e.OnChanged = nil
 }
 
@@ -374,15 +379,14 @@ func (e *NumericalEntry) setupRunes(locale string) {
 
 // updateFromData updates the entry's text with the value from the data source.
 // It checks if the current value is different before updating to prevent unnecessary refreshes.
-func (e *NumericalEntry) updateFromData(data binding.DataItem) {
-	if data == nil {
+func (e *NumericalEntry) updateFromData() {
+	if e.listener == nil {
 		return
 	}
-	fltSource, ok := data.(binding.Float)
-	if !ok {
+	if e.data == nil {
 		return
 	}
-	val, err := fltSource.Get()
+	val, err := e.data.Get()
 	if err != nil {
 		fyne.LogError("Error getting current data value", err)
 		return
@@ -398,8 +402,8 @@ func (e *NumericalEntry) updateFromData(data binding.DataItem) {
 
 // writeData writes the entry's parsed float value to the specified data binding.
 // It validates the text, parses it as a float, and updates the binding if the value has changed.
-func (e *NumericalEntry) writeData(data binding.DataItem) {
-	if data == nil {
+func (e *NumericalEntry) writeData(_ string) {
+	if e.data == nil {
 		return
 	}
 	if err := e.Validate(); err != nil {
@@ -409,12 +413,7 @@ func (e *NumericalEntry) writeData(data binding.DataItem) {
 	if err != nil {
 		return
 	}
-	flt, ok := data.(binding.Float)
-	if !ok {
-		return
-	}
-
-	dVal, err := flt.Get()
+	dVal, err := e.data.Get()
 	if err != nil {
 		fyne.LogError("Error getting float value: ", err)
 		return
@@ -424,7 +423,7 @@ func (e *NumericalEntry) writeData(data binding.DataItem) {
 		return
 	}
 
-	if err := flt.Set(val); err != nil {
+	if err := e.data.Set(val); err != nil {
 		fyne.LogError("Error setting float value: ", err)
 	}
 }
