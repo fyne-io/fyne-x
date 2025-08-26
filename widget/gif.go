@@ -109,25 +109,25 @@ func (g *AnimatedGif) draw(dst draw.Image, frame image.Image, dispose byte, inde
 	switch dispose {
 	case gif.DisposalNone:
 		// Do not dispose old frame, draw new frame over old
-		draw.Draw(dst, bounds, frame, image.Point{}, draw.Over)
+		draw.Draw(dst, bounds, frame, bounds.Min, draw.Over)
 		// will be used in case of disposalPrevious
 		g.noDisposeIndex = index - 1
 	case gif.DisposalBackground:
 		// clear with background then render new frame Over it
 		// replacing entirely with new frame should achieve this?
-		draw.Draw(dst, bounds, frame, image.Point{}, draw.Src)
+		draw.Draw(dst, bounds, frame, bounds.Min, draw.Src)
 	case gif.DisposalPrevious:
 		// restore frame with previous image then render new over it
 		if g.noDisposeIndex >= 0 {
-			draw.Draw(dst, bounds, g.src.Image[g.noDisposeIndex], image.Point{}, draw.Src)
-			draw.Draw(dst, bounds, frame, image.Point{}, draw.Over)
+			draw.Draw(dst, bounds, g.src.Image[g.noDisposeIndex], bounds.Min, draw.Src)
+			draw.Draw(dst, bounds, frame, bounds.Min, draw.Over)
 		} else {
 			// there was no previous graphic, render background instead?
-			draw.Draw(dst, bounds, frame, image.Point{}, draw.Src)
+			draw.Draw(dst, bounds, frame, bounds.Min, draw.Src)
 		}
 	default:
 		// Disposal = Unspecified/Reserved, simply draw new frame over previous
-		draw.Draw(dst, bounds, frame, image.Point{}, draw.Over)
+		draw.Draw(dst, bounds, frame, bounds.Min, draw.Over)
 	}
 
 	g.dst.Refresh()
