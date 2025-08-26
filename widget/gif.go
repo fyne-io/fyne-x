@@ -12,6 +12,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/storage"
+	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
 
@@ -113,8 +114,9 @@ func (g *AnimatedGif) draw(dst draw.Image, frame image.Image, dispose byte, inde
 		// will be used in case of disposalPrevious
 		g.noDisposeIndex = index - 1
 	case gif.DisposalBackground:
-		// clear with background then render new frame Over it
-		// replacing entirely with new frame should achieve this?
+		// clear with background then render new frame Over it.
+		// We must blank out the previous in case there is transparent content on the next frame.
+		draw.Draw(dst, bounds, image.NewUniform(theme.ColorForWidget(theme.ColorNameBackground, g)), bounds.Min, draw.Src)
 		draw.Draw(dst, bounds, frame, bounds.Min, draw.Src)
 	case gif.DisposalPrevious:
 		// restore frame with previous image then render new over it
