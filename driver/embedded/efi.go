@@ -20,12 +20,12 @@ type efi struct {
 	queue chan embedded.Event
 }
 
-func NewUEFIDriver() Driver {
+func NewUEFIDriver() embedded.Driver {
 	return &efi{queue: make(chan embedded.Event)}
 }
 
-func (u *efi) Details() (func(image.Image), chan embedded.Event) {
-	return u.Render, u.queue
+func (u *efi) Queue() chan embedded.Event {
+	return u.queue
 }
 
 func (u *efi) Run() {

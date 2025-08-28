@@ -3,7 +3,6 @@
 package fynex
 
 import (
-	"image"
 	"time"
 
 	"fyne.io/fyne/v2"
@@ -16,12 +15,12 @@ type tinygo struct {
 	queue chan embedded.Event
 }
 
-func NewTinyGoDriver() Driver {
+func NewTinyGoDriver() embedded.Driver {
 	return &tinygo{queue: make(chan embedded.Event)}
 }
 
-func (t *tinygo) Details() (func(image.Image), chan embedded.Event) {
-	return t.Render, t.queue
+func (t *tinygo) Queue() chan embedded.Event {
+	return t.queue
 }
 
 func (t *tinygo) Run() {

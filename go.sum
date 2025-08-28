@@ -46,8 +46,8 @@ github.com/BurntSushi/toml v1.4.0 h1:kuoIxZQy2WRRk1pttg9asf+WVv6tWQuBNVmK8+nqPr0
 github.com/BurntSushi/toml v1.4.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/akavel/rsrc v0.10.2/go.mod h1:uLoCtb9J+EyAqh+26kdrTgmzRBFPGOolLWKpdxkKq+c=
-github.com/andydotxyz/fyne/v2 v2.2.0-rc1.0.20250827194016-0782a0dad087 h1:eH3t6/q7XMScaiS21wCPe/9zlB0VSRk6fjImRsBF7Pg=
-github.com/andydotxyz/fyne/v2 v2.2.0-rc1.0.20250827194016-0782a0dad087/go.mod h1:YZt7SksjvrSNJCwbWFV32WON3mE1Sr7L41D29qMZ/lU=
+github.com/andydotxyz/fyne/v2 v2.2.0-rc1.0.20250828133318-8c86f24fed07 h1:gvefNgQm4KsfE5PeOvnDenQ119DE3L/Ss6kt+Nmw/lQ=
+github.com/andydotxyz/fyne/v2 v2.2.0-rc1.0.20250828133318-8c86f24fed07/go.mod h1:YZt7SksjvrSNJCwbWFV32WON3mE1Sr7L41D29qMZ/lU=
 github.com/bgould/http v0.0.0-20190627042742-d268792bdee7/go.mod h1:BTqvVegvwifopl4KTEDth6Zezs9eR+lCWhvGKvkxJHE=
 github.com/census-instrumentation/opencensus-proto v0.2.1/go.mod h1:f6KPmirojxKA12rnyqOA5BBL4O983OfeGPqjHWSTneU=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
