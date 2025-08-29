@@ -1,3 +1,5 @@
+//go:build tamago || tinygo || noos
+
 package fynex
 
 import (
