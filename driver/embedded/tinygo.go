@@ -23,9 +23,9 @@ func (t *tinygo) Queue() chan embedded.Event {
 	return t.queue
 }
 
-func (t *tinygo) Run() {
+func (t *tinygo) Run(mainLoop func()) {
 	go runEvents(t.queue)
-	fyne.CurrentApp().Run()
+	mainLoop()
 }
 
 func runEvents(queue chan embedded.Event) {

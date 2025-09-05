@@ -28,8 +28,8 @@ func (u *efi) Queue() chan embedded.Event {
 	return u.queue
 }
 
-func (u *efi) Run() {
-	err := u.runLoop(fyne.CurrentApp(), u.queue)
+func (u *efi) Run(mainLoop func()) {
+	err := u.runLoop(mainLoop, u.queue)
 	if err != nil {
 		u.handleError(err)
 	} else {
@@ -68,16 +68,16 @@ func (u *efi) Render(img image.Image) {
 	_ = gop.Blt(u.buf, uefi.EfiBltBufferToVideo, 0, 0, 0, 0, uint64(width), uint64(height), 0)
 }
 
-func (u *efi) runLoop(a fyne.App, queue chan embedded.Event) error {
+func (u *efi) runLoop(mainLoop func(), queue chan embedded.Event) error {
 	// we have to Run on a goroutine because the UEFI.Console is used on main in other code...
 	wait := make(chan struct{})
 	go func() {
-		a.Run()
+		mainLoop()
 		wait <- struct{}{}
 	}()
 
 	defer func() {
-		a.Quit()
+		fyne.CurrentApp().Quit()
 		<-wait
 	}()
 
