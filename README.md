@@ -239,6 +239,33 @@ action := NewTwoStateToolBar(theme.MediaPlayIcon(),
 
 * [Demo App](cmd/twostatetoolbaraction_demo/main.go)
 
+### NumericalEntry
+
+A NumericalEntry is an Entry widget that accepts the inputting of numbers containing
+Arabic digits (0 through 9), as well as the minus sign, the radix separator (AKA decimal point,
+the separator
+character between the integer and fractional portions of the number), and the thousands separator
+that are valid for the system's current locale. For example, for the 'en-US' locale, the minus sign
+is the Unicode hyphen-minus (0x2d), the radix separator is the full stop (AKA period, 0x2e), and the
+thousands separator is the comma (0x2c). For the 'fr-FR' locale, the minus sign is hyphen-minus
+(0x2d), the radix separator is the comma, and the thousands separator is the non-breaking space
+(0xa0). For the 'et-EE' locale, the minus sign is the mathematical minus (0x2212), the radix
+separator is the comma (0x2c), and the thousands separator is the non-breaking space (0xa0).
+
+Here is an image of a NumericalEntry containing the number -12345.6789 for the "en-GB"
+locale:
+
+![](img/locnumentry.png)
+
+and here is an image showing an invalid value (there are two radix separators: '.'):
+
+![](img/invalidlocnumentry.png)
+
+Additional information about characters accepted as input to the NumericalEntry widget and how the contents are
+validated is provided in [README_numericalentry.md](README_numericalentry.md)
+
+[Demo](./cmd/numericalentry_demo/main.go)
+
 ## Dialogs
 
 ### About
