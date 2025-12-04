@@ -96,7 +96,7 @@ func (e *NumericalEntry) SetValue(value float64) {
 	if e.AllowFloat {
 		numStr = e.mPr.Sprintf("%f", value)
 	} else {
-		numStr = e.mPr.Sprintf("&d", int(value))
+		numStr = e.mPr.Sprintf("%d", int(value))
 	}
 	e.SetText(numStr)
 }
