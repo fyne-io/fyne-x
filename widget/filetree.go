@@ -112,6 +112,14 @@ func NewFileTree(root fyne.URI) *FileTree {
 	return tree
 }
 
+func (t *FileTree) Refresh() {
+	t.Tree.Refresh()
+
+	t.listCache = make(map[widget.TreeNodeID][]widget.TreeNodeID)
+	t.listableCache = make(map[widget.TreeNodeID]fyne.ListableURI)
+	t.uriCache = make(map[widget.TreeNodeID]fyne.URI)
+}
+
 // MapURI allows an app to return a specific URI for the given uid.
 // This can be helpful to make more custom trees based on file structure/
 func (t *FileTree) MapURI(uid string, target fyne.URI) {
