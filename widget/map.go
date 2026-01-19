@@ -24,9 +24,10 @@ const tileSize = 256
 type Map struct {
 	widget.BaseWidget
 
-	pixels     *image.NRGBA
-	w, h       int
-	zoom, x, y int
+	pixels           *image.NRGBA
+	w, h             int
+	zoom, x, y       int
+	offsetX, offsetY float32 // position offset for accurate positioning
 
 	cl *http.Client
 
@@ -172,6 +173,37 @@ func (m *Map) ZoomOut() {
 	m.Refresh()
 }
 
+// Dragged handles drag events to pan the map smoothly.
+func (m *Map) Dragged(ev *fyne.DragEvent) {
+	m.offsetX += ev.Dragged.DX
+	m.offsetY += ev.Dragged.DY
+
+	tile64 := float64(tileSize)
+	offX64 := float64(m.offsetX)
+	if math.Abs(offX64) > tile64 {
+		rem := math.Mod(offX64+tileSize, tileSize)
+		tileDiff := ((offX64 + tileSize) - rem) / tileSize
+
+		m.offsetX = float32(rem) - tileSize
+		m.x -= int(tileDiff)
+	}
+
+	offY64 := float64(m.offsetY)
+	if math.Abs(offY64) > tile64 {
+		rem := math.Mod(offY64+tileSize, tileSize)
+		tileDiff := ((offY64 + tileSize) - rem) / tileSize
+
+		m.offsetY = float32(rem) - tileSize
+		m.y -= int(tileDiff)
+	}
+
+	m.Refresh()
+}
+
+// DragEnd finalizes the map position after a drag operation.
+func (m *Map) DragEnd() {
+}
+
 // CreateRenderer returns the renderer for this widget.
 // A map renderer is simply the map Raster with user interface elements overlaid.
 func (m *Map) CreateRenderer() fyne.WidgetRenderer {
@@ -206,21 +238,15 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 }
 
 func (m *Map) draw(w, h int) image.Image {
-	scale := 1
-	tileSize := tileSize
-	// TODO use retina tiles once OSM supports it in their server (text scaling issues)...
+	scale := float32(1)
 	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
-		scale = int(c.Scale())
-		if scale < 1 {
-			scale = 1
-		}
-		tileSize = tileSize * scale
+		scale = c.Scale()
 	}
-
 	if m.w != w || m.h != h {
 		m.pixels = image.NewNRGBA(image.Rect(0, 0, w, h))
 	}
 
+	tileSize := m.tilePixelSize()
 	midTileX := (w - tileSize*2) / 2
 	midTileY := (h - tileSize*2) / 2
 	if m.zoom == 0 {
@@ -231,11 +257,11 @@ func (m *Map) draw(w, h int) image.Image {
 	count := 1 << m.zoom
 	mx := m.x + int(float32(count)/2-0.5)
 	my := m.y + int(float32(count)/2-0.5)
-	firstTileX := mx - int(math.Ceil(float64(midTileX)/float64(tileSize)))
-	firstTileY := my - int(math.Ceil(float64(midTileY)/float64(tileSize)))
+	firstTileX := mx - int(math.Ceil(float64(midTileX)/float64(tileSize))) - 1
+	firstTileY := my - int(math.Ceil(float64(midTileY)/float64(tileSize))) - 1
 
-	for x := firstTileX; (x-firstTileX)*tileSize <= w+tileSize; x++ {
-		for y := firstTileY; (y-firstTileY)*tileSize <= h+tileSize; y++ {
+	for x := firstTileX; (x-firstTileX)*tileSize <= w+tileSize*2; x++ {
+		for y := firstTileY; (y-firstTileY)*tileSize <= h+tileSize*2; y++ {
 			if x < 0 || y < 0 || x >= int(count) || y >= int(count) {
 				continue
 			}
@@ -246,8 +272,8 @@ func (m *Map) draw(w, h int) image.Image {
 				continue
 			}
 
-			pos := image.Pt(midTileX+(x-mx)*tileSize,
-				midTileY+(y-my)*tileSize)
+			pos := image.Pt(midTileX+(x-mx)*tileSize+int(m.offsetX*scale),
+				midTileY+(y-my)*tileSize+int(m.offsetY*scale))
 			scaled := src
 			if scale > 1 {
 				scaled = resize.Resize(uint(tileSize), uint(tileSize), src, resize.Lanczos2)
@@ -257,6 +283,19 @@ func (m *Map) draw(w, h int) image.Image {
 	}
 
 	return m.pixels
+}
+
+func (m *Map) tilePixelSize() int {
+	// TODO use retina tiles once OSM supports it in their server (text scaling issues)...
+	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
+		scale := int(c.Scale())
+		if scale < 1 {
+			scale = 1
+		}
+		return tileSize * scale
+	}
+
+	return tileSize
 }
 
 func (m *Map) zoomInStep() {
