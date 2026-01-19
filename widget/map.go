@@ -137,6 +137,28 @@ func (m *Map) PanWest() {
 	m.Refresh()
 }
 
+// PanToLatLon moves the center of the map to the requested latitude and longitude.
+func (m *Map) PanToLatLon(lat, lon float64) {
+	n := float64(int(1) << m.zoom)
+	// Convert longitude to tile X coordinate
+	xTile := (lon + 180.0) / 360.0 * n
+	// Convert latitude to tile Y coordinate
+	latRad := lat * math.Pi / 180.0
+	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
+
+	tileX := int(math.Floor(xTile))
+	tileY := int(math.Floor(yTile))
+	fracX := (xTile - float64(tileX)) * tileSize
+	fracY := (yTile - float64(tileY)) * tileSize
+
+	count := 1 << m.zoom
+	m.x = tileX - int(float32(count)/2-0.5)
+	m.y = tileY - int(float32(count)/2-0.5)
+	m.offsetX = tileSize - float32(fracX)
+	m.offsetY = tileSize - float32(fracY)
+	m.Refresh()
+}
+
 // Zoom sets the zoom level to a specific value, between 0 and 19.
 func (m *Map) Zoom(zoom int) {
 	if zoom < 0 || zoom > 19 {
