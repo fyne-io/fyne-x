@@ -37,6 +37,7 @@ const (
 // around.
 type BaseDiagramNode struct {
 	diagramElement
+	typedNode DiagramElement
 	// InnerSize stores size that the inner object should have, may not
 	// be respected if not large enough for the object.
 	InnerSize fyne.Size
@@ -60,13 +61,14 @@ func NewDiagramNode(diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string
 // InitializeBaseDiagramNode is used to initailize the BaseDiagramNode. It must be called by any extensions to the BaseDiagramNode
 func InitializeBaseDiagramNode(diagramNode DiagramNode, diagram *DiagramWidget, obj fyne.CanvasObject, nodeID string) {
 	bdn := diagramNode.getBaseDiagramNode()
+	bdn.typedNode = diagramNode
 	bdn.InnerSize = fyne.Size{Width: defaultWidth, Height: defaultHeight}
 	bdn.innerObject = obj
 	bdn.diagramElement.initialize(diagram, nodeID)
-	bdn.pads["default"] = NewRectanglePad(bdn)
+	bdn.SetConnectionPad(NewRectanglePad(), "default")
 	bdn.pads["default"].Hide()
 	for _, handleKey := range []string{"upperLeft", "upperMiddle", "upperRight", "leftMiddle", "rightMiddle", "lowerLeft", "lowerMiddle", "lowerRight"} {
-		newHandle := NewHandle(bdn)
+		newHandle := NewHandle(diagramNode)
 		bdn.handles[handleKey] = newHandle
 		newHandle.Hide()
 	}
@@ -139,7 +141,13 @@ func (bdn *BaseDiagramNode) GetEdgePad() ConnectionPad {
 	return bdn.pads["default"]
 }
 
-func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent) {
+// GetTypedElement returns the instantiated type of the node
+func (bdn *BaseDiagramNode) GetTypedElement() DiagramElement {
+	return bdn.typedNode
+}
+
+// HandleDragged modifies the node size when the handle is dragged
+func (bdn *BaseDiagramNode) HandleDragged(handle *Handle, event *fyne.DragEvent) {
 	// determine which handle it is
 	currentInnerSize := bdn.effectiveInnerSize()
 	handleKey := bdn.findKeyForHandle(handle)
@@ -192,8 +200,8 @@ func (bdn *BaseDiagramNode) handleDragged(handle *Handle, event *fyne.DragEvent)
 	bdn.Refresh()
 }
 
-func (bdn *BaseDiagramNode) handleDragEnd(handle *Handle) {
-
+// HandleDragEnd determines node behavior when the handle drag ends. By default, it does nothing.
+func (bdn *BaseDiagramNode) HandleDragEnd(handle *Handle) {
 }
 
 func (bdn *BaseDiagramNode) innerPos() fyne.Position {
@@ -243,6 +251,15 @@ func (bdn *BaseDiagramNode) R2Position() r2.Vec2 {
 	return r2.V2(float64(bdn.Position().X), float64(bdn.Position().Y))
 }
 
+// SetConnectionPad sets the connection pad for the indicated key.
+func (bdn *BaseDiagramNode) SetConnectionPad(pad ConnectionPad, key string) {
+	if pad != nil {
+		pad.SetLineWidth(bdn.GetProperties().PadStrokeWidth)
+		pad.setPadOwner(bdn)
+	}
+	bdn.pads[key] = pad
+}
+
 // SetInnerObject makes the skupplied canvas object the center of the node
 func (bdn *BaseDiagramNode) SetInnerObject(obj fyne.CanvasObject) {
 	bdn.innerObject = obj
@@ -288,7 +305,9 @@ func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
 	obj = append(obj, dnr.box)
 	obj = append(obj, dnr.node.innerObject)
 	for _, pad := range dnr.node.pads {
-		obj = append(obj, pad)
+		if pad != nil {
+			obj = append(obj, pad)
+		}
 	}
 	for _, handle := range dnr.node.handles {
 		obj = append(obj, handle)
@@ -299,9 +318,10 @@ func (dnr *diagramNodeRenderer) Objects() []fyne.CanvasObject {
 func (dnr *diagramNodeRenderer) Refresh() {
 	nodeSize := dnr.MinSize()
 	dnr.node.Resize(nodeSize)
-	dnr.node.pads["default"].Resize(nodeSize)
-	dnr.node.pads["default"].Move(fyne.NewPos(0, 0))
-	dnr.node.pads["default"].Refresh()
+	if dnr.node.pads["default"] != nil {
+		dnr.node.pads["default"].Resize(nodeSize)
+		dnr.node.pads["default"].Refresh()
+	}
 
 	if dnr.node.innerObject != nil {
 		dnr.node.innerObject.Move(dnr.node.innerPos())
@@ -342,7 +362,9 @@ func (dnr *diagramNodeRenderer) Refresh() {
 	dnr.box.Refresh()
 
 	for _, pad := range dnr.node.pads {
-		pad.Refresh()
+		if pad != nil {
+			pad.Refresh()
+		}
 	}
 	dnr.node.diagram.refreshDependentLinks(dnr.node)
 }
