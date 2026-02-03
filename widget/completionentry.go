@@ -97,6 +97,9 @@ func (c *CompletionEntry) ShowCompletion() {
 // calculate the max size to make the popup to cover everything below the entry
 func (c *CompletionEntry) maxSize() fyne.Size {
 	cnv := fyne.CurrentApp().Driver().CanvasForObject(c)
+	if cnv == nil {
+		return fyne.NewSize(0, 0)
+	}
 
 	if c.itemHeight == 0 {
 		// set item height to cache
