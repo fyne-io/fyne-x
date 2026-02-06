@@ -27,6 +27,32 @@ func TestMap_Pan(t *testing.T) {
 	assert.Equal(t, 0, m.y)
 }
 
+func TestMap_Drag(t *testing.T) {
+	m := NewMap()
+	m.Resize(fyne.NewSize(200, 200))
+	m.Zoom(3)
+	assert.Equal(t, 0, m.x)
+	assert.Equal(t, 0, m.y)
+
+	m.Dragged(&fyne.DragEvent{Dragged: fyne.Delta{
+		DX: 300,
+		DY: 72,
+	}})
+	assert.Equal(t, float32(-212), m.offsetX)
+	assert.Equal(t, -2, m.x)
+	assert.Equal(t, float32(72), m.offsetY)
+	assert.Equal(t, 0, m.y)
+
+	m.Dragged(&fyne.DragEvent{Dragged: fyne.Delta{
+		DX: -564,
+		DY: 0,
+	}})
+	assert.Equal(t, float32(-264), m.offsetX)
+	assert.Equal(t, 0, m.x)
+	assert.Equal(t, float32(72), m.offsetY)
+	assert.Equal(t, 0, m.y)
+}
+
 func TestMap_Zoom(t *testing.T) {
 	m := NewMap()
 	m.Resize(fyne.NewSize(200, 200))

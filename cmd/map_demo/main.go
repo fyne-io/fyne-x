@@ -15,7 +15,8 @@ func main() {
 		xwidget.WithZoomButtons(true),
 		xwidget.WithScrollButtons(true),
 	)
-	m.ZoomIn()
+	m.Zoom(9)
+	m.PanToLatLon(55.95, -3.2)
 	w.SetContent(m)
 
 	w.SetPadded(false)
