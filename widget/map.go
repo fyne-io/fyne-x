@@ -42,6 +42,20 @@ type Map struct {
 // MapOption configures the provided map with different features.
 type MapOption func(*Map)
 
+// AtLatLon configures the map to center on a given latitude, longitude on load.
+func AtLatLon(lat, lon float64) MapOption {
+	return func(m *Map) {
+		m.PanToLatLon(lat, lon)
+	}
+}
+
+// AtZoomLevel configures the map to use a given zoom level on load.
+func AtZoomLevel(zoom int) MapOption {
+	return func(m *Map) {
+		m.Zoom(zoom)
+	}
+}
+
 // WithOsmTiles configures the map to use osm tile source.
 func WithOsmTiles() MapOption {
 	return func(m *Map) {
