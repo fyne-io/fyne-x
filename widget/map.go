@@ -182,7 +182,7 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 
 func (m *Map) Resize(s fyne.Size) {
 	m.BaseWidget.Resize(s)
-	if m.pendingLat != 0 || m.pendingLat != 0 {
+	if m.pendingLat != 0 || m.pendingLon != 0 {
 		m.PanToLatLon(m.pendingLat, m.pendingLon)
 		m.pendingLat, m.pendingLon = 0, 0
 	}
