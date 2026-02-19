@@ -24,10 +24,11 @@ const tileSize = 256
 type Map struct {
 	widget.BaseWidget
 
-	pixels           *image.NRGBA
-	w, h             int
-	zoom, x, y       int
-	offsetX, offsetY float32 // position offset for accurate positioning
+	pixels                 *image.NRGBA
+	w, h                   int
+	zoom, x, y             int
+	offsetX, offsetY       float32 // position offset for accurate positioning
+	pendingLat, pendingLon float64 // if we tried to calculate scale etc before visible / sized
 
 	cl *http.Client
 
@@ -153,6 +154,12 @@ func (m *Map) PanWest() {
 
 // PanToLatLon moves the center of the map to the requested latitude and longitude.
 func (m *Map) PanToLatLon(lat, lon float64) {
+	if m.Size().IsZero() { // the calculations don't work when no size
+		m.pendingLat = lat
+		m.pendingLon = lon
+		return
+	}
+
 	n := float64(int(1) << m.zoom)
 	// Convert longitude to tile X coordinate
 	xTile := (lon + 180.0) / 360.0 * n
@@ -171,6 +178,14 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 	m.offsetX = tileSize - float32(fracX)
 	m.offsetY = tileSize - float32(fracY)
 	m.Refresh()
+}
+
+func (m *Map) Resize(s fyne.Size) {
+	m.BaseWidget.Resize(s)
+	if m.pendingLat != 0 || m.pendingLat != 0 {
+		m.PanToLatLon(m.pendingLat, m.pendingLon)
+		m.pendingLat, m.pendingLon = 0, 0
+	}
 }
 
 // Zoom sets the zoom level to a specific value, between 0 and 19.
