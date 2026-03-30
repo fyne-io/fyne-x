@@ -100,3 +100,13 @@ func TestNewMap_WithOptions(t *testing.T) {
 	assert.True(t, m.hideMoveButtons)
 	assert.True(t, m.hideZoomButtons)
 }
+
+func TestNewMap_GetPosFromLatLon(t *testing.T) {
+	w := test.NewApp().NewWindow("TestMap")
+	m := NewMap()
+	w.SetContent(m)
+
+	pos := m.getPosFromLatLon(51.509865, -0.118092, fyne.NewSize(356, 392))
+	assert.Equal(t, float32(176), pos.X)
+	assert.Equal(t, float32(181), pos.Y)
+}

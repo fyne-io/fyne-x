@@ -32,12 +32,13 @@ type Map struct {
 
 	cl *http.Client
 
-	tileSource       string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
-	hideAttribution  bool   // enable copyright attribution
-	attributionLabel string // label for attribution (example: "OpenStreetMap")
-	attributionURL   string // url for attribution (example: "https://openstreetmap.org")
-	hideZoomButtons  bool   // enable zoom buttons
-	hideMoveButtons  bool   // enable move map buttons
+	tileSource       string       // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
+	hideAttribution  bool         // enable copyright attribution
+	attributionLabel string       // label for attribution (example: "OpenStreetMap")
+	attributionURL   string       // url for attribution (example: "https://openstreetmap.org")
+	hideZoomButtons  bool         // enable zoom buttons
+	hideMoveButtons  bool         // enable move map buttons
+	markers          []*mapMarker // list of markers to show when in scope
 }
 
 // MapOption configures the provided map with different features.
@@ -104,6 +105,13 @@ func WithHTTPClient(client *http.Client) MapOption {
 	}
 }
 
+// WithMapMarkers configures the map to show a list of markers.
+func WithMapMarkers(objs []MapMarker) MapOption {
+	return func(m *Map) {
+		m.SetMarkers(objs)
+	}
+}
+
 // NewMap creates a new instance of the map widget.
 func NewMap() *Map {
 	m := &Map{cl: &http.Client{}}
@@ -152,6 +160,10 @@ func (m *Map) PanWest() {
 	m.Refresh()
 }
 
+func (m *Map) getPosFromLatLon(lat, lon float64, containerSize fyne.Size) fyne.Position {
+	return fyne.NewPos(176, 181)
+}
+
 // PanToLatLon moves the center of the map to the requested latitude and longitude.
 func (m *Map) PanToLatLon(lat, lon float64) {
 	if m.Size().IsZero() { // the calculations don't work when no size
@@ -178,6 +190,15 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 	m.offsetX = tileSize - float32(fracX)
 	m.offsetY = tileSize - float32(fracY)
 	m.Refresh()
+}
+
+// SetMarkers updates the list of markers to show on the map.
+func (m *Map) SetMarkers(objs []MapMarker) {
+	markers := make([]*mapMarker, len(objs))
+	for n, obj := range objs {
+		markers[n] = newMapMarker(obj)
+	}
+	m.markers = markers
 }
 
 func (m *Map) Resize(s fyne.Size) {
@@ -284,7 +305,16 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 
 	overlay := container.NewBorder(nil, copyright, move, zoom)
 
-	c := container.NewStack(canvas.NewRaster(m.draw), container.NewPadded(overlay))
+	c := container.NewStack(canvas.NewRaster(m.draw))
+	if m.markers != nil {
+		markers := container.New(&mapMarkerLayout{m.getPosFromLatLon})
+		for _, marker := range m.markers {
+			markers.Add(marker)
+		}
+		c.Add(markers)
+	}
+	c.Add(container.NewPadded(overlay))
+
 	return widget.NewSimpleRenderer(c)
 }
 
