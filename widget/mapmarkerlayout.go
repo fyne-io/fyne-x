@@ -8,7 +8,7 @@ type mapMarkerLayout struct {
 	getPosFromLatLon func(lat, lon float64) fyne.Position
 }
 
-func (d *mapMarkerLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
+func (l *mapMarkerLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
 	w, h := float32(0), float32(0)
 	for _, o := range objects {
 		childSize := o.MinSize()
