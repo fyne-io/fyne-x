@@ -103,10 +103,13 @@ func TestNewMap_WithOptions(t *testing.T) {
 
 func TestNewMap_GetPosFromLatLon(t *testing.T) {
 	w := test.NewApp().NewWindow("TestMap")
-	m := NewMap()
+	m := NewMapWithOptions(
+		AtLatLon(55.9486, -3.1999),
+		AtZoomLevel(9),
+	)
 	w.SetContent(m)
-
-	pos := m.getPosFromLatLon(51.509865, -0.118092)
-	assert.Equal(t, float32(176), pos.X)
-	assert.Equal(t, float32(181), pos.Y)
+	w.Resize(fyne.NewSize(520, 328))
+	pos := m.getPosFromLatLon(55.9486, -3.1999)
+	assert.InDelta(t, float32(256.0364), pos.X, 1.0)
+	assert.InDelta(t, float32(160.91034), pos.Y, 1.0)
 }
