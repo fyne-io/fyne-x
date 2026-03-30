@@ -5,7 +5,7 @@ import (
 )
 
 type mapMarkerLayout struct {
-	getPosFromLatLon func(lat, lon float64, size fyne.Size) fyne.Position
+	getPosFromLatLon func(lat, lon float64) fyne.Position
 }
 
 func (d *mapMarkerLayout) MinSize(objects []fyne.CanvasObject) fyne.Size {
@@ -30,7 +30,7 @@ func (l *mapMarkerLayout) Layout(objects []fyne.CanvasObject, containerSize fyne
 		}
 
 		// lat/lon to position within parent container
-		pos := l.getPosFromLatLon(marker.obj.Lat(), marker.obj.Lon(), containerSize)
+		pos := l.getPosFromLatLon(marker.obj.Lat(), marker.obj.Lon())
 
 		size := o.MinSize()
 
