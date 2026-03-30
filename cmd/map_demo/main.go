@@ -16,6 +16,9 @@ func main() {
 		xwidget.WithScrollButtons(true),
 		xwidget.AtZoomLevel(9),
 		xwidget.AtLatLon(55.95, -3.2),
+		xwidget.WithMapMarkers([]xwidget.MapMarker{
+			xwidget.NewMapMarker(55.9486, -3.1999, "Edinburgh Castle"),
+		}),
 	)
 	w.SetContent(m)
 
