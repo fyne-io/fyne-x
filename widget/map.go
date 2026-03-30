@@ -161,6 +161,7 @@ func (m *Map) PanWest() {
 }
 
 func (m *Map) getPosFromLatLon(lat, lon float64, containerSize fyne.Size) fyne.Position {
+	// XXX: do the math
 	return fyne.NewPos(176, 181)
 }
 
