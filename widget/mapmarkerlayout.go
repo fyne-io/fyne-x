@@ -36,9 +36,10 @@ func (l *mapMarkerLayout) Layout(objects []fyne.CanvasObject, containerSize fyne
 
 		o.Resize(size)
 
-		// adjust position to place marker point on lat/lon position
-		pos.X -= size.Height / 2
-		pos.Y -= size.Width * .9
+		off := marker.pinOffset()
+
+		pos.X -= off.X
+		pos.Y -= off.Y
 
 		// then position so that marker handle points at exact location
 		o.Move(pos)

@@ -5,6 +5,8 @@ import (
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/theme"
 	"fyne.io/fyne/v2/widget"
 )
@@ -39,8 +41,10 @@ func (m *genericMapMarker) Title() string {
 
 type mapMarker struct {
 	widget.BaseWidget
-	obj MapMarker
-	img *canvas.Image
+	container *fyne.Container
+	title     *canvas.Text
+	obj       MapMarker
+	item      *mapMarkerItem
 }
 
 //go:embed mapmarker.svg
@@ -60,20 +64,44 @@ func newMapMarker(obj MapMarker) *mapMarker {
 }
 
 func (m *mapMarker) setup() {
-	m.img = canvas.NewImageFromResource(theme.NewColoredResource(resourceMapmarkerSvg, theme.ColorNamePrimary))
-	m.img.SetMinSize(fyne.NewSize(50, 50))
+	if m.container != nil {
+		return
+	}
+
+	m.title = canvas.NewText(m.obj.Title(), theme.ColorForWidget(theme.ColorNamePrimary, m))
+	m.title.Hide()
+
+	m.item = newMapMarkerItem(func() {
+		if m.title.Hidden {
+			m.title.Show()
+		} else {
+			m.title.Hide()
+		}
+		m.container.Refresh()
+	})
+
+	m.container = container.NewVBox(
+		m.title,
+		container.NewHBox(layout.NewSpacer(), m.item, layout.NewSpacer()),
+	)
+}
+
+func (m *mapMarker) pinOffset() fyne.Position {
+	m.setup()
+	imgSize := m.item.Size()
+	if m.title.Hidden {
+		return fyne.NewPos(imgSize.Width/2, imgSize.Height+(imgSize.Height*.05))
+	}
+	conSize := m.container.Size()
+	return fyne.NewPos(conSize.Width/2, conSize.Height+(imgSize.Height*.05))
 }
 
 func (m *mapMarker) MinSize() fyne.Size {
-	if m.img == nil {
-		m.setup()
-	}
-	return m.img.MinSize()
+	m.setup()
+	return m.container.MinSize()
 }
 
 func (m *mapMarker) CreateRenderer() fyne.WidgetRenderer {
-	if m.img == nil {
-		m.setup()
-	}
-	return widget.NewSimpleRenderer(m.img)
+	m.setup()
+	return widget.NewSimpleRenderer(m.container)
 }
