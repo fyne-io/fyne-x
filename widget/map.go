@@ -161,8 +161,24 @@ func (m *Map) PanWest() {
 }
 
 func (m *Map) getPosFromLatLon(lat, lon float64) fyne.Position {
-	// XXX: do the math
-	return fyne.NewPos(176, 181)
+	n := float64(int(1) << m.zoom)
+	xTile := (lon + 180.0) / 360.0 * n
+	latRad := lat * math.Pi / 180.0
+	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
+
+	count := 1 << m.zoom
+	mx := m.x + int(float32(count)/2-0.5)
+	my := m.y + int(float32(count)/2-0.5)
+
+	size := m.Size()
+	mid := float32(-tileSize * 2)
+	if m.zoom == 0 {
+		mid = -tileSize
+	}
+	dpX := (size.Width+mid)/2 + float32(xTile-float64(mx))*tileSize + m.offsetX
+	dpY := (size.Height+mid)/2 + float32(yTile-float64(my))*tileSize + m.offsetY
+
+	return fyne.NewPos(dpX, dpY)
 }
 
 // PanToLatLon moves the center of the map to the requested latitude and longitude.
@@ -174,22 +190,20 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 	}
 
 	n := float64(int(1) << m.zoom)
-	// Convert longitude to tile X coordinate
 	xTile := (lon + 180.0) / 360.0 * n
-	// Convert latitude to tile Y coordinate
 	latRad := lat * math.Pi / 180.0
 	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
 
-	tileX := int(math.Floor(xTile))
-	tileY := int(math.Floor(yTile))
-	fracX := (xTile - float64(tileX)) * tileSize
-	fracY := (yTile - float64(tileY)) * tileSize
-
 	count := 1 << m.zoom
-	m.x = tileX - int(float32(count)/2-0.5)
-	m.y = tileY - int(float32(count)/2-0.5)
-	m.offsetX = tileSize - float32(fracX)
-	m.offsetY = tileSize - float32(fracY)
+	m.x = int(math.Floor(xTile)) - int(float32(count)/2-0.5)
+	m.y = int(math.Floor(yTile)) - int(float32(count)/2-0.5)
+	m.offsetX = 0
+	m.offsetY = 0
+
+	pos := m.getPosFromLatLon(lat, lon)
+	size := m.Size()
+	m.offsetX = size.Width/2 - pos.X
+	m.offsetY = size.Height/2 - pos.Y
 	m.Refresh()
 }
 
