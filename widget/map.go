@@ -160,6 +160,7 @@ func (m *Map) PanWest() {
 	m.Refresh()
 }
 
+// https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
 func (m *Map) getPosFromLatLon(lat, lon float64) fyne.Position {
 	n := float64(int(1) << m.zoom)
 	xTile := (lon + 180.0) / 360.0 * n
