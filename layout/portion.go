@@ -108,8 +108,8 @@ func (p *VPortion) Layout(objects []fyne.CanvasObject, size fyne.Size) {
 
 	for i, child := range objects {
 		height := float32(p.Portions[i]/sum) * height
-		child.Resize(fyne.NewSize(ypos, height))
-		child.Move(fyne.NewPos(ypos, 0))
+		child.Resize(fyne.NewSize(size.Width, height))
+		child.Move(fyne.NewPos(0, ypos))
 
 		ypos += height + padding
 	}
