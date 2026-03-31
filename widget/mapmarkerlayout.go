@@ -29,19 +29,13 @@ func (l *mapMarkerLayout) Layout(objects []fyne.CanvasObject, containerSize fyne
 			continue
 		}
 
-		// lat/lon to position within parent container
-		pos := l.getPosFromLatLon(marker.obj.Lat(), marker.obj.Lon())
-
 		size := o.MinSize()
-
 		o.Resize(size)
 
+		pos := l.getPosFromLatLon(marker.obj.Lat(), marker.obj.Lon())
 		off := marker.pinOffset()
-
 		pos.X -= off.X
 		pos.Y -= off.Y
-
-		// then position so that marker handle points at exact location
 		o.Move(pos)
 	}
 }
