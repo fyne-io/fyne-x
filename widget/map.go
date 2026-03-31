@@ -167,9 +167,8 @@ func (m *Map) getPosFromLatLon(lat, lon float64) fyne.Position {
 	latRad := lat * math.Pi / 180.0
 	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
 
-	count := 1 << m.zoom
-	mx := m.x + int(float32(count)/2-0.5)
-	my := m.y + int(float32(count)/2-0.5)
+	mx := m.x + int(float32(n)/2-0.5)
+	my := m.y + int(float32(n)/2-0.5)
 
 	size := m.Size()
 	mid := float32(-tileSize * 2)
@@ -195,9 +194,8 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 	latRad := lat * math.Pi / 180.0
 	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
 
-	count := 1 << m.zoom
-	m.x = int(math.Floor(xTile)) - int(float32(count)/2-0.5)
-	m.y = int(math.Floor(yTile)) - int(float32(count)/2-0.5)
+	m.x = int(math.Floor(xTile)) - int(float32(n)/2-0.5)
+	m.y = int(math.Floor(yTile)) - int(float32(n)/2-0.5)
 	m.offsetX = 0
 	m.offsetY = 0
 
