@@ -109,7 +109,13 @@ func TestNewMap_GetPosFromLatLon(t *testing.T) {
 	)
 	w.SetContent(m)
 	w.Resize(fyne.NewSize(520, 328))
+
 	pos := m.getPosFromLatLon(55.9486, -3.1999)
 	assert.InDelta(t, float32(256.0364), pos.X, 1.0)
 	assert.InDelta(t, float32(160.91034), pos.Y, 1.0)
+
+	m.Zoom(10)
+	pos = m.getPosFromLatLon(55.9486, -3.1999)
+	assert.InDelta(t, float32(185), pos.X, 10.0)
+	assert.InDelta(t, float32(100), pos.Y, 10.0)
 }
