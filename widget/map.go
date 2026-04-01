@@ -54,7 +54,7 @@ func AtLatLon(lat, lon float64) MapOption {
 // AtZoomLevel configures the map to use a given zoom level on load.
 func AtZoomLevel(zoom int) MapOption {
 	return func(m *Map) {
-		m.Zoom(zoom)
+		m.zoom = zoom
 	}
 }
 
@@ -264,6 +264,11 @@ func (m *Map) Dragged(ev *fyne.DragEvent) {
 	m.offsetX += ev.Dragged.DX
 	m.offsetY += ev.Dragged.DY
 
+	m.wrapOffset()
+	m.Refresh()
+}
+
+func (m *Map) wrapOffset() {
 	tile64 := float64(tileSize)
 	offX64 := float64(m.offsetX)
 	if math.Abs(offX64) > tile64 {
@@ -282,8 +287,6 @@ func (m *Map) Dragged(ev *fyne.DragEvent) {
 		m.offsetY = float32(rem) - tileSize
 		m.y -= int(tileDiff)
 	}
-
-	m.Refresh()
 }
 
 // DragEnd finalizes the map position after a drag operation.
@@ -332,14 +335,14 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 
 func (m *Map) draw(w, h int) image.Image {
 	scale := float32(1)
-	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
-		scale = c.Scale()
+	if s := m.Size(); s.Width > 0 {
+		scale = float32(w) / s.Width
 	}
 	if m.w != w || m.h != h {
 		m.pixels = image.NewNRGBA(image.Rect(0, 0, w, h))
 	}
 
-	tileSize := m.tilePixelSize()
+	tileSize := int(tileSize * math.Round(float64(scale)))
 	midTileX := (w - tileSize*2) / 2
 	midTileY := (h - tileSize*2) / 2
 	if m.zoom == 0 {
@@ -376,19 +379,6 @@ func (m *Map) draw(w, h int) image.Image {
 	}
 
 	return m.pixels
-}
-
-func (m *Map) tilePixelSize() int {
-	// TODO use retina tiles once OSM supports it in their server (text scaling issues)...
-	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
-		scale := int(c.Scale())
-		if scale < 1 {
-			scale = 1
-		}
-		return tileSize * scale
-	}
-
-	return tileSize
 }
 
 func (m *Map) zoomInStep() {
