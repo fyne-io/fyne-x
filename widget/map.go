@@ -206,6 +206,27 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 	m.Refresh()
 }
 
+// https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
+func (m *Map) getCenterLatLon() (float64, float64) {
+	n := float64(int(1) << m.zoom)
+	mx := float64(m.x + int(float32(n)/2-0.5))
+	my := float64(m.y + int(float32(n)/2-0.5))
+
+	mid := float64(-tileSize * 2)
+	if m.zoom == 0 {
+		mid = float64(-tileSize)
+	}
+
+	xTile := mx + (-mid/2-float64(m.offsetX))/tileSize
+	yTile := my + (-mid/2-float64(m.offsetY))/tileSize
+
+	lon := xTile/n*360.0 - 180.0
+	latRad := math.Atan(math.Sinh(math.Pi * (1.0 - 2.0*yTile/n)))
+	lat := latRad * 180.0 / math.Pi
+
+	return lat, lon
+}
+
 // SetMarkers updates the list of markers to show on the map.
 func (m *Map) SetMarkers(markers []MapMarker) {
 	objs := make([]fyne.CanvasObject, len(markers))
@@ -382,13 +403,13 @@ func (m *Map) draw(w, h int) image.Image {
 }
 
 func (m *Map) zoomInStep() {
+	lat, lon := m.getCenterLatLon()
 	m.zoom++
-	m.x *= 2
-	m.y *= 2
+	m.PanToLatLon(lat, lon)
 }
 
 func (m *Map) zoomOutStep() {
+	lat, lon := m.getCenterLatLon()
 	m.zoom--
-	m.x /= 2
-	m.y /= 2
+	m.PanToLatLon(lat, lon)
 }
