@@ -234,6 +234,7 @@ func (m *Map) SetMarkers(markers []MapMarker) {
 		objs[n] = newMapMarker(marker)
 	}
 	m.markers.Objects = objs
+	m.markers.Refresh()
 }
 
 func (m *Map) Resize(s fyne.Size) {
