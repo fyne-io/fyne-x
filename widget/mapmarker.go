@@ -23,7 +23,7 @@ type genericMapMarker struct {
 	title string
 }
 
-func NewMapMarker(lat, lon float64, title string) *genericMapMarker {
+func NewMapMarker(lat, lon float64, title string) MapMarker {
 	return &genericMapMarker{lat, lon, title}
 }
 
