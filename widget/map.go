@@ -32,12 +32,13 @@ type Map struct {
 
 	cl *http.Client
 
-	tileSource       string // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
-	hideAttribution  bool   // enable copyright attribution
-	attributionLabel string // label for attribution (example: "OpenStreetMap")
-	attributionURL   string // url for attribution (example: "https://openstreetmap.org")
-	hideZoomButtons  bool   // enable zoom buttons
-	hideMoveButtons  bool   // enable move map buttons
+	tileSource       string         // url to download xyz tiles (example: "https://tile.openstreetmap.org/%d/%d/%d.png")
+	hideAttribution  bool           // enable copyright attribution
+	attributionLabel string         // label for attribution (example: "OpenStreetMap")
+	attributionURL   string         // url for attribution (example: "https://openstreetmap.org")
+	hideZoomButtons  bool           // enable zoom buttons
+	hideMoveButtons  bool           // enable move map buttons
+	markers          fyne.Container // list of markers to show when in scope
 }
 
 // MapOption configures the provided map with different features.
@@ -53,7 +54,7 @@ func AtLatLon(lat, lon float64) MapOption {
 // AtZoomLevel configures the map to use a given zoom level on load.
 func AtZoomLevel(zoom int) MapOption {
 	return func(m *Map) {
-		m.Zoom(zoom)
+		m.zoom = zoom
 	}
 }
 
@@ -101,6 +102,13 @@ func WithScrollButtons(enable bool) MapOption {
 func WithHTTPClient(client *http.Client) MapOption {
 	return func(m *Map) {
 		m.cl = client
+	}
+}
+
+// WithMapMarkers configures the map to show a list of markers.
+func WithMapMarkers(objs []MapMarker) MapOption {
+	return func(m *Map) {
+		m.SetMarkers(objs)
 	}
 }
 
@@ -152,6 +160,27 @@ func (m *Map) PanWest() {
 	m.Refresh()
 }
 
+// https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
+func (m *Map) getPosFromLatLon(lat, lon float64) fyne.Position {
+	n := float64(int(1) << m.zoom)
+	xTile := (lon + 180.0) / 360.0 * n
+	latRad := lat * math.Pi / 180.0
+	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
+
+	mx := m.x + int(float32(n)/2-0.5)
+	my := m.y + int(float32(n)/2-0.5)
+
+	size := m.Size()
+	mid := float32(-tileSize * 2)
+	if m.zoom == 0 {
+		mid = -tileSize
+	}
+	dpX := (size.Width+mid)/2 + float32(xTile-float64(mx))*tileSize + m.offsetX
+	dpY := (size.Height+mid)/2 + float32(yTile-float64(my))*tileSize + m.offsetY
+
+	return fyne.NewPos(dpX, dpY)
+}
+
 // PanToLatLon moves the center of the map to the requested latitude and longitude.
 func (m *Map) PanToLatLon(lat, lon float64) {
 	if m.Size().IsZero() { // the calculations don't work when no size
@@ -161,23 +190,51 @@ func (m *Map) PanToLatLon(lat, lon float64) {
 	}
 
 	n := float64(int(1) << m.zoom)
-	// Convert longitude to tile X coordinate
 	xTile := (lon + 180.0) / 360.0 * n
-	// Convert latitude to tile Y coordinate
 	latRad := lat * math.Pi / 180.0
 	yTile := (1.0 - math.Log(math.Tan(latRad)+1.0/math.Cos(latRad))/math.Pi) / 2.0 * n
 
-	tileX := int(math.Floor(xTile))
-	tileY := int(math.Floor(yTile))
-	fracX := (xTile - float64(tileX)) * tileSize
-	fracY := (yTile - float64(tileY)) * tileSize
+	m.x = int(math.Floor(xTile)) - int(float32(n)/2-0.5)
+	m.y = int(math.Floor(yTile)) - int(float32(n)/2-0.5)
+	m.offsetX = 0
+	m.offsetY = 0
 
-	count := 1 << m.zoom
-	m.x = tileX - int(float32(count)/2-0.5)
-	m.y = tileY - int(float32(count)/2-0.5)
-	m.offsetX = tileSize - float32(fracX)
-	m.offsetY = tileSize - float32(fracY)
+	pos := m.getPosFromLatLon(lat, lon)
+	size := m.Size()
+	m.offsetX = size.Width/2 - pos.X
+	m.offsetY = size.Height/2 - pos.Y
 	m.Refresh()
+}
+
+// https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames#Mathematics
+func (m *Map) getCenterLatLon() (float64, float64) {
+	n := float64(int(1) << m.zoom)
+	mx := float64(m.x + int(float32(n)/2-0.5))
+	my := float64(m.y + int(float32(n)/2-0.5))
+
+	mid := float64(-tileSize * 2)
+	if m.zoom == 0 {
+		mid = float64(-tileSize)
+	}
+
+	xTile := mx + (-mid/2-float64(m.offsetX))/tileSize
+	yTile := my + (-mid/2-float64(m.offsetY))/tileSize
+
+	lon := xTile/n*360.0 - 180.0
+	latRad := math.Atan(math.Sinh(math.Pi * (1.0 - 2.0*yTile/n)))
+	lat := latRad * 180.0 / math.Pi
+
+	return lat, lon
+}
+
+// SetMarkers updates the list of markers to show on the map.
+func (m *Map) SetMarkers(markers []MapMarker) {
+	objs := make([]fyne.CanvasObject, len(markers))
+	for n, marker := range markers {
+		objs[n] = newMapMarker(marker)
+	}
+	m.markers.Objects = objs
+	m.markers.Refresh()
 }
 
 func (m *Map) Resize(s fyne.Size) {
@@ -229,6 +286,11 @@ func (m *Map) Dragged(ev *fyne.DragEvent) {
 	m.offsetX += ev.Dragged.DX
 	m.offsetY += ev.Dragged.DY
 
+	m.wrapOffset()
+	m.Refresh()
+}
+
+func (m *Map) wrapOffset() {
 	tile64 := float64(tileSize)
 	offX64 := float64(m.offsetX)
 	if math.Abs(offX64) > tile64 {
@@ -247,8 +309,6 @@ func (m *Map) Dragged(ev *fyne.DragEvent) {
 		m.offsetY = float32(rem) - tileSize
 		m.y -= int(tileDiff)
 	}
-
-	m.Refresh()
 }
 
 // DragEnd finalizes the map position after a drag operation.
@@ -284,20 +344,27 @@ func (m *Map) CreateRenderer() fyne.WidgetRenderer {
 
 	overlay := container.NewBorder(nil, copyright, move, zoom)
 
-	c := container.NewStack(canvas.NewRaster(m.draw), container.NewPadded(overlay))
+	m.markers.Layout = &mapMarkerLayout{m.getPosFromLatLon}
+
+	c := container.NewStack(
+		canvas.NewRaster(m.draw),
+		&m.markers,
+		container.NewPadded(overlay),
+	)
+
 	return widget.NewSimpleRenderer(c)
 }
 
 func (m *Map) draw(w, h int) image.Image {
 	scale := float32(1)
-	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
-		scale = c.Scale()
+	if s := m.Size(); s.Width > 0 {
+		scale = float32(w) / s.Width
 	}
 	if m.w != w || m.h != h {
 		m.pixels = image.NewNRGBA(image.Rect(0, 0, w, h))
 	}
 
-	tileSize := m.tilePixelSize()
+	tileSize := int(tileSize * math.Round(float64(scale)))
 	midTileX := (w - tileSize*2) / 2
 	midTileY := (h - tileSize*2) / 2
 	if m.zoom == 0 {
@@ -336,27 +403,14 @@ func (m *Map) draw(w, h int) image.Image {
 	return m.pixels
 }
 
-func (m *Map) tilePixelSize() int {
-	// TODO use retina tiles once OSM supports it in their server (text scaling issues)...
-	if c := fyne.CurrentApp().Driver().CanvasForObject(m); c != nil {
-		scale := int(c.Scale())
-		if scale < 1 {
-			scale = 1
-		}
-		return tileSize * scale
-	}
-
-	return tileSize
-}
-
 func (m *Map) zoomInStep() {
+	lat, lon := m.getCenterLatLon()
 	m.zoom++
-	m.x *= 2
-	m.y *= 2
+	m.PanToLatLon(lat, lon)
 }
 
 func (m *Map) zoomOutStep() {
+	lat, lon := m.getCenterLatLon()
 	m.zoom--
-	m.x /= 2
-	m.y /= 2
+	m.PanToLatLon(lat, lon)
 }
