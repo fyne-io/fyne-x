@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/test"
 	"fyne.io/fyne/v2/widget"
 	"github.com/stretchr/testify/assert"
@@ -227,4 +228,35 @@ func TestCompletionEntry_DoubleSubmissionIssue(t *testing.T) {
 	assert.False(t, entry.popupMenu.Visible())
 	win.Canvas().Focused().TypedKey(&fyne.KeyEvent{Name: fyne.KeyReturn}) // OnSubmitted should be called
 	assert.True(t, submitted)
+}
+
+// focusCompletionEntry overrides FocusGained to show the completion menu.
+type focusCompletionEntry struct {
+	CompletionEntry
+}
+
+func (f *focusCompletionEntry) FocusGained() {
+	f.CompletionEntry.FocusGained()
+	f.ShowCompletion()
+}
+
+// When CompletionEntry is embedded, the popup must resolve its position against
+// the extending widget so it appears below the entry rather than at the origin.
+func TestCompletionEntry_SubclassFocusGained(t *testing.T) {
+	entry := &focusCompletionEntry{}
+	entry.Options = entryData
+	entry.ExtendBaseWidget(entry)
+
+	// Nest below a label so the entry's absolute position is non-zero.
+	win := test.NewWindow(container.NewVBox(widget.NewLabel("top"), entry))
+	win.Resize(fyne.NewSize(500, 300))
+	defer win.Close()
+
+	win.Canvas().Focus(entry)
+	assert.NotNil(t, entry.popupMenu)
+	assert.True(t, entry.popupMenu.Visible())
+
+	entryPos := fyne.CurrentApp().Driver().AbsolutePositionForObject(entry)
+	assert.Greater(t, entryPos.Y, float32(0))
+	assert.Equal(t, entryPos.Add(fyne.NewPos(0, entry.Size().Height)), entry.popUpPos())
 }
