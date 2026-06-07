@@ -188,10 +188,12 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 				fn(i, o)
 				return
 			}
-			o.(*widget.Label).SetText(n.items[i])
+			if i < len(n.items) {
+				o.(*widget.Label).SetText(n.items[i])
+			}
 		},
 		OnSelected: func(id widget.ListItemID) {
-			if !n.navigating && id > -1 {
+			if !n.navigating && id > -1 && id < len(n.items) {
 				setTextFromMenu(n.items[id])
 			}
 			n.navigating = false
