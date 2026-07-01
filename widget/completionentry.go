@@ -184,13 +184,14 @@ func newNavigableList(items []string, entry *widget.Entry, setTextFromMenu func(
 			return widget.NewLabel("")
 		},
 		UpdateItem: func(i widget.ListItemID, o fyne.CanvasObject) {
+			if i >= len(n.items) {
+				return
+			}
 			if fn := n.customUpdate; fn != nil {
 				fn(i, o)
 				return
 			}
-			if i < len(n.items) {
-				o.(*widget.Label).SetText(n.items[i])
-			}
+			o.(*widget.Label).SetText(n.items[i])
 		},
 		OnSelected: func(id widget.ListItemID) {
 			if !n.navigating && id > -1 && id < len(n.items) {
