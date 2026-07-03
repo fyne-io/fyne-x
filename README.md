@@ -141,6 +141,25 @@ tree.Sorter = func(u1, u2 fyne.URI) bool {
   <img src="img/widget-filetree.png" width="1024" alt="FileTree Widget" style="max-width: 100%" />
 </p>
 
+### Gauge
+
+A widget that displays a value within a range as a needle on a circular dial, with tick marks, tick labels and a numeric readout.
+
+Check out the [demo](./cmd/gauge_demo/main.go) for an example of usage.
+
+```go
+gauge := widget.NewGauge()
+gauge.Min = 0
+gauge.Max = 280
+gauge.Steps = 28
+gauge.Title = "km/h"
+gauge.SetValue(120)
+```
+
+<p align="center" markdown="1" style="max-width: 100%">
+  <img src="img/gauge.png" alt="Gauge Widget" style="max-width: 100%" />
+</p>
+
 ### CompletionEntry
 
 An extension of widget.Entry for displaying a popup menu for completion. The "up" and "down" keys on the keyboard are used to navigate through the menu, the "Enter" key is used to confirm the selection. The options can also be selected with the mouse. The "Escape" key closes the selection list.
