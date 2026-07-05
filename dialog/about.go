@@ -27,6 +27,7 @@ func NewAbout(content string, links []*widget.Hyperlink, a fyne.App, w fyne.Wind
 // You should call Show on the returned window to display it.
 func NewAboutWindow(content string, links []*widget.Hyperlink, a fyne.App) fyne.Window {
 	w := a.NewWindow("About")
+	w.SetPadded(false)
 	w.SetContent(aboutContent(content, links, a))
 	w.Resize(fyne.NewSize(360, 300))
 
