@@ -34,5 +34,13 @@ jobs:
         xorg-dev
       if: ${{ runner.os == 'Linux' }}
 
+    # Recent macOS (Tahoe/26) requires an LC_UUID load command, which Go's
+    # internal linker does not emit on older Go versions. Force external
+    # linking so the test binaries get an LC_UUID and don't abort trap with
+    # "missing LC_UUID load command". See golang/go#69987 and #78012.
+    - name: Set macOS linker flag (LC_UUID workaround)
+      run: echo "TESTLDFLAGS=-ldflags=-linkmode=external" >> $GITHUB_ENV
+      if: ${{ runner.os == 'macOS' && matrix.go-version == '' }}
+
     - name: Tests
-      run: go test -tags ci ./...
+      run: go test -tags ci ${{ env.TESTLDFLAGS }} ./...
