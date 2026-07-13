@@ -41,15 +41,15 @@ func (h *Handle) CreateRenderer() fyne.WidgetRenderer {
 	return hr
 }
 
-// Dragged respondss to drag events, passing them on to the owning DiagramElement. It is the
+// Dragged responds to drag events, passing them on to the owning DiagramElement. It is the
 // DiagramElement that determines what to do as a result of the drag.
 func (h *Handle) Dragged(event *fyne.DragEvent) {
-	h.de.handleDragged(h, event)
+	h.de.HandleDragged(h, event)
 }
 
 // DragEnd passes the event on to the owning DiagramElement
 func (h *Handle) DragEnd() {
-	h.de.handleDragEnd(h)
+	h.de.HandleDragEnd(h)
 }
 
 func (h *Handle) getStrokeColor() color.Color {
