@@ -19,12 +19,12 @@ func TestGauge_Defaults(t *testing.T) {
 
 	assert.Equal(t, 0.0, g.Min)
 	assert.Equal(t, 100.0, g.Max)
-	assert.Len(t, r.ticks, 11)
+	assert.Len(t, r.graduations, 11)
 	assert.Equal(t, "0", r.readout.Text)
 	assert.Equal(t, "0", r.labels[0].Text)
 	assert.Equal(t, "20", r.labels[2].Text)
 	assert.Equal(t, "100", r.labels[10].Text)
-	assert.Nil(t, r.labels[1], "minor ticks have no label")
+	assert.Nil(t, r.labels[1], "minor graduations have no label")
 	assert.True(t, g.MinSize().Width >= 150)
 }
 
@@ -35,7 +35,7 @@ func TestGauge_ZeroValueStruct(t *testing.T) {
 	r := test.WidgetRenderer(g).(*gaugeRenderer)
 
 	assert.Equal(t, 100.0, g.Max)
-	assert.Len(t, r.ticks, 11)
+	assert.Len(t, r.graduations, 11)
 }
 
 func TestGauge_SetValue(t *testing.T) {
@@ -96,14 +96,14 @@ func TestGauge_ChangeRangeAndSteps(t *testing.T) {
 
 	g.Title = "RPM"
 	g.Max = 8000
-	g.Steps = 4
+	g.Graduations = 4
 	g.Refresh()
 
 	assert.Equal(t, "RPM", r.title.Text)
-	assert.Len(t, r.ticks, 5)
+	assert.Len(t, r.graduations, 5)
 	assert.Equal(t, "4000", r.labels[2].Text)
 	assert.Equal(t, "8000", r.labels[4].Text)
-	assert.Len(t, r.Objects(), 5+3+5) // ticks + labels + face, title, center, needle, readout
+	assert.Len(t, r.Objects(), 5+3+5) // graduations + labels + face, title, center, needle, readout
 }
 
 func TestGauge_Layout(t *testing.T) {

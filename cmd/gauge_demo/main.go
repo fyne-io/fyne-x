@@ -19,7 +19,7 @@ func main() {
 	gauge := xwidget.NewGauge()
 	gauge.Min = 0
 	gauge.Max = 280
-	gauge.Steps = 28
+	gauge.Graduations = 28
 	gauge.Title = "km/h"
 	gauge.SetMinSize(fyne.NewSquareSize(175))
 

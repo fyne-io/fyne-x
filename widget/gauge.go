@@ -19,7 +19,7 @@ const (
 )
 
 // Gauge is a widget that displays a value within a range as a needle on a
-// circular dial, with tick marks, tick labels and a numeric readout.
+// circular dial, with graduation marks, graduation labels and a numeric readout.
 type Gauge struct {
 	widget.BaseWidget
 
@@ -30,9 +30,9 @@ type Gauge struct {
 	Value float64
 	// Title is drawn below the centre of the dial.
 	Title string
-	// Steps is the number of tick divisions around the dial, default 10.
-	// Every second tick is drawn larger and labelled with its value.
-	Steps int
+	// Graduations is the number of graduation divisions around the dial, default 10.
+	// Every second graduation is drawn larger and labelled with its value.
+	Graduations int
 
 	// TextFormatter can be used to have a custom format of the readout text.
 	// If set, it overrides the default numeric readout and runs each time the value updates.
@@ -75,14 +75,14 @@ func (g *Gauge) CreateRenderer() fyne.WidgetRenderer {
 	}
 
 	r := &gaugeRenderer{gauge: g}
-	// the arc ends overshoot ±135° slightly to stay flush with the outer tick marks
+	// the arc ends overshoot ±135° slightly to stay flush with the outer graduation marks
 	r.face = &canvas.Arc{StartAngle: -135.73, EndAngle: 135.8, CutoutRatio: 0.985}
 	r.center = &canvas.Circle{}
 	r.needle = &canvas.Line{}
 	r.title = &canvas.Text{Text: g.Title, Alignment: fyne.TextAlignCenter, TextStyle: fyne.TextStyle{Monospace: true}}
 	r.readout = &canvas.Text{Alignment: fyne.TextAlignCenter}
 
-	r.rebuildTicks()
+	r.rebuildGraduations()
 	r.applyTheme()
 	r.readout.Text = r.formatValue()
 	return r
@@ -99,51 +99,51 @@ type gaugeRenderer struct {
 	title   *canvas.Text
 	readout *canvas.Text
 
-	ticks   []*canvas.Line
-	labels  []*canvas.Text // indexed as ticks, nil for minor ticks
-	objects []fyne.CanvasObject
+	graduations []*canvas.Line
+	labels      []*canvas.Text // indexed as graduations, nil for minor graduations
+	objects     []fyne.CanvasObject
 
-	// the values the ticks were built from, to detect changes on Refresh
+	// the values the graduations were built from, to detect changes on Refresh
 	builtMin, builtMax float64
-	builtSteps         int
+	builtGraduations   int
 	builtFg            color.Color
-	steps              int // effective tick divisions, defaulted if Steps is unset
+	graduationCount    int // effective graduation divisions, defaulted if Graduations is unset
 
 	middle                     fyne.Position
 	needleOffset, needleLength float32
 }
 
-func (r *gaugeRenderer) rebuildTicks() {
+func (r *gaugeRenderer) rebuildGraduations() {
 	g := r.gauge
-	r.builtMin, r.builtMax, r.builtSteps = g.Min, g.Max, g.Steps
+	r.builtMin, r.builtMax, r.builtGraduations = g.Min, g.Max, g.Graduations
 
-	steps := g.Steps
-	if steps <= 0 {
-		steps = 10
+	graduations := g.Graduations
+	if graduations <= 0 {
+		graduations = 10
 	}
-	r.steps = steps
+	r.graduationCount = graduations
 
-	r.ticks = make([]*canvas.Line, steps+1)
-	r.labels = make([]*canvas.Text, steps+1)
-	r.objects = make([]fyne.CanvasObject, 0, 2*(steps+1)+5)
-	for i := 0; i <= steps; i++ {
-		r.ticks[i] = &canvas.Line{StrokeColor: gaugeTickColor(i, steps)}
-		r.objects = append(r.objects, r.ticks[i])
+	r.graduations = make([]*canvas.Line, graduations+1)
+	r.labels = make([]*canvas.Text, graduations+1)
+	r.objects = make([]fyne.CanvasObject, 0, 2*(graduations+1)+5)
+	for i := 0; i <= graduations; i++ {
+		r.graduations[i] = &canvas.Line{StrokeColor: gaugeGraduationColor(i, graduations)}
+		r.objects = append(r.objects, r.graduations[i])
 
 		if i%2 != 0 {
 			continue
 		}
-		v := g.Min + float64(i)/float64(steps)*(g.Max-g.Min)
+		v := g.Min + float64(i)/float64(graduations)*(g.Max-g.Min)
 		r.labels[i] = &canvas.Text{Text: strconv.FormatFloat(v, 'f', -1, 64), Alignment: fyne.TextAlignCenter}
 		r.objects = append(r.objects, r.labels[i])
 	}
 	r.objects = append(r.objects, r.face, r.title, r.center, r.needle, r.readout)
 }
 
-// gaugeTickColor blends the tick marks from green at the low end of the dial
+// gaugeGraduationColor blends the graduation marks from green at the low end of the dial
 // through yellow in the middle to red at the high end.
-func gaugeTickColor(i, steps int) color.Color {
-	half := float64(steps) / 2
+func gaugeGraduationColor(i, graduations int) color.Color {
+	half := float64(graduations) / 2
 	if float64(i) <= half {
 		return color.NRGBA{R: uint8(255 * float64(i) / half), G: 0xFF, A: 0xFF}
 	}
@@ -228,23 +228,23 @@ func (r *gaugeRenderer) Layout(size fyne.Size) {
 	minorStroke := fyne.Max(2, diameter/200)
 	labelPad := fyne.Max(6, radius*0.14)
 	labelTextSize := radius * 0.1
-	for i, tick := range r.ticks {
-		sin64, cos64 := math.Sincos(gaugeStart + gaugeSweep*float64(i)/float64(r.steps))
+	for i, graduation := range r.graduations {
+		sin64, cos64 := math.Sincos(gaugeStart + gaugeSweep*float64(i)/float64(r.graduationCount))
 		sin, cos := float32(sin64), float32(cos64)
 
 		lbl := r.labels[i]
-		if lbl == nil { // minor tick
-			tick.StrokeWidth = minorStroke
-			r.placeLine(tick, sin, cos, radius*0.875, radius*0.125-2)
+		if lbl == nil { // minor graduation
+			graduation.StrokeWidth = minorStroke
+			r.placeLine(graduation, sin, cos, radius*0.875, radius*0.125-2)
 			continue
 		}
 
-		tick.StrokeWidth = majorStroke
-		r.placeLine(tick, sin, cos, radius*0.75, radius*0.25-2)
+		graduation.StrokeWidth = majorStroke
+		r.placeLine(graduation, sin, cos, radius*0.75, radius*0.25-2)
 
 		lbl.TextSize = labelTextSize
 		lblSize := fyne.MeasureText(lbl.Text, labelTextSize, lbl.TextStyle)
-		lblRadius := radius*0.75 - labelPad // labels sit on the inside of the major ticks
+		lblRadius := radius*0.75 - labelPad // labels sit on the inside of the major graduations
 		lbl.Resize(lblSize)
 		lbl.Move(fyne.NewPos(r.middle.X+sin*lblRadius-lblSize.Width/2, r.middle.Y-cos*lblRadius-lblSize.Height/2))
 	}
@@ -256,9 +256,9 @@ func (r *gaugeRenderer) MinSize() fyne.Size {
 
 func (r *gaugeRenderer) Refresh() {
 	g := r.gauge
-	full := g.Min != r.builtMin || g.Max != r.builtMax || g.Steps != r.builtSteps
+	full := g.Min != r.builtMin || g.Max != r.builtMax || g.Graduations != r.builtGraduations
 	if full {
-		r.rebuildTicks()
+		r.rebuildGraduations()
 		r.Layout(g.Size())
 	}
 
