@@ -283,6 +283,31 @@ some markup content and links at the bottom of the window/dialog.
 
 ![](img/about.png)
 
+## Menus
+
+Community contributed menu helpers.
+
+`import "fyne.io/x/fyne/menu"`
+
+### Recents
+
+A menu item that lists the most recently used items for an app.
+The 5 most recent items are saved to the app preferences, call `Add` each time an item is opened or saved.
+
+```go
+	recents := menu.NewRecents("Open Recent", func(u fyne.URI) {
+		openFile(u)
+	})
+	w.SetMainMenu(fyne.NewMainMenu(
+		fyne.NewMenu("File",
+			fyne.NewMenuItem("Open", showOpenDialog),
+			recents.MenuItem()),
+	))
+
+	// when a file has been opened
+	recents.Add(uri)
+```
+
 ## Data Binding
 
 Community contributed data sources for binding.
