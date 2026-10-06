@@ -293,6 +293,7 @@ Community contributed menu helpers.
 
 A menu item that lists the most recently used items for an app.
 The 5 most recent items are saved to the app preferences, call `Add` each time an item is opened or saved.
+Items are labelled by name, and if two share a name the parent directory is shown too (such as `dir/file.txt`).
 
 ```go
 	recents := menu.NewRecents("Open Recent", func(u fyne.URI) {

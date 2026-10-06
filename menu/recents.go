@@ -81,7 +81,7 @@ func (r *Recents) MenuItem() *fyne.MenuItem {
 }
 
 // SetItemLabel sets a function used to generate the label for each recent item.
-// By default the name of the URI is used.
+// By default the name of the URI is used, with parent directories added when two names match.
 func (r *Recents) SetItemLabel(fn func(fyne.URI) string) {
 	r.getLabel = fn
 
@@ -111,14 +111,10 @@ func (r *Recents) refresh() {
 }
 
 func (r *Recents) update() {
+	labels := r.labels()
 	items := make([]*fyne.MenuItem, len(r.uris))
 	for i, u := range r.uris {
-		label := u.Name()
-		if r.getLabel != nil {
-			label = r.getLabel(u)
-		}
-
-		items[i] = fyne.NewMenuItem(label, func() {
+		items[i] = fyne.NewMenuItem(labels[i], func() {
 			if r.onOpen != nil {
 				r.onOpen(u)
 			}
@@ -127,6 +123,53 @@ func (r *Recents) update() {
 
 	r.item.ChildMenu.Items = items
 	r.item.Disabled = len(items) == 0
+}
+
+// labels returns the label to show for each of the recent URIs.
+// When the default name labels would be ambiguous the parent directories are
+// included, such as "dir/file.txt", until the labels are unique.
+func (r *Recents) labels() []string {
+	labels := make([]string, len(r.uris))
+	if r.getLabel != nil {
+		for i, u := range r.uris {
+			labels[i] = r.getLabel(u)
+		}
+		return labels
+	}
+
+	parents := make([]fyne.URI, len(r.uris))
+	for i, u := range r.uris {
+		labels[i] = u.Name()
+		parents[i] = u
+	}
+
+	for {
+		counts := make(map[string]int)
+		for _, l := range labels {
+			counts[l]++
+		}
+
+		changed := false
+		for i, l := range labels {
+			if counts[l] < 2 || parents[i] == nil {
+				continue
+			}
+
+			parent, err := storage.Parent(parents[i])
+			if err != nil || parent == nil || parent.Name() == "" || parent.Name() == "/" {
+				parents[i] = nil
+				continue
+			}
+
+			labels[i] = parent.Name() + "/" + l
+			parents[i] = parent
+			changed = true
+		}
+
+		if !changed {
+			return labels
+		}
+	}
 }
 
 func menuContains(m *fyne.Menu, item *fyne.MenuItem) bool {
