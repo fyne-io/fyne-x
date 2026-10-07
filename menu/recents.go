@@ -2,6 +2,8 @@
 package menu
 
 import (
+	"path/filepath"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
 )
@@ -161,7 +163,7 @@ func (r *Recents) labels() []string {
 				continue
 			}
 
-			labels[i] = parent.Name() + "/" + l
+			labels[i] = filepath.Join(parent.Name(), l)
 			parents[i] = parent
 			changed = true
 		}

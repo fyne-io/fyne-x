@@ -2,6 +2,7 @@ package menu
 
 import (
 	"fmt"
+	"path/filepath"
 	"testing"
 
 	"fyne.io/fyne/v2"
@@ -106,12 +107,13 @@ func TestRecents_Add_SameName(t *testing.T) {
 	r.Add(storage.NewFileURI("/tmp/first/pres.md"))
 	r.Add(storage.NewFileURI("/tmp/other.md"))
 	r.Add(storage.NewFileURI("/tmp/second/pres.md"))
-	assert.Equal(t, []string{"second/pres.md", "other.md", "first/pres.md"}, labels(r))
+	assert.Equal(t, []string{filepath.Join("second", "pres.md"), "other.md", filepath.Join("first", "pres.md")}, labels(r))
 
 	// parent dirs share a name too, so go up another level
 	r.Add(storage.NewFileURI("/home/work/docs/pres.md"))
 	r.Add(storage.NewFileURI("/home/play/docs/pres.md"))
-	assert.Equal(t, []string{"play/docs/pres.md", "work/docs/pres.md", "second/pres.md", "other.md", "first/pres.md"}, labels(r))
+	assert.Equal(t, []string{filepath.Join("play", "docs", "pres.md"), filepath.Join("work", "docs", "pres.md"),
+		filepath.Join("second", "pres.md"), "other.md", filepath.Join("first", "pres.md")}, labels(r))
 }
 
 func TestRecents_SetItemLabel(t *testing.T) {
@@ -120,7 +122,7 @@ func TestRecents_SetItemLabel(t *testing.T) {
 	r := NewRecents("Recent", nil)
 	r.Add(storage.NewFileURI("/tmp/first/pres.md"))
 	r.Add(storage.NewFileURI("/tmp/second/pres.md"))
-	assert.Equal(t, []string{"second/pres.md", "first/pres.md"}, labels(r))
+	assert.Equal(t, []string{filepath.Join("second", "pres.md"), filepath.Join("first", "pres.md")}, labels(r))
 
 	r.SetItemLabel(func(u fyne.URI) string {
 		parent, _ := storage.Parent(u)
