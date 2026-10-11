@@ -6,7 +6,9 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
+
 	"fyne.io/x/fyne/dialog"
+	xWidget "fyne.io/x/fyne/widget"
 )
 
 func main() {
@@ -23,6 +25,8 @@ func main() {
 		}),
 		widget.NewButton("About window", func() {
 			dialog.ShowAboutWindow("Some **cool** stuff", links, a)
+		}),
+		xWidget.NewTracedButton("Traced", func() {
 		}),
 	))
 
